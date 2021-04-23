@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31205.134
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bource.Models", "Bource.Models\Bource.Models.csproj", "{43777C6B-2A30-481F-8D5A-22C683A2AAE7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bource.Common", "Bource.Common\Bource.Common.csproj", "{F277EEC4-8640-4E55-8F39-2D27FC91ADAB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{43777C6B-2A30-481F-8D5A-22C683A2AAE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43777C6B-2A30-481F-8D5A-22C683A2AAE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43777C6B-2A30-481F-8D5A-22C683A2AAE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43777C6B-2A30-481F-8D5A-22C683A2AAE7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F277EEC4-8640-4E55-8F39-2D27FC91ADAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F277EEC4-8640-4E55-8F39-2D27FC91ADAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F277EEC4-8640-4E55-8F39-2D27FC91ADAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F277EEC4-8640-4E55-8F39-2D27FC91ADAB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {14A0A180-CB98-4796-9F12-608126730DD4}
+	EndGlobalSection
+EndGlobal
