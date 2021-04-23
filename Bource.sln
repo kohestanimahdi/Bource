@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bource.Models", "Bource.Mod
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bource.Common", "Bource.Common\Bource.Common.csproj", "{F277EEC4-8640-4E55-8F39-2D27FC91ADAB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bource.Services", "Bource.Services\Bource.Services.csproj", "{0CFD9326-AE12-44D2-B2A6-4EDD4FAB7669}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{F277EEC4-8640-4E55-8F39-2D27FC91ADAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F277EEC4-8640-4E55-8F39-2D27FC91ADAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F277EEC4-8640-4E55-8F39-2D27FC91ADAB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CFD9326-AE12-44D2-B2A6-4EDD4FAB7669}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CFD9326-AE12-44D2-B2A6-4EDD4FAB7669}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CFD9326-AE12-44D2-B2A6-4EDD4FAB7669}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CFD9326-AE12-44D2-B2A6-4EDD4FAB7669}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
