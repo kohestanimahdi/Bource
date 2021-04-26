@@ -25,21 +25,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             symbolGroupRepository = new SymbolGroupRepository(mongoDbSetting);
         }
 
-        public async Task AddOrUpdateSymbolGroups(List<SymbolGroup> symbolGroups, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            var allGroups = await symbolGroupRepository.GetAllAsync(cancellationToken);
-
-            foreach (var newGroup in symbolGroups)
-            {
-                var group = allGroups.FirstOrDefault(i => i.Code == newGroup.Code);
-                if (group is not null)
-                {
-                    group.Title = newGroup.Title;
-                    await symbolGroupRepository.UpdateAsync(group, cancellationToken);
-                }
-                else
-                    await symbolGroupRepository.AddAsync(newGroup);
-            }
-        }
+        public Task AddOrUpdateSymbolGroups(List<SymbolGroup> symbolGroups, CancellationToken cancellationToken = default(CancellationToken))
+            => symbolGroupRepository.AddOrUpdateSymbolGroups(symbolGroups, cancellationToken);
     }
 }

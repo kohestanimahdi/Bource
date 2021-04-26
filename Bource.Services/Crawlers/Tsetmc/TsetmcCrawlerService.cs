@@ -6,9 +6,7 @@ using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -40,9 +38,10 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         public async Task GetOrUpdateSymbolGroups(CancellationToken cancellationToken = default(CancellationToken))
         {
+
             var response = await httpClient.GetAsync("Loader.aspx?ParTree=111C1213", cancellationToken);
 
-            var html = await response.Content.ReadAsStringAsync();
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -59,14 +58,15 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             for (int i = 1; i < trs.Count; i++)
             {
+                var tds = trs[i].SelectNodes("td");
                 groups.Add(new SymbolGroup
                 {
-                    Title = trs[i].ChildNodes[1].InnerText.FixPersianLetters(),
-                    Code = trs[i].ChildNodes[0].InnerText.FixedNumbersToEn()
+                    Title = tds[1].InnerText.FixPersianLetters(),
+                    Code = tds[0].InnerText.FixedNumbersToEn()
                 });
             }
 
-
+            await tsetmcUnitOfWork.AddOrUpdateSymbolGroups(groups, cancellationToken);
         }
     }
 }
