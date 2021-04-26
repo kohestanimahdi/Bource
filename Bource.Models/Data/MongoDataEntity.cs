@@ -4,12 +4,12 @@ using System;
 
 namespace Bource.Models.Data
 {
-    public interface IDataEntity
+    public interface IMongoDataEntity
     {
     }
-    public class DataEntity : IDataEntity
+    public class MongoDataEntity : IMongoDataEntity
     {
-        public DataEntity()
+        public MongoDataEntity()
         {
             CreateDate = DateTime.Now;
         }

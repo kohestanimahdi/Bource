@@ -1,4 +1,4 @@
-﻿namespace Bource.Common
+﻿namespace Bource.Common.Models
 {
     public interface IScopedDependency
     {

@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Bource.Models.Data.Tsetmc
 {
-    public class SymbolData : DataEntity
+    public class SymbolData : MongoDataEntity
     {
         [BsonRepresentation(BsonType.ObjectId)]
         public string SymbolId { get; set; }

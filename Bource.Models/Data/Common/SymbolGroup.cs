@@ -1,6 +1,6 @@
 ﻿namespace Bource.Models.Data.Common
 {
-    public class SymbolGroup : DataEntity
+    public class SymbolGroup : MongoDataEntity
     {
         public string Title { get; set; }
         public int Code { get; set; }

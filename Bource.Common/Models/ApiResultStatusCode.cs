@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Bource.Common
+namespace Bource.Common.Models
 {
     public enum ApiResultStatusCode
     {

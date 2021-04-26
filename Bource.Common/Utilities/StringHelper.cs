@@ -1,7 +1,10 @@
-﻿namespace Bource.Common.Utilities
+﻿using Pluralize.NET.Core;
+
+namespace Bource.Common.Utilities
 {
     public static class StringHelper
     {
+        private static Pluralizer pluralizer = new Pluralizer();
 
         /// <summary>
         /// Replace arabic numbers with english numbers
@@ -367,5 +370,13 @@
             text = ArToEngNumbers(text);
             return FixPersianLetters(text);
         }
+
+        /// <summary>
+        /// Pluralizing Name 
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static string PluralizingNameConvention(this string text)
+            => pluralizer.Pluralize(text);
     }
 }

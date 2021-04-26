@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bource.Common.Models;
+using System;
 using System.Net;
 using System.Runtime.Serialization;
 

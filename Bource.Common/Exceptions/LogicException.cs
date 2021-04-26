@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bource.Common.Models;
+using System;
 
 namespace Bource.Common.Exceptions
 {
