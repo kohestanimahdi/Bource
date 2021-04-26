@@ -17,4 +17,8 @@
     <WCFMetadata Include="Connected Services" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Crawlers\Tsetmc\" />
+  </ItemGroup>
+
 </Project>
