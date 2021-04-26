@@ -6,8 +6,6 @@ namespace Bource.Models.Data.Common
     {
         public string Title { get; set; }
         public int Code { get; set; }
-
-        public List<SymbolSubGroup> SubGroups { get; set; }
     }
 
 
