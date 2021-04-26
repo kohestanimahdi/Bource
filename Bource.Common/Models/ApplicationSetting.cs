@@ -9,7 +9,6 @@ namespace Bource.Common.Models
     public class ApplicationSetting
     {
         public MongoDbSetting mongoDbSetting { get; set; }
-        //"mongodb://localhost:27017/"
     }
 
     public class MongoDbSetting

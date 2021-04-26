@@ -81,6 +81,9 @@ namespace Bource.Common.Utilities
         /// <returns></returns>
         public static string FixPersianLetters(this string text)
         {
+            if (string.IsNullOrWhiteSpace(text))
+                return text;
+
             char[] find;
             char replace;
             find = new char[] {'؆', '؇', '؈', '؉', '؊', '؍', '؎', 'ؐ', 'ؑ', 'ؒ', 'ؓ', 'ؔ', 'ؕ',
@@ -366,9 +369,25 @@ namespace Bource.Common.Utilities
             if (string.IsNullOrWhiteSpace(text))
                 return text;
 
+            text = FixedNumbersToEn(text);
+
+            return FixPersianLetters(text);
+        }
+
+        /// <summary>
+        /// change arabic or persian numbers to english numbers
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static string FixedNumbersToEn(this string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return text;
+
             text = PerToEngNumbers(text);
             text = ArToEngNumbers(text);
-            return FixPersianLetters(text);
+
+            return text;
         }
 
         /// <summary>
@@ -378,5 +397,7 @@ namespace Bource.Common.Utilities
         /// <returns></returns>
         public static string PluralizingNameConvention(this string text)
             => pluralizer.Pluralize(text);
+
+
     }
 }

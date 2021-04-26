@@ -3,6 +3,6 @@
     public class SymbolGroup : MongoDataEntity
     {
         public string Title { get; set; }
-        public int Code { get; set; }
+        public string Code { get; set; }
     }
 }
