@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using Bource.Common.Utilities;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
@@ -8,8 +9,65 @@ namespace Bource.Models.Data.Tsetmc
 {
     public class SymbolData : MongoDataEntity
     {
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string SymbolId { get; set; }
+
+        public SymbolData()
+        {
+
+        }
+        public SymbolData(string dataLine, DateTime lastModified)
+        {
+            LastUpdate = lastModified;
+
+            var data = dataLine.Split(",");
+
+            IId = data[0];
+            InsCode = data[1];
+            Symbol = data[2].FixPersianLetters();
+            Name = data[3].FixPersianLetters();
+            FirstPrice = Convert.ToInt64(data[5]);
+            FinishPrice = Convert.ToInt64(data[6]);
+            LastPrice = Convert.ToInt64(data[7]);
+            NumberOfTransaction = Convert.ToInt64(data[8]);
+            Turnover = Convert.ToInt64(data[9]);
+            ValueOfTransaction = Convert.ToInt64(data[10]);
+            MinPrice = Convert.ToInt64(data[11]);
+            MaxPrice = Convert.ToInt64(data[12]);
+            YesterdayPrice = Convert.ToInt64(data[13]);
+            EPS = string.IsNullOrWhiteSpace(data[14]) ? null : Convert.ToInt64(data[14]);
+            BaseValue = Convert.ToInt64(data[15]);
+            SymbolGroup = data[18];
+            MinAllowedPrice = Convert.ToDouble(data[19]);
+            MaxAllowedPrice = Convert.ToDouble(data[20]);
+            Count = Convert.ToInt64(data[21]);
+            FinishPriceChange = FinishPrice - YesterdayPrice;
+            PercentFinishPriceChange = Math.Round(100d * FinishPriceChange / YesterdayPrice, 2);
+            LastPriceChange = NumberOfTransaction == 0 ? 0 : LastPrice - YesterdayPrice;
+            PercentLastPriceChange = NumberOfTransaction == 0 ? 0 : Math.Round(100d * LastPriceChange / YesterdayPrice, 2);
+            PE = EPS.HasValue ? Math.Round(100d * FinishPrice / EPS.Value, 2) : null;
+
+            BuyTransactions = new List<SymbolTransaction>();
+            SellTransactions = new List<SymbolTransaction>();
+        }
+
+        //[BsonIgnore]
+        public string InsCode { get; set; }
+
+        //[BsonIgnore]
+        public string IId { get; set; }
+
+        //[BsonIgnore]
+        public string Name { get; set; }
+
+        //[BsonIgnore]
+        public string Symbol { get; set; }
+
+        //[BsonIgnore]
+        public string SymbolGroup { get; set; }
+
+
+
+        //[BsonRepresentation(BsonType.ObjectId)]
+        //public string SymbolId { get; set; }
 
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime LastUpdate { get; set; }
@@ -68,10 +126,10 @@ namespace Bource.Models.Data.Tsetmc
         public long? EPS { get; set; }
 
         [Display(Name = "PE")]
-        public double PE { get; set; }
+        public double? PE { get; set; }
 
         [Display(Name = "PE گروه")]
-        public double GroupPE { get; set; }
+        public double? GroupPE { get; set; }
 
         [Display(Name = "تعداد سهام")]
         public long Count { get; set; }
@@ -119,6 +177,45 @@ namespace Bource.Models.Data.Tsetmc
 
         public List<SymbolTransaction> BuyTransactions { get; set; }
         public List<SymbolTransaction> SellTransactions { get; set; }
+
+        public void FillTransactions(IEnumerable<string> transactions)
+        {
+            BuyTransactions = new List<SymbolTransaction>();
+            SellTransactions = new List<SymbolTransaction>();
+
+            foreach (var data in transactions)
+            {
+                var items = data.Split(",");
+                BuyTransactions.Add(new SymbolTransaction
+                {
+                    Order = Convert.ToInt16(items[1]),
+                    Number = Convert.ToInt64(items[3]),
+                    Value = Convert.ToInt64(items[6]),
+                    Price = Convert.ToInt64(items[4])
+                });
+
+                SellTransactions.Add(new SymbolTransaction
+                {
+                    Order = Convert.ToInt16(items[1]),
+                    Number = Convert.ToInt64(items[2]),
+                    Value = Convert.ToInt64(items[7]),
+                    Price = Convert.ToInt64(items[5])
+                });
+            }
+        }
+
+        public void FillClientValues(string[] values)
+        {
+            NaturalBuyNumber = Convert.ToInt64(values[1]);
+            LegalEntityBuyNumber = Convert.ToInt64(values[2]);
+            NaturalBuyValue = Convert.ToInt64(values[3]);
+            LegalEntityBuyValue = Convert.ToInt64(values[4]);
+
+            NaturalSellNumber = Convert.ToInt64(values[5]);
+            LegalEntitySellNumber = Convert.ToInt64(values[6]);
+            NaturalSellValue = Convert.ToInt64(values[7]);
+            LegalEntitySellValue = Convert.ToInt64(values[8]);
+        }
 
     }
 

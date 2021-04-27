@@ -8,7 +8,7 @@
         public string LatinSign { get; set; }
         public string Panel { get; set; }
 
-        public long IId { get; set; }
+        public string IId { get; set; }
         public string Code12 { get; set; }
         public string Code5 { get; set; }
         public string Code4 { get; set; }
