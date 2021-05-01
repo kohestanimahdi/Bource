@@ -4,6 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace Bource.Models.Data.Tsetmc
 {
@@ -36,8 +37,8 @@ namespace Bource.Models.Data.Tsetmc
             EPS = string.IsNullOrWhiteSpace(data[14]) ? null : Convert.ToInt64(data[14]);
             BaseValue = Convert.ToInt64(data[15]);
             SymbolGroup = data[18];
-            MinAllowedPrice = Convert.ToDouble(data[19]);
-            MaxAllowedPrice = Convert.ToDouble(data[20]);
+            MaxAllowedPrice = Convert.ToDouble(data[19]);
+            MinAllowedPrice = Convert.ToDouble(data[20]);
             Count = Convert.ToInt64(data[21]);
             FinishPriceChange = FinishPrice - YesterdayPrice;
             PercentFinishPriceChange = Math.Round(100d * FinishPriceChange / YesterdayPrice, 2);
@@ -178,6 +179,57 @@ namespace Bource.Models.Data.Tsetmc
         public List<SymbolTransaction> BuyTransactions { get; set; }
         public List<SymbolTransaction> SellTransactions { get; set; }
 
+        public override bool Equals(object obj)
+        {
+            if (obj is SymbolData symbolData)
+            {
+                if (symbolData.BuyTransactions.Count != BuyTransactions.Count)
+                    return false;
+
+                if (symbolData.SellTransactions.Count != SellTransactions.Count)
+                    return false;
+
+                if (symbolData.NumberOfTransaction != NumberOfTransaction)
+                    return false;
+
+                if (BuyTransactions.Any())
+                    for (short i = BuyTransactions.First().Order; i <= BuyTransactions.Last().Order; i++)
+                    {
+                        var item = symbolData.BuyTransactions.FirstOrDefault(j => j.Order == i);
+                        var secondItem = BuyTransactions.FirstOrDefault(j => j.Order == i);
+                        if (item is null && secondItem is null)
+                            continue;
+
+                        if ((item is null && secondItem is not null) || (item is not null && secondItem is null))
+                            return false;
+
+                        if (!item.Equals(secondItem))
+                            return false;
+
+
+                    }
+
+                if (SellTransactions.Any())
+                    for (short i = SellTransactions.First().Order; i <= SellTransactions.Last().Order; i++)
+                    {
+                        var item = symbolData.SellTransactions.FirstOrDefault(j => j.Order == i);
+                        var secondItem = SellTransactions.FirstOrDefault(j => j.Order == i);
+                        if (item is null && secondItem is null)
+                            continue;
+
+                        if ((item is null && secondItem is not null) || (item is not null && secondItem is null))
+                            return false;
+
+                        if (!item.Equals(secondItem))
+                            return false;
+                    }
+
+                return true;
+            }
+            return false;
+
+        }
+
         public void FillTransactions(IEnumerable<string> transactions)
         {
             BuyTransactions = new List<SymbolTransaction>();
@@ -202,6 +254,12 @@ namespace Bource.Models.Data.Tsetmc
                     Price = Convert.ToInt64(items[5])
                 });
             }
+
+            BuyTransactions = BuyTransactions.Where(i => i.Price <= MaxAllowedPrice && i.Price >= MinAllowedPrice).OrderBy(i => i.Order).ToList();
+            SellTransactions = SellTransactions.Where(i => i.Price <= MaxAllowedPrice && i.Price >= MinAllowedPrice).OrderBy(i => i.Order).ToList();
+
+            BuyPrice = BuyTransactions.Any() ? BuyTransactions.First().Price : 0;
+            SalePrice = SellTransactions.Any() ? SellTransactions.First().Price : 0;
         }
 
         public void FillClientValues(string[] values)
@@ -225,6 +283,14 @@ namespace Bource.Models.Data.Tsetmc
         public long Number { get; set; }
         public long Value { get; set; }
         public long Price { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is SymbolTransaction transaction)
+                return Order == transaction.Order && Number == transaction.Number && Value == transaction.Value && Price == transaction.Price;
+
+            return false;
+        }
 
     }
 }

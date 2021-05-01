@@ -34,7 +34,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
             httpClient.BaseAddress = new Uri("http://www.tsetmc.com/");
-            //httpClient.Timeout = TimeSpan.FromSeconds(0.5);
+            httpClient.Timeout = TimeSpan.FromSeconds(1.5);
 
             tsetmcUnitOfWork = new TsetmcUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
         }
@@ -77,6 +77,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Error in get client symbol data");
+                Console.WriteLine("Error in get client symbol data");
                 return;
             }
 
@@ -96,10 +97,14 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         public async Task GetLatestSymbolDataAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
+            var startDate = DateTime.Now;
+
+
             var response = await httpClient.GetAsync("tsev2/data/MarketWatchPlus.aspx", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Error in get symbol data");
+                Console.WriteLine("Error in get symbol data");
                 return;
             }
 
@@ -118,6 +123,9 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             var data = new List<SymbolData>();
 
+            System.Console.WriteLine($"Get symbol Data:{ (DateTime.Now - startDate).TotalSeconds}");
+            startDate = DateTime.Now;
+
             foreach (var item in symbolsSplitted)
             {
                 var symbolData = new SymbolData(item, lastModified);
@@ -125,10 +133,15 @@ namespace Bource.Services.Crawlers.Tsetmc
 
                 data.Add(symbolData);
             }
-
+            System.Console.WriteLine($"Get symbol transactions Data:{ (DateTime.Now - startDate).TotalSeconds}");
+            startDate = DateTime.Now;
             await GetLatestClientSymbolDataAsync(data, cancellationToken);
+            System.Console.WriteLine($"Get symbol client Data:{ (DateTime.Now - startDate).TotalSeconds}");
+            startDate = DateTime.Now;
 
             await tsetmcUnitOfWork.AddSymbolData(data, cancellationToken);
+            System.Console.WriteLine($"Save Data:{(DateTime.Now - startDate).TotalSeconds}");
+
         }
 
     }

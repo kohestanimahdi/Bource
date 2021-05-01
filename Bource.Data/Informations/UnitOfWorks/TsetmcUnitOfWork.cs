@@ -49,27 +49,58 @@ namespace Bource.Data.Informations.UnitOfWorks
 
         public async Task AddSymbolData(List<SymbolData> data, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var symbols = data.Select(i => new Symbol
-            {
-                IId = i.IId,
-                Code12 = i.InsCode,
-                Name = i.Name,
-                Sign = i.Symbol,
-                GroupId = i.SymbolGroup
-            }).ToList();
+            var startDate = DateTime.Now;
+            int i = 0;
 
-            await AddSymbolsIfNotExists(symbols, cancellationToken);
+            var todayItems = await symbolDataRepository.Table.Find(i => i.LastUpdate >= DateTime.Now.AddMinutes(-15)).ToListAsync(cancellationToken);
 
-            var todayItems = await symbolDataRepository.Table.Find(i => i.LastUpdate >= DateTime.Today).ToListAsync(cancellationToken);
+            System.Console.WriteLine($"get  Data1 from db { (DateTime.Now - startDate).TotalSeconds}");
+
+            var itemsToSave = new List<SymbolData>();
+
+
             if (todayItems is not null && todayItems.Any())
+            {
+                startDate = DateTime.Now;
                 foreach (var item in data)
                 {
                     var symbolData = todayItems.Where(i => i.IId == item.IId).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
-                    if (symbolData is null || symbolData.NumberOfTransaction != item.NumberOfTransaction)
-                        await symbolDataRepository.AddAsync(item, cancellationToken);
+
+                    if (symbolData is null || !symbolData.Equals(item))
+                    {
+                        itemsToSave.Add(item);
+                        i++;
+                    }
+
                 }
+
+                System.Console.WriteLine($"add to list { (DateTime.Now - startDate).TotalSeconds}");
+            }
             else
-                await symbolDataRepository.AddRangeAsync(data, cancellationToken);
+            {
+                startDate = DateTime.Now;
+
+                var symbols = data.Select(i => new Symbol
+                {
+                    IId = i.IId,
+                    Code12 = i.InsCode,
+                    Name = i.Name,
+                    Sign = i.Symbol,
+                    GroupId = i.SymbolGroup
+                }).ToList();
+
+                i = data.Count;
+                itemsToSave = data;
+                await AddSymbolsIfNotExists(symbols, cancellationToken);
+                System.Console.WriteLine($"save symbols { (DateTime.Now - startDate).TotalSeconds}");
+
+            }
+
+            startDate = DateTime.Now;
+            await symbolDataRepository.AddRangeAsync(itemsToSave, cancellationToken);
+            System.Console.WriteLine($"save symbol data 1 { (DateTime.Now - startDate).TotalSeconds}");
+
+            Console.WriteLine($"Count of data: {i}");
         }
     }
 }
