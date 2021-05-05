@@ -26,6 +26,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly StockCashMarketAtGlanceRepository stockCashMarketAtGlanceRepository;
         private readonly OTCCashMarketAtGlanceRepository OTCCashMarketAtGlanceRepository;
         private readonly MarketWatcherMessageRepository marketWatcherMessageRepository;
+        private readonly ValueOfMarketRepository valueOfMarketRepository;
 
         public TsetmcUnitOfWork(IOptionsSnapshot<ApplicationSetting> options)
         {
@@ -35,6 +36,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             stockCashMarketAtGlanceRepository = new(options.Value.mongoDbSetting);
             OTCCashMarketAtGlanceRepository = new(options.Value.mongoDbSetting);
             marketWatcherMessageRepository = new(options.Value.mongoDbSetting);
+            valueOfMarketRepository = new(options.Value.mongoDbSetting);
         }
 
         public TsetmcUnitOfWork(MongoDbSetting mongoDbSetting)
@@ -45,6 +47,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             stockCashMarketAtGlanceRepository = new(mongoDbSetting);
             OTCCashMarketAtGlanceRepository = new(mongoDbSetting);
             marketWatcherMessageRepository = new(mongoDbSetting);
+            valueOfMarketRepository = new(mongoDbSetting);
         }
 
         public async Task AddMarketWatcherMessageIfNotExistsRangeAsync(List<MarketWatcherMessage> messages, CancellationToken cancellationToken = default(CancellationToken))
@@ -62,7 +65,21 @@ namespace Bource.Data.Informations.UnitOfWorks
                 await marketWatcherMessageRepository.AddRangeAsync(messagesToAdd, cancellationToken);
 
         }
+        public async Task AddValuesOfMarketsIfNotExistsRangeAsync(List<ValueOfMarket> values, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var existValues = await valueOfMarketRepository.GetValueOfMarketAsync(values.First().Market, cancellationToken);
+            List<ValueOfMarket> valuesToAdd = new();
 
+            foreach (var item in values)
+            {
+                if (!existValues.Any(i => i.Date == item.Date))
+                    valuesToAdd.Add(item);
+            }
+
+            if (valuesToAdd.Any())
+                await valueOfMarketRepository.AddRangeAsync(valuesToAdd, cancellationToken);
+
+        }
         public Task AddOrUpdateSymbolGroups(List<SymbolGroup> symbolGroups, CancellationToken cancellationToken = default(CancellationToken))
             => symbolGroupRepository.AddOrUpdateSymbolGroups(symbolGroups, cancellationToken);
 

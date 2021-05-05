@@ -29,6 +29,8 @@ namespace Bource.Services.Crawlers.Tsetmc
             httpClient = httpClientFactory?.CreateClient() ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
             httpClient.BaseAddress = new Uri("http://www.tsetmc.com/");
+            httpClient.Timeout = TimeSpan.FromSeconds(1.5);
+
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
         }
 
@@ -256,8 +258,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             if (otcMessages.Any())
                 await tsetmcUnitOfWork.AddMarketWatcherMessageIfNotExistsRangeAsync(otcMessages, cancellationToken);
         }
-
-        private async Task<List<MarketWatcherMessage>> GetMarketWatcherMessage(Models.Data.Enums.MarketType market, CancellationToken cancellationToken = default(CancellationToken))
+        private async Task<List<MarketWatcherMessage>> GetMarketWatcherMessage(MarketType market, CancellationToken cancellationToken = default(CancellationToken))
         {
             List<MarketWatcherMessage> messages = new();
             var response = await httpClient.GetAsync($"Loader.aspx?Partree=151313&Flow={(byte)market}", cancellationToken);
@@ -290,6 +291,49 @@ namespace Bource.Services.Crawlers.Tsetmc
             }
 
             return messages;
+        }
+
+        public async Task GetValueOfMarketAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var stockValueOfMarkets = await GetValueOfMarketAsync(MarketType.Stock, cancellationToken);
+            var otcValueOfMarkets = await GetValueOfMarketAsync(MarketType.OTC, cancellationToken);
+
+            if (stockValueOfMarkets.Any())
+                await tsetmcUnitOfWork.AddValuesOfMarketsIfNotExistsRangeAsync(stockValueOfMarkets, cancellationToken);
+
+            if (otcValueOfMarkets.Any())
+                await tsetmcUnitOfWork.AddValuesOfMarketsIfNotExistsRangeAsync(otcValueOfMarkets, cancellationToken);
+        }
+        private async Task<List<ValueOfMarket>> GetValueOfMarketAsync(MarketType market, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            List<ValueOfMarket> values = new();
+            var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131N&Flow={(byte)market}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError("Error in Get value Of Market");
+                Console.WriteLine("Error in Get value Of Market");
+                return values;
+            }
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(html);
+
+            var tds = htmlDoc.DocumentNode.SelectNodes("//table[@class='table1']/tbody/tr/td");
+
+            for (int i = 0; i < tds.Count - 1; i += 2)
+            {
+                values.Add(new ValueOfMarket
+                {
+                    CreateDate = DateTime.Now,
+                    Market = market,
+                    Date = tds[i].GetAsDateTime(),
+                    Value = tds[i + 1].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal()
+                });
+            }
+
+            return values;
         }
 
         public async Task SaveSymbolData(CancellationToken cancellationToken = default(CancellationToken))
