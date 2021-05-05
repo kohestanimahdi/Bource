@@ -49,6 +49,98 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         }
 
+        public async Task UpdateSymbolAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
+            foreach (var symbol in symbols)
+            {
+                await GetSymbolInstructionAsync(symbol, cancellationToken);
+                await GetSymbolInformationAsync(symbol, cancellationToken);
+                await tsetmcUnitOfWork.UpdateSymbolsAsync(symbol, cancellationToken);
+            }
+        }
+
+        private async Task GetSymbolInformationAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        {
+            try
+            {
+
+                var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131M&i={symbol.IId}", cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                {
+                    logger.LogError("Error in get Symbol Information");
+                    Console.WriteLine("Error in get Symbol Information");
+                    return;
+                }
+                var html = await response.Content.ReadAsStringAsync(cancellationToken);
+                if (string.IsNullOrWhiteSpace(html))
+                    return;
+
+                var htmlDoc = new HtmlDocument();
+                htmlDoc.LoadHtml(html);
+
+                var table = htmlDoc.DocumentNode.SelectSingleNode("//table[@class='table1']");
+                if (table is null)
+                    return;
+
+                var rows = table.SelectNodes("tbody/tr/td");
+
+                if (rows is null || rows.Count <= 2)
+                    return;
+
+                symbol.UpdateInforamtion(rows);
+
+            }
+            catch
+            {
+                if (numberOfTries < 2)
+                    await GetSymbolInstructionAsync(symbol, cancellationToken, numberOfTries++);
+                else
+                    throw;
+            }
+
+        }
+        private async Task GetSymbolInstructionAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        {
+            try
+            {
+
+                var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131V&s={symbol.Sign}", cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                {
+                    logger.LogError("Error in get SymbolInstruction");
+                    Console.WriteLine("Error in get SymbolInstruction");
+                    return;
+                }
+                var html = await response.Content.ReadAsStringAsync(cancellationToken);
+                if (string.IsNullOrWhiteSpace(html))
+                    return;
+
+                var htmlDoc = new HtmlDocument();
+                htmlDoc.LoadHtml(html);
+
+                var table = htmlDoc.DocumentNode.SelectSingleNode("//table[@class='table1']");
+                if (table is null)
+                    return;
+
+                var rows = table.SelectNodes("tbody/tr/td");
+
+                if (rows is null || rows.Count <= 2)
+                    return;
+
+                symbol.Introduction = new(rows);
+
+            }
+            catch
+            {
+                if (numberOfTries < 2)
+                    await GetSymbolInstructionAsync(symbol, cancellationToken, numberOfTries++);
+                else
+                    throw;
+            }
+
+        }
+
         public async Task GetAllNaturalAndLegalEntityAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var startDate = DateTime.Now;

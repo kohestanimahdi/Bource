@@ -117,6 +117,9 @@ namespace Bource.Data.Informations.UnitOfWorks
             }
         }
 
+        public Task UpdateSymbolsAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
+        => symbolRepository.UpdateAsync(symbol, cancellationToken);
+
         public async Task AddSymbolData(List<SymbolData> data, CancellationToken cancellationToken = default(CancellationToken))
         {
             var startDate = DateTime.Now;

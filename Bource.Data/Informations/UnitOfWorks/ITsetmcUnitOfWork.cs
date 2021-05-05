@@ -20,5 +20,6 @@ namespace Bource.Data.Informations.UnitOfWorks
         Task AddTopSupplyAndDemandRangeAsync(List<TopSupplyAndDemand> values, CancellationToken cancellationToken = default);
         Task AddValuesOfMarketsIfNotExistsRangeAsync(List<ValueOfMarket> values, CancellationToken cancellationToken = default);
         Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default);
+        Task UpdateSymbolsAsync(Symbol symbol, CancellationToken cancellationToken = default);
     }
 }
