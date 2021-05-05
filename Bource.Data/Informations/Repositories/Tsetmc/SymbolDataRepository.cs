@@ -15,6 +15,6 @@ namespace Bource.Data.Informations.Repositories
         }
 
         public Task<SymbolData> GetLastById(string iid, CancellationToken cancellationToken = default(CancellationToken))
-            => Table.Find(i => i.IId == iid).SortByDescending(i => i.LastUpdate).FirstAsync(cancellationToken);
+            => Table.Find(i => i.IId == iid).SortByDescending(i => i.LastUpdate).FirstOrDefaultAsync(cancellationToken);
     }
 }

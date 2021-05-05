@@ -11,6 +11,7 @@ namespace Bource.Data.Informations.UnitOfWorks
 {
     public interface ITsetmcUnitOfWork
     {
+        Task AddCashMarketAtGlance(StockCashMarketAtGlance stockCashMarketAtGlance, OTCCashMarketAtGlance oTCCashMarketAtGlance, CancellationToken cancellationToken = default);
         Task AddOrUpdateSymbolGroups(List<SymbolGroup> symbolGroups, CancellationToken cancellationToken = default);
         Task AddSymbolData(List<SymbolData> data, CancellationToken cancellationToken = default);
         Task AddSymbolsIfNotExists(List<Symbol> symbols, CancellationToken cancellationToken = default);

@@ -11,6 +11,8 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Collections.Concurrent;
+using MD.PersianDateTime.Standard;
 
 namespace Bource.Services.Crawlers.Tsetmc
 {
@@ -19,7 +21,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         private readonly HttpClient httpClient;
         private readonly ILogger<TsetmcCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
-
+        private static readonly ConcurrentQueue<List<SymbolData>> SymbolDataQueue = new();
         public TsetmcCrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork)
         {
             logger = loggerFactory?.CreateLogger<TsetmcCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
@@ -37,6 +39,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             httpClient.Timeout = TimeSpan.FromSeconds(1.5);
 
             tsetmcUnitOfWork = new TsetmcUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
+
         }
 
         public async Task GetOrUpdateSymbolGroupsAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -139,10 +142,145 @@ namespace Bource.Services.Crawlers.Tsetmc
             System.Console.WriteLine($"Get symbol client Data:{ (DateTime.Now - startDate).TotalSeconds}");
             startDate = DateTime.Now;
 
-            await tsetmcUnitOfWork.AddSymbolData(data, cancellationToken);
-            System.Console.WriteLine($"Save Data:{(DateTime.Now - startDate).TotalSeconds}");
+            SymbolDataQueue.Enqueue(data);
+
+            System.Console.WriteLine($"Save Data to queue:{(DateTime.Now - startDate).TotalSeconds}");
 
         }
 
+        public async Task GetCashMarketAtGlanceAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var response = await httpClient.GetAsync("Loader.aspx?ParTree=15", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError("Error in get client symbol data");
+                Console.WriteLine("Error in get client symbol data");
+                return;
+            }
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(html);
+
+            var stockCashMarketAtGlance = GetStockCashMarketAtGlance(htmlDoc);
+            var OTCCashMarketAtGlance = GetOTCCashMarketAtGlance(htmlDoc);
+
+            await tsetmcUnitOfWork.AddCashMarketAtGlance(stockCashMarketAtGlance, OTCCashMarketAtGlance, cancellationToken);
+        }
+
+        private StockCashMarketAtGlance GetStockCashMarketAtGlance(HtmlDocument htmlDoc)
+        {
+            var node = htmlDoc.DocumentNode.SelectSingleNode("//div[@id='TseTab1Elm']");
+
+            var TseTab1ElmDoc = new HtmlDocument();
+            TseTab1ElmDoc.LoadHtml(node.InnerHtml);
+
+            var tables = TseTab1ElmDoc.DocumentNode.SelectNodes("//table[@class='table1']");
+
+            StockCashMarketAtGlance stockCashMarketAtGlance = null;
+            if (tables.Any())
+            {
+                var trs = tables.First().SelectNodes("tbody/tr/td");
+                if (trs.Any())
+                {
+                    PersianDateTime time;
+                    if (!PersianDateTime.TryParse($"14{trs[9].InnerText}", out time))
+                        time = PersianDateTime.Now;
+
+                    stockCashMarketAtGlance = new StockCashMarketAtGlance
+                    {
+                        CreateDate = DateTime.Now,
+                        Status = trs[1].GetText(),
+                        OverallIndex = trs[3].FirstChild.ConvertToDecimal(),
+                        OverallIndexChange = trs[3].SelectSingleNode("div").ConvertToNegativePositiveDecimal(),
+                        OverallIndexEqualWeight = trs[5].FirstChild.ConvertToDecimal(),
+                        OverallIndexEqualWeightChange = trs[5].SelectSingleNode("div").ConvertToNegativePositiveDecimal(),
+                        ValueOfMarket = trs[7].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
+                        Time = time.ToDateTime(),
+                        NumberOfTransaction = trs[11].ConvertToDecimal(),
+                        ValueOfTransaction = trs[13].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
+                        Turnover = trs[15].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
+                    };
+                }
+
+            }
+
+            return stockCashMarketAtGlance;
+        }
+
+        private OTCCashMarketAtGlance GetOTCCashMarketAtGlance(HtmlDocument htmlDoc)
+        {
+            var node = htmlDoc.DocumentNode.SelectSingleNode("//div[@id='IfbTab1Elm']");
+
+            var TseTab1ElmDoc = new HtmlDocument();
+            TseTab1ElmDoc.LoadHtml(node.InnerHtml);
+
+            var tables = TseTab1ElmDoc.DocumentNode.SelectNodes("//table[@class='table1']");
+
+            OTCCashMarketAtGlance stockCashMarketAtGlance = null;
+            if (tables.Any())
+            {
+                var trs = tables.First().SelectNodes("tbody/tr/td");
+                if (trs.Any())
+                {
+                    PersianDateTime time;
+                    if (!PersianDateTime.TryParse($"14{trs[7].InnerText}", out time))
+                        time = PersianDateTime.Now;
+
+                    stockCashMarketAtGlance = new OTCCashMarketAtGlance
+                    {
+                        CreateDate = DateTime.Now,
+                        Status = trs[1].GetText(),
+                        OverallIndex = trs[3].FirstChild.ConvertToDecimal(),
+                        OverallIndexChange = trs[3].SelectSingleNode("div").ConvertToNegativePositiveDecimal(),
+                        ValueOfFirstAndSecondMarket = trs[5].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
+
+                        Time = time.ToDateTime(),
+                        NumberOfTransaction = trs[9].ConvertToDecimal(),
+                        ValueOfTransaction = trs[11].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
+                        Turnover = trs[13].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
+                    };
+                }
+
+            }
+
+            return stockCashMarketAtGlance;
+        }
+
+
+        public async Task SaveSymbolData(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            while (true)
+            {
+                var startDate = DateTime.Now;
+                if (!SymbolDataQueue.IsEmpty)
+                {
+                    List<SymbolData> data;
+                    if (SymbolDataQueue.TryDequeue(out data))
+                    {
+                        await tsetmcUnitOfWork.AddSymbolData(data, cancellationToken);
+                        System.Console.WriteLine($"Save Data to database:{(DateTime.Now - startDate).TotalSeconds}");
+                    }
+                }
+                else
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+            }
+        }
+
+        public async Task SaveAllSymbolData(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            while (!SymbolDataQueue.IsEmpty)
+            {
+                var startDate = DateTime.Now;
+                List<SymbolData> data;
+                if (SymbolDataQueue.TryDequeue(out data))
+                {
+                    await tsetmcUnitOfWork.AddSymbolData(data, cancellationToken);
+                    System.Console.WriteLine($"Save Data to database:{(DateTime.Now - startDate).TotalSeconds}");
+                }
+
+            }
+        }
     }
 }
