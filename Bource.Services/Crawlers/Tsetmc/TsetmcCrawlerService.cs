@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Concurrent;
 using MD.PersianDateTime.Standard;
+using Bource.Models.Data.Enums;
 
 namespace Bource.Services.Crawlers.Tsetmc
 {
@@ -148,13 +149,13 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         }
 
-        public async Task GetCashMarketAtGlanceAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task GetMarketAtGlanceAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var response = await httpClient.GetAsync("Loader.aspx?ParTree=15", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogError("Error in get client symbol data");
-                Console.WriteLine("Error in get client symbol data");
+                logger.LogError("Error in Get Market At Glance ");
+                Console.WriteLine("Error in Get Market At Glance ");
                 return;
             }
 
@@ -184,9 +185,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 var trs = tables.First().SelectNodes("tbody/tr/td");
                 if (trs.Any())
                 {
-                    PersianDateTime time;
-                    if (!PersianDateTime.TryParse($"14{trs[9].InnerText}", out time))
-                        time = PersianDateTime.Now;
+
 
                     stockCashMarketAtGlance = new StockCashMarketAtGlance
                     {
@@ -197,7 +196,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                         OverallIndexEqualWeight = trs[5].FirstChild.ConvertToDecimal(),
                         OverallIndexEqualWeightChange = trs[5].SelectSingleNode("div").ConvertToNegativePositiveDecimal(),
                         ValueOfMarket = trs[7].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
-                        Time = time.ToDateTime(),
+                        Time = trs[9].GetAsDateTime(),
                         NumberOfTransaction = trs[11].ConvertToDecimal(),
                         ValueOfTransaction = trs[13].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
                         Turnover = trs[15].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
@@ -224,9 +223,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                 var trs = tables.First().SelectNodes("tbody/tr/td");
                 if (trs.Any())
                 {
-                    PersianDateTime time;
-                    if (!PersianDateTime.TryParse($"14{trs[7].InnerText}", out time))
-                        time = PersianDateTime.Now;
 
                     stockCashMarketAtGlance = new OTCCashMarketAtGlance
                     {
@@ -236,7 +232,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                         OverallIndexChange = trs[3].SelectSingleNode("div").ConvertToNegativePositiveDecimal(),
                         ValueOfFirstAndSecondMarket = trs[5].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
 
-                        Time = time.ToDateTime(),
+                        Time = trs[7].GetAsDateTime(),
                         NumberOfTransaction = trs[9].ConvertToDecimal(),
                         ValueOfTransaction = trs[11].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
                         Turnover = trs[13].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
@@ -248,6 +244,53 @@ namespace Bource.Services.Crawlers.Tsetmc
             return stockCashMarketAtGlance;
         }
 
+
+        public async Task GetMarketWatcherMessage(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var stockMessages = await GetMarketWatcherMessage(MarketType.Stock, cancellationToken);
+            var otcMessages = await GetMarketWatcherMessage(MarketType.OTC, cancellationToken);
+
+            if (stockMessages.Any())
+                await tsetmcUnitOfWork.AddMarketWatcherMessageIfNotExistsRangeAsync(stockMessages, cancellationToken);
+
+            if (otcMessages.Any())
+                await tsetmcUnitOfWork.AddMarketWatcherMessageIfNotExistsRangeAsync(otcMessages, cancellationToken);
+        }
+
+        private async Task<List<MarketWatcherMessage>> GetMarketWatcherMessage(Models.Data.Enums.MarketType market, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            List<MarketWatcherMessage> messages = new();
+            var response = await httpClient.GetAsync($"Loader.aspx?Partree=151313&Flow={(byte)market}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError("Error in Market Watcher Message");
+                Console.WriteLine("Error in Market Watcher Message");
+                return messages;
+            }
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(html);
+
+            var trs = htmlDoc.DocumentNode.SelectNodes("//table[@class='table1']/tbody/tr");
+
+
+            for (int i = 0; i < trs.Count - 1; i += 2)
+            {
+                var ths = trs[i].SelectNodes("th");
+                messages.Add(new MarketWatcherMessage
+                {
+                    CreateDate = DateTime.Now,
+                    Market = market,
+                    Title = ths[0].GetText(),
+                    Time = ths[1].GetAsDateTime(),
+                    Description = trs[i + 1].GetText()
+                });
+            }
+
+            return messages;
+        }
 
         public async Task SaveSymbolData(CancellationToken cancellationToken = default(CancellationToken))
         {

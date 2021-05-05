@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using MD.PersianDateTime.Standard;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,14 @@ namespace Bource.Common.Utilities
         public static string GetText(this HtmlNode node)
             => node.InnerText.Replace("&nbsp;", "").Trim().FixPersianLetters();
 
+        public static DateTime GetAsDateTime(this HtmlNode node)
+        {
+            PersianDateTime time;
+            if (!PersianDateTime.TryParse($"14{node.InnerText}", out time))
+                time = PersianDateTime.Now;
 
+            return time.ToDateTime();
+        }
         public static decimal ConvertToDecimal(this HtmlNode node)
         {
             return node.InnerText.ConvertToDecimal();

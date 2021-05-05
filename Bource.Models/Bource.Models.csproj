@@ -11,9 +11,5 @@
     <ProjectReference Include="..\Bource.Common\Bource.Common.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Data\Enums\" />
-  </ItemGroup>
-
 
 </Project>

@@ -25,6 +25,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly SymbolRepository symbolRepository;
         private readonly StockCashMarketAtGlanceRepository stockCashMarketAtGlanceRepository;
         private readonly OTCCashMarketAtGlanceRepository OTCCashMarketAtGlanceRepository;
+        private readonly MarketWatcherMessageRepository marketWatcherMessageRepository;
 
         public TsetmcUnitOfWork(IOptionsSnapshot<ApplicationSetting> options)
         {
@@ -33,6 +34,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             symbolRepository = new(options.Value.mongoDbSetting);
             stockCashMarketAtGlanceRepository = new(options.Value.mongoDbSetting);
             OTCCashMarketAtGlanceRepository = new(options.Value.mongoDbSetting);
+            marketWatcherMessageRepository = new(options.Value.mongoDbSetting);
         }
 
         public TsetmcUnitOfWork(MongoDbSetting mongoDbSetting)
@@ -42,6 +44,23 @@ namespace Bource.Data.Informations.UnitOfWorks
             symbolRepository = new(mongoDbSetting);
             stockCashMarketAtGlanceRepository = new(mongoDbSetting);
             OTCCashMarketAtGlanceRepository = new(mongoDbSetting);
+            marketWatcherMessageRepository = new(mongoDbSetting);
+        }
+
+        public async Task AddMarketWatcherMessageIfNotExistsRangeAsync(List<MarketWatcherMessage> messages, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var existMessages = await marketWatcherMessageRepository.GetTodayMessagesAsync(messages.First().Market, cancellationToken);
+            List<MarketWatcherMessage> messagesToAdd = new();
+
+            foreach (var item in messages)
+            {
+                if (!existMessages.Any(i => i.Equals(item)))
+                    messagesToAdd.Add(item);
+            }
+
+            if (messagesToAdd.Any())
+                await marketWatcherMessageRepository.AddRangeAsync(messagesToAdd, cancellationToken);
+
         }
 
         public Task AddOrUpdateSymbolGroups(List<SymbolGroup> symbolGroups, CancellationToken cancellationToken = default(CancellationToken))
