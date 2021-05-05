@@ -28,6 +28,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly MarketWatcherMessageRepository marketWatcherMessageRepository;
         private readonly ValueOfMarketRepository valueOfMarketRepository;
         private readonly TopSupplyAndDemandRepository topSupplyAndDemandRepository;
+        private readonly NaturalAndLegalEntityRepository naturalAndLegalEntityRepository;
 
         public TsetmcUnitOfWork(IOptionsSnapshot<ApplicationSetting> options)
         {
@@ -39,6 +40,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             marketWatcherMessageRepository = new(options.Value.mongoDbSetting);
             valueOfMarketRepository = new(options.Value.mongoDbSetting);
             topSupplyAndDemandRepository = new(options.Value.mongoDbSetting);
+            naturalAndLegalEntityRepository = new(options.Value.mongoDbSetting);
         }
 
         public TsetmcUnitOfWork(MongoDbSetting mongoDbSetting)
@@ -51,6 +53,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             marketWatcherMessageRepository = new(mongoDbSetting);
             valueOfMarketRepository = new(mongoDbSetting);
             topSupplyAndDemandRepository = new(mongoDbSetting);
+            naturalAndLegalEntityRepository = new(mongoDbSetting);
         }
 
         public async Task AddMarketWatcherMessageIfNotExistsRangeAsync(List<MarketWatcherMessage> messages, CancellationToken cancellationToken = default(CancellationToken))
@@ -221,6 +224,23 @@ namespace Bource.Data.Informations.UnitOfWorks
             System.Console.WriteLine($"save symbol data 1 { (DateTime.Now - startDate).TotalSeconds}");
 
             Console.WriteLine($"Count of data: {i}");
+        }
+
+        public Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))
+            => symbolRepository.GetAllAsync(cancellationToken);
+
+        public async Task AddNewNaturalAndLegalEntity(string iid, List<NaturalAndLegalEntity> entities, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var existsItems = await naturalAndLegalEntityRepository.GetNaturalAndLegalEntityOfSymbolAsync(iid, cancellationToken);
+            List<NaturalAndLegalEntity> itemToSave = new();
+
+            foreach (var entity in entities)
+            {
+                if (!existsItems.Any(i => i.Date.Date == entity.Date.Date))
+                    itemToSave.Add(entity);
+            }
+
+            await naturalAndLegalEntityRepository.AddRangeAsync(itemToSave, cancellationToken);
         }
     }
 }

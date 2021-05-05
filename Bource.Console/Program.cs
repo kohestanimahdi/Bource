@@ -22,7 +22,7 @@ namespace Bource.Console
             var tse = new Services.Crawlers.Tsetmc.TsetmcCrawlerService(httpClient);
 
 
-            tse.GetTopSupplyAndDemandAsync().GetAwaiter().GetResult();
+            tse.GetAllNaturalAndLegalEntityAsync().GetAwaiter().GetResult();
             //var t3 = Task.Run(() =>
             //{
             //    while (true)

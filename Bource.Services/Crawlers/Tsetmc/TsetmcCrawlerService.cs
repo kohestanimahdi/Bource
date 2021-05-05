@@ -31,7 +31,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             baseUrl = "http://www.tsetmc.com/";
 
             httpClient.BaseAddress = new Uri(baseUrl);
-            httpClient.Timeout = TimeSpan.FromSeconds(1.5);
+            httpClient.Timeout = TimeSpan.FromSeconds(2);
 
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
         }
@@ -43,9 +43,61 @@ namespace Bource.Services.Crawlers.Tsetmc
             baseUrl = "http://www.tsetmc.com/";
 
             httpClient.BaseAddress = new Uri(baseUrl);
-            httpClient.Timeout = TimeSpan.FromSeconds(1.5);
+            httpClient.Timeout = TimeSpan.FromSeconds(2);
 
             tsetmcUnitOfWork = new TsetmcUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
+
+        }
+
+        public async Task GetAllNaturalAndLegalEntityAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var startDate = DateTime.Now;
+
+            var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
+
+            System.Console.WriteLine($"Get symbols :{ (DateTime.Now - startDate).TotalSeconds}");
+            startDate = DateTime.Now;
+
+            foreach (var symbol in symbols)
+            {
+                await GetNaturalAndLegalEntityAsync(symbol.IId, cancellationToken);
+            }
+
+            System.Console.WriteLine($"save NaturalAndLegalEntity :{ (DateTime.Now - startDate).TotalSeconds}");
+        }
+
+        private async Task GetNaturalAndLegalEntityAsync(string iid, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        {
+            try
+            {
+                List<NaturalAndLegalEntity> entities = new();
+
+                var response = await httpClient.GetAsync($"tsev2/data/clienttype.aspx?i={iid}", cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                {
+                    logger.LogError("Error in get Batural And LegalEntity");
+                    Console.WriteLine("Error in get Batural And LegalEntity");
+                    return;
+                }
+                var result = await response.Content.ReadAsStringAsync(cancellationToken);
+                if (string.IsNullOrWhiteSpace(result))
+                    return;
+
+                var rows = result.Split(";");
+                foreach (var row in rows)
+                {
+                    entities.Add(new NaturalAndLegalEntity(iid, row.Split(",")));
+                }
+
+                await tsetmcUnitOfWork.AddNewNaturalAndLegalEntity(iid, entities, cancellationToken);
+            }
+            catch
+            {
+                if (numberOfTries < 2)
+                    await GetNaturalAndLegalEntityAsync(iid, cancellationToken, numberOfTries++);
+                else
+                    throw;
+            }
 
         }
 
