@@ -19,6 +19,9 @@ namespace Bource.Common.Utilities
         public static string GetText(this HtmlNode node)
             => node.InnerText.Replace("&nbsp;", "").Trim().FixPersianLetters();
 
+        public static string GetNumberAsText(this string text)
+            => text.Trim().FixedNumbersToEn().ToLower().Replace("&nbsp;", "").Replace('(', ' ').Replace(')', ' ').Replace(",", "").Replace("k", "000").Replace("B", "000000000");
+
         public static DateTime GetAsDateTime(this HtmlNode node)
         {
             PersianDateTime time;
@@ -27,15 +30,15 @@ namespace Bource.Common.Utilities
 
             return time.ToDateTime();
         }
-        public static decimal ConvertToDecimal(this HtmlNode node)
-        {
-            return node.InnerText.ConvertToDecimal();
+        public static long ConvertToLong(this HtmlNode node)
+        => node.InnerText.ConvertToLong();
 
-        }
+        public static decimal ConvertToDecimal(this HtmlNode node)
+        => node.InnerText.ConvertToDecimal();
 
         public static decimal ConvertToDecimal(this string text)
         {
-            text = text.FixedNumbersToEn().ToLower().Replace("&nbsp;", "").Replace('(', ' ').Replace(')', ' ').Replace(",", "").Replace("k", "000").Trim();
+            text = text.GetNumberAsText();
             if (string.IsNullOrWhiteSpace(text))
                 return 0;
 
@@ -45,15 +48,39 @@ namespace Bource.Common.Utilities
 
         }
 
+        public static long ConvertToLong(this string text)
+        {
+            text = text.GetNumberAsText();
+            if (string.IsNullOrWhiteSpace(text))
+                return 0;
+
+            long result = 0;
+            Int64.TryParse(text, out result);
+            return result;
+
+        }
+
+        //public static 
 
         public static double ConvertToDouble(this HtmlNode node)
         {
-            string text = node.InnerText.Replace('(', ' ').Replace(')', ' ').Replace(",", "").Trim();
+            string text = node.InnerText.GetNumberAsText();
             if (string.IsNullOrWhiteSpace(text))
                 return 0;
 
             return Convert.ToDouble(text);
 
+        }
+
+        public static decimal GetAttributeValueAsDecimal(this HtmlNode node, string attributeName = "title")
+        {
+
+            var chNode = node.SelectSingleNode("div");
+
+            if (chNode is not null && chNode.Attributes.Any(i => i.Name == attributeName))
+                return chNode.Attributes[attributeName].Value.ConvertToDecimal();
+
+            return node.ConvertToDecimal();
         }
     }
 }

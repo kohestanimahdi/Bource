@@ -27,6 +27,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly OTCCashMarketAtGlanceRepository OTCCashMarketAtGlanceRepository;
         private readonly MarketWatcherMessageRepository marketWatcherMessageRepository;
         private readonly ValueOfMarketRepository valueOfMarketRepository;
+        private readonly TopSupplyAndDemandRepository topSupplyAndDemandRepository;
 
         public TsetmcUnitOfWork(IOptionsSnapshot<ApplicationSetting> options)
         {
@@ -37,6 +38,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             OTCCashMarketAtGlanceRepository = new(options.Value.mongoDbSetting);
             marketWatcherMessageRepository = new(options.Value.mongoDbSetting);
             valueOfMarketRepository = new(options.Value.mongoDbSetting);
+            topSupplyAndDemandRepository = new(options.Value.mongoDbSetting);
         }
 
         public TsetmcUnitOfWork(MongoDbSetting mongoDbSetting)
@@ -48,6 +50,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             OTCCashMarketAtGlanceRepository = new(mongoDbSetting);
             marketWatcherMessageRepository = new(mongoDbSetting);
             valueOfMarketRepository = new(mongoDbSetting);
+            topSupplyAndDemandRepository = new(mongoDbSetting);
         }
 
         public async Task AddMarketWatcherMessageIfNotExistsRangeAsync(List<MarketWatcherMessage> messages, CancellationToken cancellationToken = default(CancellationToken))
@@ -78,6 +81,17 @@ namespace Bource.Data.Informations.UnitOfWorks
 
             if (valuesToAdd.Any())
                 await valueOfMarketRepository.AddRangeAsync(valuesToAdd, cancellationToken);
+
+        }
+        public async Task AddTopSupplyAndDemandRangeAsync(List<TopSupplyAndDemand> values, CancellationToken cancellationToken = default(CancellationToken))
+        {
+
+            if (values.Any())
+            {
+                var existValues = await topSupplyAndDemandRepository.GetTodayTopSupplyAndDemandAsync(values.First().Market, cancellationToken);
+                await topSupplyAndDemandRepository.DeleteRangeAsync(existValues, cancellationToken);
+                await topSupplyAndDemandRepository.AddRangeAsync(values, cancellationToken);
+            }
 
         }
         public Task AddOrUpdateSymbolGroups(List<SymbolGroup> symbolGroups, CancellationToken cancellationToken = default(CancellationToken))

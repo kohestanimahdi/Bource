@@ -19,6 +19,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 {
     public class TsetmcCrawlerService
     {
+        private string baseUrl { get; init; }
         private readonly HttpClient httpClient;
         private readonly ILogger<TsetmcCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
@@ -27,8 +28,9 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             logger = loggerFactory?.CreateLogger<TsetmcCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
             httpClient = httpClientFactory?.CreateClient() ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            baseUrl = "http://www.tsetmc.com/";
 
-            httpClient.BaseAddress = new Uri("http://www.tsetmc.com/");
+            httpClient.BaseAddress = new Uri(baseUrl);
             httpClient.Timeout = TimeSpan.FromSeconds(1.5);
 
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
@@ -38,7 +40,9 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
-            httpClient.BaseAddress = new Uri("http://www.tsetmc.com/");
+            baseUrl = "http://www.tsetmc.com/";
+
+            httpClient.BaseAddress = new Uri(baseUrl);
             httpClient.Timeout = TimeSpan.FromSeconds(1.5);
 
             tsetmcUnitOfWork = new TsetmcUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
@@ -197,11 +201,11 @@ namespace Bource.Services.Crawlers.Tsetmc
                         OverallIndexChange = trs[3].SelectSingleNode("div").ConvertToNegativePositiveDecimal(),
                         OverallIndexEqualWeight = trs[5].FirstChild.ConvertToDecimal(),
                         OverallIndexEqualWeightChange = trs[5].SelectSingleNode("div").ConvertToNegativePositiveDecimal(),
-                        ValueOfMarket = trs[7].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
+                        ValueOfMarket = trs[7].GetAttributeValueAsDecimal(),
                         Time = trs[9].GetAsDateTime(),
                         NumberOfTransaction = trs[11].ConvertToDecimal(),
-                        ValueOfTransaction = trs[13].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
-                        Turnover = trs[15].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
+                        ValueOfTransaction = trs[13].GetAttributeValueAsDecimal(),
+                        Turnover = trs[15].GetAttributeValueAsDecimal(),
                     };
                 }
 
@@ -232,12 +236,12 @@ namespace Bource.Services.Crawlers.Tsetmc
                         Status = trs[1].GetText(),
                         OverallIndex = trs[3].FirstChild.ConvertToDecimal(),
                         OverallIndexChange = trs[3].SelectSingleNode("div").ConvertToNegativePositiveDecimal(),
-                        ValueOfFirstAndSecondMarket = trs[5].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
+                        ValueOfFirstAndSecondMarket = trs[5].GetAttributeValueAsDecimal(),
 
                         Time = trs[7].GetAsDateTime(),
                         NumberOfTransaction = trs[9].ConvertToDecimal(),
-                        ValueOfTransaction = trs[11].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
-                        Turnover = trs[13].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal(),
+                        ValueOfTransaction = trs[11].GetAttributeValueAsDecimal(),
+                        Turnover = trs[13].GetAttributeValueAsDecimal(),
                     };
                 }
 
@@ -329,7 +333,82 @@ namespace Bource.Services.Crawlers.Tsetmc
                     CreateDate = DateTime.Now,
                     Market = market,
                     Date = tds[i].GetAsDateTime(),
-                    Value = tds[i + 1].SelectSingleNode("div").Attributes["title"].Value.ConvertToDecimal()
+                    Value = tds[i + 1].GetAttributeValueAsDecimal()
+                });
+            }
+
+            return values;
+        }
+
+        public async Task GetTopSupplyAndDemandAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var stockTopSupplyAndDemand = await GetTopSupplyAndDemandAsync(MarketType.Stock, cancellationToken);
+            var otcTopSupplyAndDemand = await GetTopSupplyAndDemandAsync(MarketType.OTC, cancellationToken);
+
+            if (stockTopSupplyAndDemand.Any())
+                await tsetmcUnitOfWork.AddTopSupplyAndDemandRangeAsync(stockTopSupplyAndDemand, cancellationToken);
+
+            if (otcTopSupplyAndDemand.Any())
+                await tsetmcUnitOfWork.AddTopSupplyAndDemandRangeAsync(otcTopSupplyAndDemand, cancellationToken);
+        }
+        private async Task<List<TopSupplyAndDemand>> GetTopSupplyAndDemandAsync(MarketType market, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            List<TopSupplyAndDemand> values = new();
+            var response = await httpClient.GetAsync($"Loader.aspx?Partree=151318&Flow={(byte)market}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError("Error in Get Top Supply And Demand");
+                Console.WriteLine("Error in Get Top Supply And Demand");
+                return values;
+            }
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(html);
+
+            var tables = htmlDoc.DocumentNode.SelectNodes("//table[@class='table1']");
+
+            var demandTable = tables.First();
+            var supplyTable = tables.Skip(1).First();
+
+            var demandtrs = demandTable.SelectNodes("tbody/tr");
+            var supplytrs = supplyTable.SelectNodes("tbody/tr");
+            foreach (var item in demandtrs)
+            {
+                var tds = item.SelectNodes("td");
+                var uri = new Uri(baseUrl + tds[0].SelectSingleNode("a").Attributes["href"].Value);
+                var queryDictionary = System.Web.HttpUtility.ParseQueryString(uri.Query);
+                values.Add(new TopSupplyAndDemand
+                {
+                    CreateDate = DateTime.Now,
+                    Market = market,
+                    Symbol = tds[0].GetText(),
+                    Price = tds[1].ConvertToLong(),
+                    Volume = tds[2].GetAttributeValueAsDecimal(),
+                    Value = tds[3].GetAttributeValueAsDecimal(),
+                    Count = tds[4].ConvertToLong(),
+                    IId = queryDictionary["i"],
+                    IsSupply = false
+                });
+            }
+
+            foreach (var item in supplytrs)
+            {
+                var tds = item.SelectNodes("td");
+                var uri = new Uri(baseUrl + tds[0].SelectSingleNode("a").Attributes["href"].Value);
+                var queryDictionary = System.Web.HttpUtility.ParseQueryString(uri.Query);
+                values.Add(new TopSupplyAndDemand
+                {
+                    CreateDate = DateTime.Now,
+                    Market = market,
+                    Symbol = tds[0].GetText(),
+                    Price = tds[1].ConvertToLong(),
+                    Volume = tds[2].GetAttributeValueAsDecimal(),
+                    Value = tds[3].GetAttributeValueAsDecimal(),
+                    Count = tds[4].ConvertToLong(),
+                    IId = queryDictionary["i"],
+                    IsSupply = true
                 });
             }
 

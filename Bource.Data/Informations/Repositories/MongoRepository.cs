@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using Bource.Common.Utilities;
 using Bource.Common.Models;
+using MongoDB.Bson;
 
 namespace Bource.Data.Informations.Repositories
 {
@@ -85,7 +86,12 @@ namespace Bource.Data.Informations.Repositories
         public virtual Task DeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default(CancellationToken))
         {
             Assert.NotNull(entities, nameof(entities));
-            return Table.DeleteManyAsync(i => entities.Any(j => i.Id == j.Id), cancellationToken: cancellationToken);
+            return Table.DeleteManyAsync(ItemWithListOfId(entities.Select(i => new ObjectId(i.Id))), cancellationToken: cancellationToken);
+        }
+
+        protected FilterDefinition<TEntity> ItemWithListOfId(IEnumerable<ObjectId> id)
+        {
+            return Builders<TEntity>.Filter.In("_id", id);
         }
         #endregion
 
@@ -140,7 +146,7 @@ namespace Bource.Data.Informations.Repositories
         public virtual void DeleteRange(IEnumerable<TEntity> entities)
         {
             Assert.NotNull(entities, nameof(entities));
-            Table.DeleteMany(i => entities.Any(j => i.Id == j.Id));
+            Table.DeleteMany(ItemWithListOfId(entities.Select(i => new ObjectId(i.Id))));
         }
         #endregion
     }
