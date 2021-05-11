@@ -22,11 +22,16 @@ namespace Bource.Common.Utilities
         public static string GetNumberAsText(this string text)
             => text.Trim().FixedNumbersToEn().ToLower().Replace("&nbsp;", "").Replace('(', ' ').Replace(')', ' ').Replace(",", "").Replace("k", "000").Replace("B", "000000000");
 
-        public static DateTime GetAsDateTime(this HtmlNode node)
+        public static DateTime GetAsDateTime(this HtmlNode node, string prefix = "", DateTime? defaultValue = null)
         {
             PersianDateTime time;
-            if (!PersianDateTime.TryParse($"14{node.InnerText}", out time))
-                time = PersianDateTime.Now;
+            if (!PersianDateTime.TryParse($"{prefix}{node.InnerText}", out time))
+            {
+                if (defaultValue.HasValue)
+                    return defaultValue.Value;
+                else
+                    time = PersianDateTime.Now;
+            }
 
             return time.ToDateTime();
         }

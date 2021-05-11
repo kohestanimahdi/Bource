@@ -11,6 +11,7 @@ namespace Bource.Data.Informations.UnitOfWorks
 {
     public interface ITsetmcUnitOfWork
     {
+        Task AddCapitalIncreaseAsync(string iid, List<CapitalIncrease> entities, CancellationToken cancellationToken = default);
         Task AddCashMarketAtGlance(StockCashMarketAtGlance stockCashMarketAtGlance, OTCCashMarketAtGlance oTCCashMarketAtGlance, CancellationToken cancellationToken = default);
         Task AddMarketWatcherMessageIfNotExistsRangeAsync(List<MarketWatcherMessage> messages, CancellationToken cancellationToken = default);
         Task AddNewNaturalAndLegalEntity(string iid, List<NaturalAndLegalEntity> entities, CancellationToken cancellationToken = default);

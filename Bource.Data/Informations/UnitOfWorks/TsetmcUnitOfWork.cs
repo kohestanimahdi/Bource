@@ -29,6 +29,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly ValueOfMarketRepository valueOfMarketRepository;
         private readonly TopSupplyAndDemandRepository topSupplyAndDemandRepository;
         private readonly NaturalAndLegalEntityRepository naturalAndLegalEntityRepository;
+        private readonly CapitalIncreaseRepository capitalIncrease;
 
         public TsetmcUnitOfWork(IOptionsSnapshot<ApplicationSetting> options)
         {
@@ -41,6 +42,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             valueOfMarketRepository = new(options.Value.mongoDbSetting);
             topSupplyAndDemandRepository = new(options.Value.mongoDbSetting);
             naturalAndLegalEntityRepository = new(options.Value.mongoDbSetting);
+            capitalIncrease = new(options.Value.mongoDbSetting);
         }
 
         public TsetmcUnitOfWork(MongoDbSetting mongoDbSetting)
@@ -54,6 +56,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             valueOfMarketRepository = new(mongoDbSetting);
             topSupplyAndDemandRepository = new(mongoDbSetting);
             naturalAndLegalEntityRepository = new(mongoDbSetting);
+            capitalIncrease = new(mongoDbSetting);
         }
 
         public async Task AddMarketWatcherMessageIfNotExistsRangeAsync(List<MarketWatcherMessage> messages, CancellationToken cancellationToken = default(CancellationToken))
@@ -244,6 +247,20 @@ namespace Bource.Data.Informations.UnitOfWorks
             }
 
             await naturalAndLegalEntityRepository.AddRangeAsync(itemToSave, cancellationToken);
+        }
+
+        public async Task AddCapitalIncreaseAsync(string iid, List<CapitalIncrease> entities, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var existsItems = await capitalIncrease.GetCapitalIncreaseOfSymbolAsync(iid, cancellationToken);
+            List<CapitalIncrease> itemToSave = new();
+
+            foreach (var entity in entities)
+            {
+                if (!existsItems.Any(i => i.Date.Date == entity.Date.Date))
+                    itemToSave.Add(entity);
+            }
+
+            await capitalIncrease.AddRangeAsync(itemToSave, cancellationToken);
         }
     }
 }

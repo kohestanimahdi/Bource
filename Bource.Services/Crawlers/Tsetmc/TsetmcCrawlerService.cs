@@ -346,7 +346,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                         OverallIndexEqualWeight = trs[5].FirstChild.ConvertToDecimal(),
                         OverallIndexEqualWeightChange = trs[5].SelectSingleNode("div").ConvertToNegativePositiveDecimal(),
                         ValueOfMarket = trs[7].GetAttributeValueAsDecimal(),
-                        Time = trs[9].GetAsDateTime(),
+                        Time = trs[9].GetAsDateTime("14"),
                         NumberOfTransaction = trs[11].ConvertToDecimal(),
                         ValueOfTransaction = trs[13].GetAttributeValueAsDecimal(),
                         Turnover = trs[15].GetAttributeValueAsDecimal(),
@@ -382,7 +382,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                         OverallIndexChange = trs[3].SelectSingleNode("div").ConvertToNegativePositiveDecimal(),
                         ValueOfFirstAndSecondMarket = trs[5].GetAttributeValueAsDecimal(),
 
-                        Time = trs[7].GetAsDateTime(),
+                        Time = trs[7].GetAsDateTime("14"),
                         NumberOfTransaction = trs[9].ConvertToDecimal(),
                         ValueOfTransaction = trs[11].GetAttributeValueAsDecimal(),
                         Turnover = trs[13].GetAttributeValueAsDecimal(),
@@ -433,7 +433,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                     CreateDate = DateTime.Now,
                     Market = market,
                     Title = ths[0].GetText(),
-                    Time = ths[1].GetAsDateTime(),
+                    Time = ths[1].GetAsDateTime("14"),
                     Description = trs[i + 1].GetText()
                 });
             }
@@ -476,7 +476,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 {
                     CreateDate = DateTime.Now,
                     Market = market,
-                    Date = tds[i].GetAsDateTime(),
+                    Date = tds[i].GetAsDateTime("14"),
                     Value = tds[i + 1].GetAttributeValueAsDecimal()
                 });
             }
@@ -591,6 +591,65 @@ namespace Bource.Services.Crawlers.Tsetmc
                 }
 
             }
+        }
+
+        public async Task GetAllCapitalIncreaseAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+
+            var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
+
+            var startDate = DateTime.Now;
+            foreach (var symbol in symbols)
+            {
+                await GetCapitalIncreaseAsync(symbol.IId, cancellationToken);
+            }
+
+            System.Console.WriteLine($"save CapitalIncrease :{ (DateTime.Now - startDate).TotalSeconds}");
+        }
+
+        private async Task GetCapitalIncreaseAsync(string iid, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        {
+            try
+            {
+                List<CapitalIncrease> entities = new();
+
+                var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131H&i={iid}", cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                {
+                    logger.LogError("Error in Get Capital Increase");
+                    Console.WriteLine("Error in Get Capital Increase");
+                    return;
+                }
+
+                var html = await response.Content.ReadAsStringAsync(cancellationToken);
+                if (string.IsNullOrWhiteSpace(html))
+                    return;
+
+                var htmlDoc = new HtmlDocument();
+                htmlDoc.LoadHtml(html);
+
+                var tables = htmlDoc.DocumentNode.SelectSingleNode("//table[@class='table1']");
+
+                var trs = tables.SelectNodes("tbody/tr");
+                if (trs is null)
+                    return;
+
+                foreach (var tr in trs)
+                {
+                    var tds = tr.SelectNodes("td");
+                    entities.Add(new CapitalIncrease(iid, tds));
+                }
+
+                await tsetmcUnitOfWork.AddCapitalIncreaseAsync(iid, entities, cancellationToken);
+            }
+            catch
+            {
+                if (numberOfTries < 2)
+                    await GetCapitalIncreaseAsync(iid, cancellationToken, numberOfTries++);
+                else
+                    throw;
+            }
+
         }
     }
 }

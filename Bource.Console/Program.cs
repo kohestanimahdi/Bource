@@ -12,7 +12,7 @@ namespace Bource.Console
         private static object lockObject = new();
         static void Main(string[] args)
         {
-            SetConsoleCtrlHandler(new HandlerRoutine(ConsoleCtrlCheck), true);
+
 
             HttpClientHandler handler = new HttpClientHandler()
             {
@@ -21,8 +21,10 @@ namespace Bource.Console
             var httpClient = new HttpClient(handler);
             var tse = new Services.Crawlers.Tsetmc.TsetmcCrawlerService(httpClient);
 
-
-            tse.UpdateSymbolAsync().GetAwaiter().GetResult();
+            var startDate = DateTime.Now;
+            tse.GetAllCapitalIncreaseAsync().GetAwaiter().GetResult();
+            //tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
+            //tse.SaveSymbolData().GetAwaiter().GetResult();
             //var t3 = Task.Run(() =>
             //{
             //    while (true)
@@ -37,41 +39,38 @@ namespace Bource.Console
             //    }
             //});
 
-            var t1 = Task.Run(() => tse.SaveSymbolData());
-            var t2 = Task.Run(() =>
-            {
-                while (true)
-                {
-                    try
-                    {
-                        var startTime = DateTime.Now;
+            // var t1 = Task.Run(() => tse.SaveSymbolData());
+            // var t2 = Task.Run(() =>
+            // {
+            //     while (true)
+            //     {
+            //         try
+            //         {
+            //             var startTime = DateTime.Now;
 
-                        tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
+            //             tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
 
-                        var finishTime = DateTime.Now;
+            //             var finishTime = DateTime.Now;
 
-                        System.Console.WriteLine($"{ (finishTime - startTime).TotalSeconds}");
-                        System.Console.WriteLine($"*********************************************");
+            //             System.Console.WriteLine($"{ (finishTime - startTime).TotalSeconds}");
+            //             System.Console.WriteLine($"*********************************************");
 
-                        if ((finishTime - startTime).TotalSeconds < 1)
-                            Task.Delay(finishTime - startTime).GetAwaiter().GetResult();
-
-
-                    }
-                    catch (Exception ex)
-                    {
-
-                        LogException(ex);
-                    }
-
-                }
-            });
+            //             if ((finishTime - startTime).TotalSeconds < 1)
+            //                 Task.Delay(finishTime - startTime).GetAwaiter().GetResult();
 
 
-            while (!isclosing) ;
+            //         }
+            //         catch (Exception ex)
+            //         {
+
+            //             LogException(ex);
+            //         }
+
+            //     }
+            // });
 
 
-            tse.SaveAllSymbolData().GetAwaiter().GetResult();
+            System.Console.WriteLine($"All app:{(DateTime.Now - startDate).TotalSeconds}");
         }
 
         public static void LogException(Exception exception)
@@ -87,60 +86,6 @@ namespace Bource.Console
             }
 
         }
-
-        private static bool isclosing = false;
-        private static bool ConsoleCtrlCheck(CtrlTypes ctrlType)
-        {
-            // Put your own handler here
-            switch (ctrlType)
-            {
-                case CtrlTypes.CTRL_C_EVENT:
-                    isclosing = true;
-                    System.Console.WriteLine("CTRL+C received!");
-                    break;
-
-                case CtrlTypes.CTRL_BREAK_EVENT:
-                    isclosing = true;
-                    System.Console.WriteLine("CTRL+BREAK received!");
-                    break;
-
-                case CtrlTypes.CTRL_CLOSE_EVENT:
-                    isclosing = true;
-                    System.Console.WriteLine("Program being closed!");
-                    break;
-
-                case CtrlTypes.CTRL_LOGOFF_EVENT:
-                case CtrlTypes.CTRL_SHUTDOWN_EVENT:
-                    isclosing = true;
-                    System.Console.WriteLine("User is logging off!");
-                    break;
-            }
-            return true;
-        }
-
-        #region unmanaged
-
-        // Declare the SetConsoleCtrlHandler function
-        // as external and receiving a delegate.
-        [System.Runtime.InteropServices.DllImport("Kernel32")]
-        public static extern bool SetConsoleCtrlHandler(HandlerRoutine Handler, bool Add);
-
-        // A delegate type to be used as the handler routine
-        // for SetConsoleCtrlHandler.
-        public delegate bool HandlerRoutine(CtrlTypes CtrlType);
-
-        // An enumerated type for the control messages
-        // sent to the handler routine.
-        public enum CtrlTypes
-        {
-            CTRL_C_EVENT = 0,
-            CTRL_BREAK_EVENT,
-            CTRL_CLOSE_EVENT,
-            CTRL_LOGOFF_EVENT = 5,
-            CTRL_SHUTDOWN_EVENT
-        }
-
-        #endregion
 
     }
 }
