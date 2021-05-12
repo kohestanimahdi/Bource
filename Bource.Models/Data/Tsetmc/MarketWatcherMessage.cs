@@ -14,7 +14,6 @@ namespace Bource.Models.Data.Tsetmc
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime Time { get; set; }
 
-
         public override bool Equals(object obj)
         {
             if (obj is MarketWatcherMessage message)

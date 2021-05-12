@@ -26,7 +26,6 @@ namespace Bource.Models.Data.Common
 
         public SymbolIntroduction Introduction { get; set; }
 
-
         public void UpdateInforamtion(HtmlAgilityPack.HtmlNodeCollection nodes)
         {
             Code12 = nodes[1].GetText();
@@ -42,7 +41,6 @@ namespace Bource.Models.Data.Common
             GroupName = nodes[23].GetText();
             SubGroupCode = nodes[25].GetText();
             SubGroupName = nodes[27].GetText();
-
         }
     }
 
@@ -50,8 +48,8 @@ namespace Bource.Models.Data.Common
     {
         public SymbolIntroduction()
         {
-
         }
+
         public SymbolIntroduction(HtmlAgilityPack.HtmlNodeCollection nodes)
         {
             Subject = nodes[1].GetText();
@@ -68,8 +66,8 @@ namespace Bource.Models.Data.Common
             Year = nodes[23].GetText();
             FinancialManager = nodes[25].GetText();
             NationalId = nodes[27].GetText();
-
         }
+
         public string Subject { get; set; }
         public string CEO { get; set; }
         public string Address { get; set; }

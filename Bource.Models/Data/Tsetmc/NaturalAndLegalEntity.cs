@@ -8,7 +8,6 @@ namespace Bource.Models.Data.Tsetmc
     {
         public NaturalAndLegalEntity()
         {
-
         }
 
         public NaturalAndLegalEntity(string iid, string[] items)
@@ -29,8 +28,10 @@ namespace Bource.Models.Data.Tsetmc
             IId = iid;
             CreateDate = DateTime.Now;
         }
+
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime Date { get; set; }
+
         public string IId { get; set; }
 
         public long BuyCountNatural { get; set; }
@@ -55,6 +56,7 @@ namespace Bource.Models.Data.Tsetmc
                 return BuyValueNatural - SellValueNatural;
             }
         }
+
         public decimal BuyValueNaturalPercent
         {
             get
@@ -62,6 +64,7 @@ namespace Bource.Models.Data.Tsetmc
                 return BuyValueNatural / (BuyValueNatural + BuyValueLegal);
             }
         }
+
         public decimal BuyValueLegalPercent
         {
             get
@@ -69,6 +72,7 @@ namespace Bource.Models.Data.Tsetmc
                 return BuyValueLegal / (BuyValueNatural + BuyValueLegal);
             }
         }
+
         public decimal SellValueNaturalPercent
         {
             get
@@ -76,6 +80,7 @@ namespace Bource.Models.Data.Tsetmc
                 return SellValueNatural / (SellValueNatural + SellValueLegal);
             }
         }
+
         public decimal SellValueLegalPercent
         {
             get

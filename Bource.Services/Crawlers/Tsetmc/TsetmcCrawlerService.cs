@@ -2,28 +2,28 @@
 using Bource.Common.Utilities;
 using Bource.Data.Informations.UnitOfWorks;
 using Bource.Models.Data.Common;
+using Bource.Models.Data.Enums;
 using Bource.Models.Data.Tsetmc;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
-using System.Collections.Concurrent;
-using MD.PersianDateTime.Standard;
-using Bource.Models.Data.Enums;
 
 namespace Bource.Services.Crawlers.Tsetmc
 {
-    public class TsetmcCrawlerService
+    public class TsetmcCrawlerService : IScopedDependency
     {
         private string baseUrl { get; init; }
         private readonly HttpClient httpClient;
         private readonly ILogger<TsetmcCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
         private static readonly ConcurrentQueue<List<SymbolData>> SymbolDataQueue = new();
+
         public TsetmcCrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork)
         {
             logger = loggerFactory?.CreateLogger<TsetmcCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
@@ -46,7 +46,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             httpClient.Timeout = TimeSpan.FromSeconds(2);
 
             tsetmcUnitOfWork = new TsetmcUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
-
         }
 
         public async Task UpdateSymbolAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -64,7 +63,6 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             try
             {
-
                 var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131M&i={symbol.IId}", cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
@@ -89,7 +87,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                     return;
 
                 symbol.UpdateInforamtion(rows);
-
             }
             catch
             {
@@ -98,13 +95,12 @@ namespace Bource.Services.Crawlers.Tsetmc
                 else
                     throw;
             }
-
         }
+
         private async Task GetSymbolInstructionAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
-
                 var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131V&s={symbol.Sign}", cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
@@ -129,7 +125,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                     return;
 
                 symbol.Introduction = new(rows);
-
             }
             catch
             {
@@ -138,7 +133,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                 else
                     throw;
             }
-
         }
 
         public async Task GetAllNaturalAndLegalEntityAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -190,7 +184,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                 else
                     throw;
             }
-
         }
 
         public async Task GetOrUpdateSymbolGroupsAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -246,13 +239,11 @@ namespace Bource.Services.Crawlers.Tsetmc
 
                 symbol.FillClientValues(columns);
             }
-
         }
 
         public async Task GetLatestSymbolDataAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var startDate = DateTime.Now;
-
 
             var response = await httpClient.GetAsync("tsev2/data/MarketWatchPlus.aspx", cancellationToken);
             if (!response.IsSuccessStatusCode)
@@ -296,7 +287,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             SymbolDataQueue.Enqueue(data);
 
             System.Console.WriteLine($"Save Data to queue:{(DateTime.Now - startDate).TotalSeconds}");
-
         }
 
         public async Task GetMarketAtGlanceAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -335,8 +325,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                 var trs = tables.First().SelectNodes("tbody/tr/td");
                 if (trs.Any())
                 {
-
-
                     stockCashMarketAtGlance = new StockCashMarketAtGlance
                     {
                         CreateDate = DateTime.Now,
@@ -352,7 +340,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                         Turnover = trs[15].GetAttributeValueAsDecimal(),
                     };
                 }
-
             }
 
             return stockCashMarketAtGlance;
@@ -373,7 +360,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                 var trs = tables.First().SelectNodes("tbody/tr/td");
                 if (trs.Any())
                 {
-
                     stockCashMarketAtGlance = new OTCCashMarketAtGlance
                     {
                         CreateDate = DateTime.Now,
@@ -388,12 +374,10 @@ namespace Bource.Services.Crawlers.Tsetmc
                         Turnover = trs[13].GetAttributeValueAsDecimal(),
                     };
                 }
-
             }
 
             return stockCashMarketAtGlance;
         }
-
 
         public async Task GetMarketWatcherMessage(CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -406,6 +390,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             if (otcMessages.Any())
                 await tsetmcUnitOfWork.AddMarketWatcherMessageIfNotExistsRangeAsync(otcMessages, cancellationToken);
         }
+
         private async Task<List<MarketWatcherMessage>> GetMarketWatcherMessage(MarketType market, CancellationToken cancellationToken = default(CancellationToken))
         {
             List<MarketWatcherMessage> messages = new();
@@ -423,7 +408,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             htmlDoc.LoadHtml(html);
 
             var trs = htmlDoc.DocumentNode.SelectNodes("//table[@class='table1']/tbody/tr");
-
 
             for (int i = 0; i < trs.Count - 1; i += 2)
             {
@@ -452,6 +436,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             if (otcValueOfMarkets.Any())
                 await tsetmcUnitOfWork.AddValuesOfMarketsIfNotExistsRangeAsync(otcValueOfMarkets, cancellationToken);
         }
+
         private async Task<List<ValueOfMarket>> GetValueOfMarketAsync(MarketType market, CancellationToken cancellationToken = default(CancellationToken))
         {
             List<ValueOfMarket> values = new();
@@ -495,6 +480,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             if (otcTopSupplyAndDemand.Any())
                 await tsetmcUnitOfWork.AddTopSupplyAndDemandRangeAsync(otcTopSupplyAndDemand, cancellationToken);
         }
+
         private async Task<List<TopSupplyAndDemand>> GetTopSupplyAndDemandAsync(MarketType market, CancellationToken cancellationToken = default(CancellationToken))
         {
             List<TopSupplyAndDemand> values = new();
@@ -589,13 +575,11 @@ namespace Bource.Services.Crawlers.Tsetmc
                     await tsetmcUnitOfWork.AddSymbolData(data, cancellationToken);
                     System.Console.WriteLine($"Save Data to database:{(DateTime.Now - startDate).TotalSeconds}");
                 }
-
             }
         }
 
         public async Task GetAllCapitalIncreaseAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
             var startDate = DateTime.Now;
@@ -649,7 +633,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                 else
                     throw;
             }
-
         }
     }
 }

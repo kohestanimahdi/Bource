@@ -6,11 +6,9 @@ using Bource.Models.Data.Tsetmc;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -72,8 +70,8 @@ namespace Bource.Data.Informations.UnitOfWorks
 
             if (messagesToAdd.Any())
                 await marketWatcherMessageRepository.AddRangeAsync(messagesToAdd, cancellationToken);
-
         }
+
         public async Task AddValuesOfMarketsIfNotExistsRangeAsync(List<ValueOfMarket> values, CancellationToken cancellationToken = default(CancellationToken))
         {
             var existValues = await valueOfMarketRepository.GetValueOfMarketAsync(values.First().Market, cancellationToken);
@@ -87,19 +85,18 @@ namespace Bource.Data.Informations.UnitOfWorks
 
             if (valuesToAdd.Any())
                 await valueOfMarketRepository.AddRangeAsync(valuesToAdd, cancellationToken);
-
         }
+
         public async Task AddTopSupplyAndDemandRangeAsync(List<TopSupplyAndDemand> values, CancellationToken cancellationToken = default(CancellationToken))
         {
-
             if (values.Any())
             {
                 var existValues = await topSupplyAndDemandRepository.GetTodayTopSupplyAndDemandAsync(values.First().Market, cancellationToken);
                 await topSupplyAndDemandRepository.DeleteRangeAsync(existValues, cancellationToken);
                 await topSupplyAndDemandRepository.AddRangeAsync(values, cancellationToken);
             }
-
         }
+
         public Task AddOrUpdateSymbolGroups(List<SymbolGroup> symbolGroups, CancellationToken cancellationToken = default(CancellationToken))
             => symbolGroupRepository.AddOrUpdateSymbolGroups(symbolGroups, cancellationToken);
 
@@ -134,7 +131,6 @@ namespace Bource.Data.Informations.UnitOfWorks
 
             List<SymbolData> itemsToSave = new();
 
-
             if (todayItems is not null && todayItems.Any())
             {
                 startDate = DateTime.Now;
@@ -147,7 +143,6 @@ namespace Bource.Data.Informations.UnitOfWorks
                         itemsToSave.Add(item);
                         i++;
                     }
-
                 }
 
                 System.Console.WriteLine($"add to list { (DateTime.Now - startDate).TotalSeconds}");
@@ -169,7 +164,6 @@ namespace Bource.Data.Informations.UnitOfWorks
                 itemsToSave = data;
                 await AddSymbolsIfNotExists(symbols, cancellationToken);
                 System.Console.WriteLine($"save symbols { (DateTime.Now - startDate).TotalSeconds}");
-
             }
 
             startDate = DateTime.Now;
@@ -218,7 +212,6 @@ namespace Bource.Data.Informations.UnitOfWorks
             //{
             //    tasks.Add(Task.Run(() =>
             //    {
-
             //    }));
             //}
             //await Task.WhenAll(tasks);

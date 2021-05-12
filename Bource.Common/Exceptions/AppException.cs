@@ -1,7 +1,6 @@
 ﻿using Bource.Common.Models;
 using System;
 using System.Net;
-using System.Runtime.Serialization;
 
 namespace Bource.Common.Exceptions
 {
@@ -88,6 +87,5 @@ namespace Bource.Common.Exceptions
             HttpStatusCode = httpStatusCode;
             AdditionalData = additionalData;
         }
-
     }
 }

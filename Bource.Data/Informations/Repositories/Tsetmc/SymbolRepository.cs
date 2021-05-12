@@ -8,7 +8,6 @@ namespace Bource.Data.Informations.Repositories
         public SymbolRepository(MongoDbSetting dbSetting)
             : base(dbSetting)
         {
-
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Bource.Common.Utilities;
-using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
@@ -10,11 +9,10 @@ namespace Bource.Models.Data.Tsetmc
 {
     public class SymbolData : MongoDataEntity
     {
-
         public SymbolData()
         {
-
         }
+
         public SymbolData(string dataLine, DateTime lastModified)
         {
             LastUpdate = lastModified;
@@ -65,15 +63,13 @@ namespace Bource.Models.Data.Tsetmc
         //[BsonIgnore]
         public string SymbolGroup { get; set; }
 
-
-
         //[BsonRepresentation(BsonType.ObjectId)]
         //public string SymbolId { get; set; }
 
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime LastUpdate { get; set; }
-        public string Status { get; set; }
 
+        public string Status { get; set; }
 
         [Display(Name = "تعداد معاملات")]
         public long NumberOfTransaction { get; set; }
@@ -138,13 +134,11 @@ namespace Bource.Models.Data.Tsetmc
         [Display(Name = "حجم مبنا")]
         public long BaseValue { get; set; }
 
-
         [Display(Name = "کمترین قیمت مجاز")]
         public double MinAllowedPrice { get; set; }
 
         [Display(Name = "بیشترین قیمت مجاز")]
         public double MaxAllowedPrice { get; set; }
-
 
         [Display(Name = "سهام شناور")]
         public double? FloatingStock { get; set; }
@@ -205,8 +199,6 @@ namespace Bource.Models.Data.Tsetmc
 
                         if (!item.Equals(secondItem))
                             return false;
-
-
                     }
 
                 if (SellTransactions.Any())
@@ -227,7 +219,6 @@ namespace Bource.Models.Data.Tsetmc
                 return true;
             }
             return false;
-
         }
 
         public void FillTransactions(IEnumerable<string> transactions)
@@ -274,7 +265,6 @@ namespace Bource.Models.Data.Tsetmc
             NaturalSellValue = Convert.ToInt64(values[7]);
             LegalEntitySellValue = Convert.ToInt64(values[8]);
         }
-
     }
 
     public class SymbolTransaction
@@ -291,6 +281,5 @@ namespace Bource.Models.Data.Tsetmc
 
             return false;
         }
-
     }
 }

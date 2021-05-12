@@ -8,7 +8,6 @@ namespace Bource.Data.Informations.Repositories.Tsetmc
         public StockCashMarketAtGlanceRepository(MongoDbSetting dbSetting)
             : base(dbSetting)
         {
-
         }
     }
 }

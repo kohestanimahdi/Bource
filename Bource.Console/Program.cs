@@ -1,28 +1,34 @@
-﻿using System;
+﻿using Bource.Services.Crawlers.Tsetmc;
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Bource.Console
 {
-    static class Program
+    internal static class Program
     {
         private static object lockObject = new();
-        static void Main(string[] args)
+
+        private static void Main(string[] args)
         {
-
-
+            var startDate = DateTime.Now;
             HttpClientHandler handler = new HttpClientHandler()
             {
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
             };
             var httpClient = new HttpClient(handler);
-            var tse = new Services.Crawlers.Tsetmc.TsetmcCrawlerService(httpClient);
+            var fipIran = new FipiranCrawlerService(httpClient);
+            fipIran.GetAssociations().GetAwaiter().GetResult();
 
-            var startDate = DateTime.Now;
-            tse.GetAllCapitalIncreaseAsync().GetAwaiter().GetResult();
+            //var tseClient = new TseClientService();
+            //tseClient.Test().GetAwaiter().GetResult();
+
+            //var tse = new Services.Crawlers.Tsetmc.TsetmcCrawlerService(httpClient);
+
+            //
+            //tse.GetAllCapitalIncreaseAsync().GetAwaiter().GetResult();
+
             //tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
             //tse.SaveSymbolData().GetAwaiter().GetResult();
             //var t3 = Task.Run(() =>
@@ -58,17 +64,14 @@ namespace Bource.Console
             //             if ((finishTime - startTime).TotalSeconds < 1)
             //                 Task.Delay(finishTime - startTime).GetAwaiter().GetResult();
 
-
             //         }
             //         catch (Exception ex)
             //         {
-
             //             LogException(ex);
             //         }
 
             //     }
             // });
-
 
             System.Console.WriteLine($"All app:{(DateTime.Now - startDate).TotalSeconds}");
         }
@@ -84,8 +87,6 @@ namespace Bource.Console
                 content += $"***********************************************************************************************{Environment.NewLine}";
                 File.AppendAllText(Path.Combine(Directory.GetCurrentDirectory(), "log.txt"), content);
             }
-
         }
-
     }
 }

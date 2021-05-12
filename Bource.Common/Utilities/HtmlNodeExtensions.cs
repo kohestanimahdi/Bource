@@ -1,10 +1,7 @@
 ﻿using HtmlAgilityPack;
 using MD.PersianDateTime.Standard;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Bource.Common.Utilities
 {
@@ -23,9 +20,12 @@ namespace Bource.Common.Utilities
             => text.Trim().FixedNumbersToEn().ToLower().Replace("&nbsp;", "").Replace('(', ' ').Replace(')', ' ').Replace(",", "").Replace("k", "000").Replace("B", "000000000");
 
         public static DateTime GetAsDateTime(this HtmlNode node, string prefix = "", DateTime? defaultValue = null)
+        => node.InnerText.GetAsDateTime(prefix, defaultValue);
+
+        public static DateTime GetAsDateTime(this string text, string prefix = "", DateTime? defaultValue = null)
         {
             PersianDateTime time;
-            if (!PersianDateTime.TryParse($"{prefix}{node.InnerText}", out time))
+            if (!PersianDateTime.TryParse($"{prefix}{text}", out time))
             {
                 if (defaultValue.HasValue)
                     return defaultValue.Value;
@@ -35,6 +35,7 @@ namespace Bource.Common.Utilities
 
             return time.ToDateTime();
         }
+
         public static long ConvertToLong(this HtmlNode node)
         => node.InnerText.ConvertToLong();
 
@@ -50,7 +51,6 @@ namespace Bource.Common.Utilities
             decimal result = 0;
             decimal.TryParse(text, out result);
             return result;
-
         }
 
         public static long ConvertToLong(this string text)
@@ -62,10 +62,9 @@ namespace Bource.Common.Utilities
             long result = 0;
             Int64.TryParse(text, out result);
             return result;
-
         }
 
-        //public static 
+        //public static
 
         public static double ConvertToDouble(this HtmlNode node)
         {
@@ -74,12 +73,10 @@ namespace Bource.Common.Utilities
                 return 0;
 
             return Convert.ToDouble(text);
-
         }
 
         public static decimal GetAttributeValueAsDecimal(this HtmlNode node, string attributeName = "title")
         {
-
             var chNode = node.SelectSingleNode("div");
 
             if (chNode is not null && chNode.Attributes.Any(i => i.Name == attributeName))

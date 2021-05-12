@@ -391,13 +391,11 @@ namespace Bource.Common.Utilities
         }
 
         /// <summary>
-        /// Pluralizing Name 
+        /// Pluralizing Name
         /// </summary>
         /// <param name="text"></param>
         /// <returns></returns>
         public static string PluralizingNameConvention(this string text)
             => pluralizer.Pluralize(text);
-
-
     }
 }

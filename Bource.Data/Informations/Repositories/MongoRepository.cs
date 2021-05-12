@@ -1,12 +1,12 @@
-﻿using Bource.Models.Data;
+﻿using Bource.Common.Models;
+using Bource.Common.Utilities;
+using Bource.Models.Data;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Threading;
-using Bource.Common.Utilities;
-using Bource.Common.Models;
-using MongoDB.Bson;
+using System.Threading.Tasks;
 
 namespace Bource.Data.Informations.Repositories
 {
@@ -28,15 +28,14 @@ namespace Bource.Data.Informations.Repositories
         }
 
         #region Async Method
+
         public virtual Task<List<TEntity>> GetAllAsync(CancellationToken cancellationToken = default(CancellationToken))
             => Table.Find(i => true).ToListAsync(cancellationToken);
-
 
         public virtual Task<TEntity> GetByIdAsync(string id, CancellationToken cancellationToken = default(CancellationToken))
         {
             return Table.Find(i => i.Id == id).SingleOrDefaultAsync(cancellationToken);
         }
-
 
         public virtual Task AddAsync(TEntity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -93,7 +92,8 @@ namespace Bource.Data.Informations.Repositories
         {
             return Builders<TEntity>.Filter.In("_id", id);
         }
-        #endregion
+
+        #endregion Async Method
 
         #region Sync Methods
 
@@ -148,6 +148,7 @@ namespace Bource.Data.Informations.Repositories
             Assert.NotNull(entities, nameof(entities));
             Table.DeleteMany(ItemWithListOfId(entities.Select(i => new ObjectId(i.Id))));
         }
-        #endregion
+
+        #endregion Sync Methods
     }
 }

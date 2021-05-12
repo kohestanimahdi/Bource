@@ -9,8 +9,8 @@ namespace Bource.Models.Data.Tsetmc
     {
         public CapitalIncrease()
         {
-
         }
+
         public CapitalIncrease(string iid, HtmlNodeCollection nodes)
         {
             Date = nodes[0].GetAsDateTime();
@@ -19,9 +19,9 @@ namespace Bource.Models.Data.Tsetmc
             IId = iid;
         }
 
-
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime Date { get; set; }
+
         public decimal NewStock { get; set; }
         public decimal OldStock { get; set; }
 

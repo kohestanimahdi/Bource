@@ -12,7 +12,6 @@ namespace Bource.Data.Informations.Repositories
         public SymbolGroupRepository(MongoDbSetting dbSetting)
             : base(dbSetting)
         {
-
         }
 
         public async Task AddOrUpdateSymbolGroups(List<SymbolGroup> symbolGroups, CancellationToken cancellationToken = default(CancellationToken))

@@ -11,7 +11,6 @@ namespace Bource.Data.Informations.Repositories
         public SymbolDataRepository(MongoDbSetting dbSetting)
             : base(dbSetting)
         {
-
         }
 
         public Task<SymbolData> GetLastById(string iid, CancellationToken cancellationToken = default(CancellationToken))

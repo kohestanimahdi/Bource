@@ -30,6 +30,5 @@ namespace Bource.Models.Data.Tsetmc
 
         [Display(Name = "حجم معاملات")]
         public decimal Turnover { get; set; }
-
     }
 }

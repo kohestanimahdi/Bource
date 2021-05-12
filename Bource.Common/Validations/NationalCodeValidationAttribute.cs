@@ -6,10 +6,8 @@ namespace Bource.Common.Validations
 {
     public class NationalCodeValidationAttribute : ValidationAttribute
     {
-
         public NationalCodeValidationAttribute(string ErrorMessage = "") : base(errorMessage: ErrorMessage)
         {
-
         }
 
         protected override ValidationResult IsValid(object value,
@@ -46,11 +44,8 @@ namespace Bource.Common.Validations
             }
             catch
             {
-
             }
             return new ValidationResult(base.ErrorMessage);
-
-
         }
     }
 }

@@ -18,7 +18,6 @@ namespace Bource.Common.Utilities
         {
             if (!obj.HasValue)
                 throw new ArgumentNullException($"{name} : {typeof(T)}", message);
-
         }
 
         public static void NotEmpty<T>(T obj, string name, string message = null, T defaultValue = null)

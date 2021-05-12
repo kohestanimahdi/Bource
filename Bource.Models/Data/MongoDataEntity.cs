@@ -7,6 +7,7 @@ namespace Bource.Models.Data
     public interface IMongoDataEntity
     {
     }
+
     public class MongoDataEntity : IMongoDataEntity
     {
         public MongoDataEntity()

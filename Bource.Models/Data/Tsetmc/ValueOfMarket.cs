@@ -8,6 +8,7 @@ namespace Bource.Models.Data.Tsetmc
     {
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime Date { get; set; }
+
         public decimal Value { get; set; }
         public MarketType Market { get; set; }
     }
