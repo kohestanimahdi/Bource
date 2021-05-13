@@ -17,7 +17,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         Task AddNewNaturalAndLegalEntity(string iid, List<NaturalAndLegalEntity> entities, CancellationToken cancellationToken = default);
 
         Task AddOrUpdateSymbolGroups(List<SymbolGroup> symbolGroups, CancellationToken cancellationToken = default);
-
+        Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default);
         Task AddSymbolData(List<SymbolData> data, CancellationToken cancellationToken = default);
 
         Task AddSymbolsIfNotExists(List<Symbol> symbols, CancellationToken cancellationToken = default);

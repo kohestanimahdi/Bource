@@ -4,6 +4,7 @@ using Bource.Data.Informations.UnitOfWorks;
 using Bource.Models.Data.Common;
 using Bource.Models.Data.Enums;
 using Bource.Models.Data.Tsetmc;
+using Bource.Services.Crawlers.Tsetmc.Models;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using System;
@@ -19,20 +20,23 @@ namespace Bource.Services.Crawlers.Tsetmc
 {
     public class TsetmcCrawlerService : IScopedDependency
     {
-        private string baseUrl { get; init; }
+        #region Properties
+        private TimeSpan RequestTimeout => TimeSpan.FromSeconds(2);
+
+        public static string baseUrl = "http://www.tsetmc.com/";
         private readonly HttpClient httpClient;
         private readonly ILogger<TsetmcCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
-        private static readonly ConcurrentQueue<List<SymbolData>> SymbolDataQueue = new();
+        #endregion
 
+        #region Constructors
         public TsetmcCrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork)
         {
             logger = loggerFactory?.CreateLogger<TsetmcCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
             httpClient = httpClientFactory?.CreateClient() ?? throw new ArgumentNullException(nameof(httpClientFactory));
-            baseUrl = "http://www.tsetmc.com/";
 
             httpClient.BaseAddress = new Uri(baseUrl);
-            //httpClient.Timeout = TimeSpan.FromSeconds(2);
+            httpClient.Timeout = RequestTimeout;
 
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
         }
@@ -41,17 +45,23 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
-            baseUrl = "http://www.tsetmc.com/";
-
             httpClient.BaseAddress = new Uri(baseUrl);
-            //httpClient.Timeout = TimeSpan.FromSeconds(2);
+            httpClient.Timeout = RequestTimeout;
 
             LoggerFactory loggerFactory = new LoggerFactory();
             logger = new Logger<TsetmcCrawlerService>(loggerFactory);
 
             tsetmcUnitOfWork = new TsetmcUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
         }
+        #endregion
 
+        #region نمادها
+
+        /// <summary>
+        /// ویرایش اطلاعات کامل هر نماد
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task UpdateSymbolAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
@@ -138,7 +148,15 @@ namespace Bource.Services.Crawlers.Tsetmc
                     throw;
             }
         }
+        #endregion
 
+        #region حقیقی و حقوقی
+
+        /// <summary>
+        /// دریافت اطلاعات حقیقی و حقوقی هر نماد
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task GetAllNaturalAndLegalEntityAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var startDate = DateTime.Now;
@@ -189,7 +207,15 @@ namespace Bource.Services.Crawlers.Tsetmc
                     throw;
             }
         }
+        #endregion
 
+        #region صنعت
+
+        /// <summary>
+        /// دریافت نام صنایع
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task GetOrUpdateSymbolGroupsAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var response = await httpClient.GetAsync("Loader.aspx?ParTree=111C1213", cancellationToken);
@@ -221,49 +247,15 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             await tsetmcUnitOfWork.AddOrUpdateSymbolGroups(groups, cancellationToken);
         }
+        #endregion
 
-        private async Task GetLatestClientSymbolDataAsync(List<SymbolData> symbols, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            var response = await httpClient.GetAsync("tsev2/data/ClientTypeAll.aspx", cancellationToken);
-            if (!response.IsSuccessStatusCode)
-            {
-                logger.LogError("Error in get client symbol data");
-                Console.WriteLine("Error in get client symbol data");
-                return;
-            }
+        #region  در یک نگاه نماد
 
-            var result = await response.Content.ReadAsStringAsync(cancellationToken);
-            var clientValues = result.Split(";");
-            foreach (var item in clientValues)
-            {
-                var columns = item.Split(",");
-                var symbol = symbols.FirstOrDefault(i => i.IId == columns[0]);
-                if (symbol is null)
-                    continue;
-
-                symbol.FillClientValues(columns);
-            }
-        }
-
-        public async Task SaveSymbolData(CancellationToken cancellationToken = default(CancellationToken))
-        {
-            while (true)
-            {
-                var startDate = DateTime.Now;
-                if (!SymbolDataQueue.IsEmpty)
-                {
-                    List<SymbolData> data;
-                    if (SymbolDataQueue.TryDequeue(out data))
-                    {
-                        await tsetmcUnitOfWork.AddSymbolData(data, cancellationToken);
-                        System.Console.WriteLine($"Save Data to database:{(DateTime.Now - startDate).TotalSeconds}");
-                    }
-                }
-                else
-                    await Task.Delay(TimeSpan.FromSeconds(5));
-            }
-        }
-
+        /// <summary>
+        /// دریافت اطلاعات لحظه ای هر نماد
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task GetLatestSymbolDataAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var startDate = DateTime.Now;
@@ -311,41 +303,46 @@ namespace Bource.Services.Crawlers.Tsetmc
             System.Console.WriteLine($"Get symbol client Data:{ (DateTime.Now - startDate).TotalSeconds}");
             startDate = DateTime.Now;
 
-            //SymbolDataQueue.Enqueue(data);
+            // افزودن به لیست دیتاهای امروز و صف برای ذخیره سازی
+            TseSymbolDataProvider.AddSymbolDataRange(data);
 
-            await FillAllSymbolDataAsync(data, cancellationToken);
-
-
-            await tsetmcUnitOfWork.AddSymbolData(data, cancellationToken);
             System.Console.WriteLine($"Save Data to queue:{(DateTime.Now - startDate).TotalSeconds}");
         }
 
-        public Task FillAllSymbolDataAsync(List<SymbolData> symbolData, CancellationToken cancellationToken = default(CancellationToken))
+        /// <summary>
+        /// اطلاعاتی که روزانه یک بار از هر نماد آپدیت می‌شوند
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task FillOneTimeDataAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
+            var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
+            var fillSymbolData = symbols.Select(i => new FillSymbolData(i.IId)).ToList();
             List<Task> tasks = new();
             int n = 0;
-            int count = symbolData.Count / 15;
+            int count = fillSymbolData.Count / 15;
 
-            while (n < symbolData.Count)
+            while (n < fillSymbolData.Count)
             {
-                var subSymbols = symbolData.Skip(n).Take(count).ToList();
+                var subSymbols = fillSymbolData.Skip(n).Take(count).ToList();
 
                 tasks.Add(Task.Run(() => FillSymbolDataAsync(subSymbols, cancellationToken)));
                 n += count;
             }
 
-            return Task.WhenAll(tasks);
-        }
+            await Task.WhenAll(tasks);
 
-        private async Task FillSymbolDataAsync(List<SymbolData> symbolData, CancellationToken cancellationToken = default(CancellationToken))
+            TseSymbolDataProvider.FillOneTimeData(fillSymbolData);
+        }
+        private async Task FillSymbolDataAsync(List<FillSymbolData> symbolData, CancellationToken cancellationToken = default(CancellationToken))
         {
             HttpClientHandler handler = new HttpClientHandler()
             {
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
             };
             var client = new HttpClient(handler);
-            client.BaseAddress = httpClient.BaseAddress;
+            client.BaseAddress = new Uri(baseUrl);
 
             for (int i = 0; i < symbolData.Count; i++)
             {
@@ -354,8 +351,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
 
         }
-
-        private async Task<SymbolData> FillSymbolDataAsync(HttpClient client, SymbolData symboldata, CancellationToken cancellationToken = default(CancellationToken))
+        private async Task<FillSymbolData> FillSymbolDataAsync(HttpClient client, FillSymbolData symboldata, CancellationToken cancellationToken = default(CancellationToken))
         {
             var response = await client.GetAsync($"loader.aspx?ParTree=151311&i={symboldata.IId}", cancellationToken);
             if (!response.IsSuccessStatusCode)
@@ -373,6 +369,32 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             return symboldata;
         }
+        private async Task GetLatestClientSymbolDataAsync(List<SymbolData> symbols, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var response = await httpClient.GetAsync("tsev2/data/ClientTypeAll.aspx", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError("Error in get client symbol data");
+                Console.WriteLine("Error in get client symbol data");
+                return;
+            }
+
+            var result = await response.Content.ReadAsStringAsync(cancellationToken);
+            var clientValues = result.Split(";");
+            foreach (var item in clientValues)
+            {
+                var columns = item.Split(",");
+                var symbol = symbols.FirstOrDefault(i => i.IId == columns[0]);
+                if (symbol is null)
+                    continue;
+
+                symbol.FillClientValues(columns);
+            }
+        }
+
+        #endregion
+
+        #region بازار نقدی در یک نگاه
 
         public async Task GetMarketAtGlanceAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -464,6 +486,15 @@ namespace Bource.Services.Crawlers.Tsetmc
             return stockCashMarketAtGlance;
         }
 
+        #endregion
+
+        #region پیغام‌های ناظر
+
+        /// <summary>
+        /// دریافت پیغام‌های ناظر بورس و فرابورس
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task GetMarketWatcherMessage(CancellationToken cancellationToken = default(CancellationToken))
         {
             var stockMessages = await GetMarketWatcherMessage(MarketType.Stock, cancellationToken);
@@ -510,6 +541,15 @@ namespace Bource.Services.Crawlers.Tsetmc
             return messages;
         }
 
+        #endregion
+
+        #region ارزش بازار
+
+        /// <summary>
+        /// دریافت ارزش بازار بورس و فرابورس
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task GetValueOfMarketAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var stockValueOfMarkets = await GetValueOfMarketAsync(MarketType.Stock, cancellationToken);
@@ -554,6 +594,15 @@ namespace Bource.Services.Crawlers.Tsetmc
             return values;
         }
 
+        #endregion
+
+        #region عرضه و تقاضا
+
+        /// <summary>
+        /// دریافت اطلاعات بیشترین عرضه و تقاضای بورس و فرابورس
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task GetTopSupplyAndDemandAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var stockTopSupplyAndDemand = await GetTopSupplyAndDemandAsync(MarketType.Stock, cancellationToken);
@@ -592,8 +641,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             foreach (var item in demandtrs)
             {
                 var tds = item.SelectNodes("td");
-                var uri = new Uri(baseUrl + tds[0].SelectSingleNode("a").Attributes["href"].Value);
-                var queryDictionary = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
                 values.Add(new TopSupplyAndDemand
                 {
                     CreateDate = DateTime.Now,
@@ -603,7 +651,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                     Volume = tds[2].GetAttributeValueAsDecimal(),
                     Value = tds[3].GetAttributeValueAsDecimal(),
                     Count = tds[4].ConvertToLong(),
-                    IId = queryDictionary["i"],
+                    IId = tds[0].GetQueryString("i", baseUrl),
                     IsSupply = false
                 });
             }
@@ -630,21 +678,15 @@ namespace Bource.Services.Crawlers.Tsetmc
             return values;
         }
 
+        #endregion
 
-        public async Task SaveAllSymbolData(CancellationToken cancellationToken = default(CancellationToken))
-        {
-            while (!SymbolDataQueue.IsEmpty)
-            {
-                var startDate = DateTime.Now;
-                List<SymbolData> data;
-                if (SymbolDataQueue.TryDequeue(out data))
-                {
-                    await tsetmcUnitOfWork.AddSymbolData(data, cancellationToken);
-                    System.Console.WriteLine($"Save Data to database:{(DateTime.Now - startDate).TotalSeconds}");
-                }
-            }
-        }
+        #region افزایش سرمایه
 
+        /// <summary>
+        /// دریافت اطلاعات افزایش سرمایه هر نماد
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task GetAllCapitalIncreaseAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
@@ -662,8 +704,6 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             try
             {
-                List<CapitalIncrease> entities = new();
-
                 var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131H&i={iid}", cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
@@ -685,6 +725,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 if (trs is null)
                     return;
 
+                List<CapitalIncrease> entities = new();
                 foreach (var tr in trs)
                 {
                     var tds = tr.SelectNodes("td");
@@ -701,5 +742,49 @@ namespace Bource.Services.Crawlers.Tsetmc
                     throw;
             }
         }
+        #endregion
+
+        #region شاخص‌ها
+
+        /// <summary>
+        /// دریافت لحظه ای شاخص های منتخب
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task GetSelectedIndicatorAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var response = await httpClient.GetAsync($"Loader.aspx?Partree=151315&Flow=1", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError("Error in Get Selected Indicator");
+                Console.WriteLine("Error in Get Selected Indicator");
+                return;
+            }
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (string.IsNullOrWhiteSpace(html))
+                return;
+
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(html);
+
+            var tables = htmlDoc.DocumentNode.SelectSingleNode("//table[@class='table1']");
+
+            var trs = tables.SelectNodes("tbody/tr");
+            if (trs is null)
+                return;
+
+            List<SelectedIndicator> entities = new();
+            foreach (var tr in trs)
+            {
+                var tds = tr.SelectNodes("td");
+                var iid = tds[0].GetQueryString("i", baseUrl);
+                entities.Add(new SelectedIndicator(iid, tds));
+            }
+
+            await tsetmcUnitOfWork.AddSelectedIndicatorsAsync(entities, cancellationToken);
+        }
+
+        #endregion
     }
 }

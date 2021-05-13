@@ -94,5 +94,13 @@ namespace Bource.Common.Utilities
 
             return node.ConvertToDecimal();
         }
+
+        public static string GetQueryString(this HtmlNode node, string key, string baseUrl = "")
+        {
+            var uri = new Uri(baseUrl + node.SelectSingleNode("a").Attributes["href"].Value);
+            var queryDictionary = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+            return queryDictionary[key];
+        }
     }
 }

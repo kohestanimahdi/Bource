@@ -31,7 +31,7 @@ namespace Bource.Console
 
             try
             {
-                tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
+                tse.GetSelectedIndicatorAsync().GetAwaiter().GetResult();
 
             }
             catch (Exception ex)

@@ -65,8 +65,6 @@ namespace Bource.Models.Data.Tsetmc
         //[BsonIgnore]
         public string SymbolGroup { get; set; }
 
-        //[BsonRepresentation(BsonType.ObjectId)]
-        //public string SymbolId { get; set; }
 
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime LastUpdate { get; set; }
@@ -288,6 +286,15 @@ namespace Bource.Models.Data.Tsetmc
                 var result = regex.Match(html);
                 GroupPE = result.Value.RegexConvertToDecimal();
             }
+        }
+
+        public void FillData(decimal? monthAverageValue, decimal? floatingStock, decimal? groupPE)
+        {
+            MonthAverageValue = monthAverageValue;
+
+            FloatingStock = floatingStock;
+
+            GroupPE = groupPE;
         }
     }
 

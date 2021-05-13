@@ -28,6 +28,8 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly TopSupplyAndDemandRepository topSupplyAndDemandRepository;
         private readonly NaturalAndLegalEntityRepository naturalAndLegalEntityRepository;
         private readonly CapitalIncreaseRepository capitalIncrease;
+        private readonly IndicatorRepository indicatorRepository;
+        private readonly SelectedIndicatorRepository selectedIndicatorRepository;
 
         public TsetmcUnitOfWork(IOptionsSnapshot<ApplicationSetting> options)
         {
@@ -41,6 +43,8 @@ namespace Bource.Data.Informations.UnitOfWorks
             topSupplyAndDemandRepository = new(options.Value.mongoDbSetting);
             naturalAndLegalEntityRepository = new(options.Value.mongoDbSetting);
             capitalIncrease = new(options.Value.mongoDbSetting);
+            indicatorRepository = new(options.Value.mongoDbSetting);
+            selectedIndicatorRepository = new(options.Value.mongoDbSetting);
         }
 
         public TsetmcUnitOfWork(MongoDbSetting mongoDbSetting)
@@ -55,6 +59,16 @@ namespace Bource.Data.Informations.UnitOfWorks
             topSupplyAndDemandRepository = new(mongoDbSetting);
             naturalAndLegalEntityRepository = new(mongoDbSetting);
             capitalIncrease = new(mongoDbSetting);
+            indicatorRepository = new(mongoDbSetting);
+            selectedIndicatorRepository = new(mongoDbSetting);
+        }
+
+        public async Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var indicators = selectedIndicators.Select(i => new Indicator { IId = i.IId, Title = i.Title }).ToList();
+            await indicatorRepository.AddIfNotExistsAsync(indicators, cancellationToken);
+
+            await selectedIndicatorRepository.AddRangeAsync(selectedIndicators, cancellationToken);
         }
 
         public async Task AddMarketWatcherMessageIfNotExistsRangeAsync(List<MarketWatcherMessage> messages, CancellationToken cancellationToken = default(CancellationToken))
@@ -165,58 +179,6 @@ namespace Bource.Data.Informations.UnitOfWorks
                 await AddSymbolsIfNotExists(symbols, cancellationToken);
                 System.Console.WriteLine($"save symbols { (DateTime.Now - startDate).TotalSeconds}");
             }
-
-            startDate = DateTime.Now;
-            await symbolDataRepository.AddRangeAsync(itemsToSave, cancellationToken);
-            System.Console.WriteLine($"save symbol data 1 { (DateTime.Now - startDate).TotalSeconds}");
-
-            Console.WriteLine($"Count of data: {i}");
-        }
-
-        public async Task AddSymbolData2(List<SymbolData> data, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            var startDate = DateTime.Now;
-
-            if (DateTime.Now - LastSymbolSave > TimeSpan.FromHours(1))
-            {
-                var symbols = data.Select(i => new Symbol
-                {
-                    IId = i.IId,
-                    Code12 = i.InsCode,
-                    Name = i.Name,
-                    Sign = i.Symbol,
-                    GroupId = i.SymbolGroup
-                }).ToList();
-
-                await AddSymbolsIfNotExists(symbols, cancellationToken);
-                System.Console.WriteLine($"save symbols { (DateTime.Now - startDate).TotalSeconds}");
-                startDate = DateTime.Now;
-            }
-            int i = 0;
-
-            var itemsToSave = new ConcurrentBag<SymbolData>();
-
-            //var tasks = new List<Task>();
-
-            data.AsParallel().ForAll(item =>
-            {
-                var symbolData = symbolDataRepository.GetLastById(item.IId, cancellationToken).GetAwaiter().GetResult();
-
-                if (symbolData is null || !symbolData.Equals(item))
-                {
-                    itemsToSave.Add(item);
-                    i++;
-                }
-            });
-            //foreach (var item in data)
-            //{
-            //    tasks.Add(Task.Run(() =>
-            //    {
-            //    }));
-            //}
-            //await Task.WhenAll(tasks);
-
-            System.Console.WriteLine($"add to list { (DateTime.Now - startDate).TotalSeconds}");
 
             startDate = DateTime.Now;
             await symbolDataRepository.AddRangeAsync(itemsToSave, cancellationToken);
