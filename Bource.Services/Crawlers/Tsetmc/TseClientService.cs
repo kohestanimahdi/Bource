@@ -69,8 +69,8 @@ namespace Bource.Services.Crawlers.Tsetmc
                 {
                     Body = new DecompressAndGetInsturmentClosingPriceRequestBody
                     {
-                        insCodes = aa3
-                        //insCodes = "HAAAAB+LCAAAAAAABADtvQdgHEmWJSYvbcp7f0r1StfgdKEIgGATJNiQQBDswYjN5pLsHWlHIymrKoHKZVZlXWYWQMztnbz33nvvvffee++997o7nU4n99//P1xmZAFs9s5K2smeIYCqyB8/fnwfPyL2P723f3D//sPdh/f29vZ3Hu6M9nb2dnfu7+6Mdv4fkd3d4BwAAAA="
+                        //insCodes = aa3
+                        insCodes = "HAAAAB+LCAAAAAAABADtvQdgHEmWJSYvbcp7f0r1StfgdKEIgGATJNiQQBDswYjN5pLsHWlHIymrKoHKZVZlXWYWQMztnbz33nvvvffee++997o7nU4n99//P1xmZAFs9s5K2smeIYCqyB8/fnwfPyL2P723f3D//sPdh/f29vZ3Hu6M9nb2dnfu7+6Mdv4fkd3d4BwAAAA="
                     }
                 });
             }
@@ -83,8 +83,8 @@ namespace Bource.Services.Crawlers.Tsetmc
                 {
                     Body = new InstrumentAndShareRequestBody
                     {
-                        DEven = 20210511,
-                        LastID = 1891
+                        DEven = 20210513,
+                        LastID = 0
                     }
                 });
             }

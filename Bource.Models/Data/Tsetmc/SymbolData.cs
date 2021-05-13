@@ -23,26 +23,28 @@ namespace Bource.Models.Data.Tsetmc
             InsCode = data[1];
             Symbol = data[2].FixPersianLetters();
             Name = data[3].FixPersianLetters();
-            FirstPrice = Convert.ToInt64(data[5]);
-            FinishPrice = Convert.ToInt64(data[6]);
-            LastPrice = Convert.ToInt64(data[7]);
-            NumberOfTransaction = Convert.ToInt64(data[8]);
-            Turnover = Convert.ToInt64(data[9]);
-            ValueOfTransaction = Convert.ToInt64(data[10]);
-            MinPrice = Convert.ToInt64(data[11]);
-            MaxPrice = Convert.ToInt64(data[12]);
-            YesterdayPrice = Convert.ToInt64(data[13]);
-            EPS = string.IsNullOrWhiteSpace(data[14]) ? null : Convert.ToInt64(data[14]);
-            BaseValue = Convert.ToInt64(data[15]);
+            FirstPrice = Convert.ToDecimal(data[5]);
+            FinishPrice = Convert.ToDecimal(data[6]);
+            LastPrice = Convert.ToDecimal(data[7]);
+            NumberOfTransaction = Convert.ToDecimal(data[8]);
+            Turnover = Convert.ToDecimal(data[9]);
+            ValueOfTransaction = Convert.ToDecimal(data[10]);
+            MinPrice = Convert.ToDecimal(data[11]);
+            MaxPrice = Convert.ToDecimal(data[12]);
+            YesterdayPrice = Convert.ToDecimal(data[13]);
+            EPS = string.IsNullOrWhiteSpace(data[14]) ? null : Convert.ToDecimal(data[14]);
+            BaseValue = Convert.ToDecimal(data[15]);
             SymbolGroup = data[18];
-            MaxAllowedPrice = Convert.ToDouble(data[19]);
-            MinAllowedPrice = Convert.ToDouble(data[20]);
-            Count = Convert.ToInt64(data[21]);
+            MaxAllowedPrice = Convert.ToDecimal(data[19]);
+            MinAllowedPrice = Convert.ToDecimal(data[20]);
+            Count = Convert.ToDecimal(data[21]);
             FinishPriceChange = FinishPrice - YesterdayPrice;
-            PercentFinishPriceChange = Math.Round(100d * FinishPriceChange / YesterdayPrice, 2);
             LastPriceChange = NumberOfTransaction == 0 ? 0 : LastPrice - YesterdayPrice;
-            PercentLastPriceChange = NumberOfTransaction == 0 ? 0 : Math.Round(100d * LastPriceChange / YesterdayPrice, 2);
-            PE = EPS.HasValue ? Math.Round(100d * FinishPrice / EPS.Value, 2) : null;
+
+
+            PercentFinishPriceChange = YesterdayPrice != 0 ? Math.Round(100 * FinishPriceChange / YesterdayPrice, 2) : 0;
+            PercentLastPriceChange = NumberOfTransaction == 0 || YesterdayPrice == 0 ? 0 : Math.Round(100 * LastPriceChange / YesterdayPrice, 2);
+            PE = EPS.HasValue && EPS.Value != 0 ? Math.Round(100 * FinishPrice / EPS.Value, 2) : null;
 
             BuyTransactions = new List<SymbolTransaction>();
             SellTransactions = new List<SymbolTransaction>();
@@ -69,106 +71,104 @@ namespace Bource.Models.Data.Tsetmc
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime LastUpdate { get; set; }
 
-        public string Status { get; set; }
-
         [Display(Name = "تعداد معاملات")]
-        public long NumberOfTransaction { get; set; }
+        public decimal NumberOfTransaction { get; set; }
 
         [Display(Name = "حجم معاملات")]
-        public long Turnover { get; set; }
+        public decimal Turnover { get; set; }
 
         [Display(Name = "ارزش معاملات")]
-        public long ValueOfTransaction { get; set; }
+        public decimal ValueOfTransaction { get; set; }
 
         [Display(Name = "ارزش بازار")]
-        public long ValueOfMarket { get; set; }
+        public decimal ValueOfMarket { get; set; }
 
         [Display(Name = "قیمت دیروز")]
-        public long YesterdayPrice { get; set; }
+        public decimal YesterdayPrice { get; set; }
 
         [Display(Name = "خرید")]
-        public long? BuyPrice { get; set; }
+        public decimal? BuyPrice { get; set; }
 
         [Display(Name = "فروش")]
-        public long? SalePrice { get; set; }
+        public decimal? SalePrice { get; set; }
 
         [Display(Name = "اولین قیمت")] //pf
-        public long FirstPrice { get; set; }
+        public decimal FirstPrice { get; set; }
 
         [Display(Name = "کمترین بازه روز")] //pmin
-        public long MinPrice { get; set; }
+        public decimal MinPrice { get; set; }
 
         [Display(Name = "بیشترین بازه روز")] //pmax
-        public long MaxPrice { get; set; }
+        public decimal MaxPrice { get; set; }
 
         [Display(Name = "قیمت معامله")] //pl
-        public long LastPrice { get; set; }
+        public decimal LastPrice { get; set; }
 
         [Display(Name = "تغییر قیمت معامله")] //plc
-        public long LastPriceChange { get; set; }
+        public decimal LastPriceChange { get; set; }
 
         [Display(Name = "درصد تغییر قیمت معامله")] //plp
-        public double PercentLastPriceChange { get; set; }
+        public decimal PercentLastPriceChange { get; set; }
 
         [Display(Name = "قیمت پایانی")] //pc
-        public long FinishPrice { get; set; }
+        public decimal FinishPrice { get; set; }
 
         [Display(Name = "تغییر قیمت پایانی")] //pcc
-        public long FinishPriceChange { get; set; }
+        public decimal FinishPriceChange { get; set; }
 
         [Display(Name = "درصد تغییر قیمت پایانی")]//pcl
-        public double PercentFinishPriceChange { get; set; }
+        public decimal PercentFinishPriceChange { get; set; }
 
         [Display(Name = "EPS")]
-        public long? EPS { get; set; }
+        public decimal? EPS { get; set; }
 
         [Display(Name = "PE")]
-        public double? PE { get; set; }
+        public decimal? PE { get; set; }
 
         [Display(Name = "PE گروه")]
-        public double? GroupPE { get; set; }
+        public decimal? GroupPE { get; set; }
 
         [Display(Name = "تعداد سهام")]
-        public long Count { get; set; }
+        public decimal Count { get; set; }
 
         [Display(Name = "حجم مبنا")]
-        public long BaseValue { get; set; }
+        public decimal BaseValue { get; set; }
 
         [Display(Name = "کمترین قیمت مجاز")]
-        public double MinAllowedPrice { get; set; }
+        public decimal MinAllowedPrice { get; set; }
 
         [Display(Name = "بیشترین قیمت مجاز")]
-        public double MaxAllowedPrice { get; set; }
+        public decimal MaxAllowedPrice { get; set; }
 
         [Display(Name = "سهام شناور")]
-        public double? FloatingStock { get; set; }
+        public decimal? FloatingStock { get; set; }
 
         [Display(Name = "میانگین حجم ماه")]
-        public double? MonthAverageValue { get; set; }
+        public decimal? MonthAverageValue { get; set; }
 
         [Display(Name = "تعداد خریدار حقیقی")]
-        public long NaturalBuyNumber { get; set; }
+        public decimal NaturalBuyNumber { get; set; }
 
         [Display(Name = "تعداد خریدار حقوقی")]
-        public long LegalEntityBuyNumber { get; set; }
+        public decimal LegalEntityBuyNumber { get; set; }
 
         [Display(Name = "حجم خرید حقیقی")]
-        public long NaturalBuyValue { get; set; }
+        public decimal NaturalBuyValue { get; set; }
 
         [Display(Name = "حجم خرید حقوقی")]
-        public long LegalEntityBuyValue { get; set; }
+        public decimal LegalEntityBuyValue { get; set; }
 
         [Display(Name = "تعداد فروشنده حقیقی")]
-        public long NaturalSellNumber { get; set; }
+        public decimal NaturalSellNumber { get; set; }
 
         [Display(Name = "تعداد فروشنده حقوقی")]
-        public long LegalEntitySellNumber { get; set; }
+        public decimal LegalEntitySellNumber { get; set; }
 
         [Display(Name = "حجم فروش حقیقی")]
-        public long NaturalSellValue { get; set; }
+        public decimal NaturalSellValue { get; set; }
 
         [Display(Name = "حجم فروش حقوقی")]
-        public long LegalEntitySellValue { get; set; }
+        public decimal LegalEntitySellValue { get; set; }
 
         public List<SymbolTransaction> BuyTransactions { get; set; }
         public List<SymbolTransaction> SellTransactions { get; set; }
@@ -232,17 +232,17 @@ namespace Bource.Models.Data.Tsetmc
                 BuyTransactions.Add(new SymbolTransaction
                 {
                     Order = Convert.ToInt16(items[1]),
-                    Number = Convert.ToInt64(items[3]),
-                    Value = Convert.ToInt64(items[6]),
-                    Price = Convert.ToInt64(items[4])
+                    Number = Convert.ToDecimal(items[3]),
+                    Value = Convert.ToDecimal(items[6]),
+                    Price = Convert.ToDecimal(items[4])
                 });
 
                 SellTransactions.Add(new SymbolTransaction
                 {
                     Order = Convert.ToInt16(items[1]),
-                    Number = Convert.ToInt64(items[2]),
-                    Value = Convert.ToInt64(items[7]),
-                    Price = Convert.ToInt64(items[5])
+                    Number = Convert.ToDecimal(items[2]),
+                    Value = Convert.ToDecimal(items[7]),
+                    Price = Convert.ToDecimal(items[5])
                 });
             }
 
@@ -255,24 +255,48 @@ namespace Bource.Models.Data.Tsetmc
 
         public void FillClientValues(string[] values)
         {
-            NaturalBuyNumber = Convert.ToInt64(values[1]);
-            LegalEntityBuyNumber = Convert.ToInt64(values[2]);
-            NaturalBuyValue = Convert.ToInt64(values[3]);
-            LegalEntityBuyValue = Convert.ToInt64(values[4]);
+            NaturalBuyNumber = Convert.ToDecimal(values[1]);
+            LegalEntityBuyNumber = Convert.ToDecimal(values[2]);
+            NaturalBuyValue = Convert.ToDecimal(values[3]);
+            LegalEntityBuyValue = Convert.ToDecimal(values[4]);
 
-            NaturalSellNumber = Convert.ToInt64(values[5]);
-            LegalEntitySellNumber = Convert.ToInt64(values[6]);
-            NaturalSellValue = Convert.ToInt64(values[7]);
-            LegalEntitySellValue = Convert.ToInt64(values[8]);
+            NaturalSellNumber = Convert.ToDecimal(values[5]);
+            LegalEntitySellNumber = Convert.ToDecimal(values[6]);
+            NaturalSellValue = Convert.ToDecimal(values[7]);
+            LegalEntitySellValue = Convert.ToDecimal(values[8]);
+        }
+
+        public void FillDataFromPage(string html)
+        {
+            var regex = new System.Text.RegularExpressions.Regex(@"QTotTran5JAvg\=\'([0-9]*|([0-9]*.[0-9]*))\'");
+            if (regex.IsMatch(html))
+            {
+                var result = regex.Match(html);
+                MonthAverageValue = result.Value.RegexConvertToDecimal();
+            }
+
+            regex = new System.Text.RegularExpressions.Regex(@"KAjCapValCpsIdx\=\'([0-9]*|([0-9]*.[0-9]*))\'");
+            if (regex.IsMatch(html))
+            {
+                var result = regex.Match(html);
+                FloatingStock = result.Value.RegexConvertToDecimal();
+            }
+
+            regex = new System.Text.RegularExpressions.Regex(@"SectorPE\=\'([0-9]*|([0-9]*.[0-9]*))\'");
+            if (regex.IsMatch(html))
+            {
+                var result = regex.Match(html);
+                GroupPE = result.Value.RegexConvertToDecimal();
+            }
         }
     }
 
     public class SymbolTransaction
     {
         public short Order { get; set; }
-        public long Number { get; set; }
-        public long Value { get; set; }
-        public long Price { get; set; }
+        public decimal Number { get; set; }
+        public decimal Value { get; set; }
+        public decimal Price { get; set; }
 
         public override bool Equals(object obj)
         {

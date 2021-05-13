@@ -10,6 +10,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,7 +32,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             baseUrl = "http://www.tsetmc.com/";
 
             httpClient.BaseAddress = new Uri(baseUrl);
-            httpClient.Timeout = TimeSpan.FromSeconds(2);
+            //httpClient.Timeout = TimeSpan.FromSeconds(2);
 
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
         }
@@ -43,7 +44,10 @@ namespace Bource.Services.Crawlers.Tsetmc
             baseUrl = "http://www.tsetmc.com/";
 
             httpClient.BaseAddress = new Uri(baseUrl);
-            httpClient.Timeout = TimeSpan.FromSeconds(2);
+            //httpClient.Timeout = TimeSpan.FromSeconds(2);
+
+            LoggerFactory loggerFactory = new LoggerFactory();
+            logger = new Logger<TsetmcCrawlerService>(loggerFactory);
 
             tsetmcUnitOfWork = new TsetmcUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
         }
@@ -241,6 +245,25 @@ namespace Bource.Services.Crawlers.Tsetmc
             }
         }
 
+        public async Task SaveSymbolData(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            while (true)
+            {
+                var startDate = DateTime.Now;
+                if (!SymbolDataQueue.IsEmpty)
+                {
+                    List<SymbolData> data;
+                    if (SymbolDataQueue.TryDequeue(out data))
+                    {
+                        await tsetmcUnitOfWork.AddSymbolData(data, cancellationToken);
+                        System.Console.WriteLine($"Save Data to database:{(DateTime.Now - startDate).TotalSeconds}");
+                    }
+                }
+                else
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+            }
+        }
+
         public async Task GetLatestSymbolDataAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var startDate = DateTime.Now;
@@ -276,7 +299,11 @@ namespace Bource.Services.Crawlers.Tsetmc
                 var symbolData = new SymbolData(item, lastModified);
                 symbolData.FillTransactions(transactionsDataDictionary[symbolData.IId]);
 
+
+
+
                 data.Add(symbolData);
+
             }
             System.Console.WriteLine($"Get symbol transactions Data:{ (DateTime.Now - startDate).TotalSeconds}");
             startDate = DateTime.Now;
@@ -284,9 +311,67 @@ namespace Bource.Services.Crawlers.Tsetmc
             System.Console.WriteLine($"Get symbol client Data:{ (DateTime.Now - startDate).TotalSeconds}");
             startDate = DateTime.Now;
 
-            SymbolDataQueue.Enqueue(data);
+            //SymbolDataQueue.Enqueue(data);
 
+            await FillAllSymbolDataAsync(data, cancellationToken);
+
+
+            await tsetmcUnitOfWork.AddSymbolData(data, cancellationToken);
             System.Console.WriteLine($"Save Data to queue:{(DateTime.Now - startDate).TotalSeconds}");
+        }
+
+        public Task FillAllSymbolDataAsync(List<SymbolData> symbolData, CancellationToken cancellationToken = default(CancellationToken))
+        {
+
+            List<Task> tasks = new();
+            int n = 0;
+            int count = symbolData.Count / 15;
+
+            while (n < symbolData.Count)
+            {
+                var subSymbols = symbolData.Skip(n).Take(count).ToList();
+
+                tasks.Add(Task.Run(() => FillSymbolDataAsync(subSymbols, cancellationToken)));
+                n += count;
+            }
+
+            return Task.WhenAll(tasks);
+        }
+
+        private async Task FillSymbolDataAsync(List<SymbolData> symbolData, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            HttpClientHandler handler = new HttpClientHandler()
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            };
+            var client = new HttpClient(handler);
+            client.BaseAddress = httpClient.BaseAddress;
+
+            for (int i = 0; i < symbolData.Count; i++)
+            {
+                symbolData[i] = await FillSymbolDataAsync(client, symbolData[i], cancellationToken);
+            }
+
+
+        }
+
+        private async Task<SymbolData> FillSymbolDataAsync(HttpClient client, SymbolData symboldata, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var response = await client.GetAsync($"loader.aspx?ParTree=151311&i={symboldata.IId}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError("Error in fill symbol data");
+                Console.WriteLine("Error in fill symbol data");
+                return symboldata;
+            }
+
+            var result = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (string.IsNullOrWhiteSpace(result))
+                return symboldata;
+
+            symboldata.FillDataFromPage(result);
+
+            return symboldata;
         }
 
         public async Task GetMarketAtGlanceAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -545,24 +630,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             return values;
         }
 
-        public async Task SaveSymbolData(CancellationToken cancellationToken = default(CancellationToken))
-        {
-            while (true)
-            {
-                var startDate = DateTime.Now;
-                if (!SymbolDataQueue.IsEmpty)
-                {
-                    List<SymbolData> data;
-                    if (SymbolDataQueue.TryDequeue(out data))
-                    {
-                        await tsetmcUnitOfWork.AddSymbolData(data, cancellationToken);
-                        System.Console.WriteLine($"Save Data to database:{(DateTime.Now - startDate).TotalSeconds}");
-                    }
-                }
-                else
-                    await Task.Delay(TimeSpan.FromSeconds(5));
-            }
-        }
 
         public async Task SaveAllSymbolData(CancellationToken cancellationToken = default(CancellationToken))
         {

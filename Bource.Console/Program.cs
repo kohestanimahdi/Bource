@@ -18,18 +18,27 @@ namespace Bource.Console
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
             };
             var httpClient = new HttpClient(handler);
-            var fipIran = new FipiranCrawlerService(httpClient);
-            fipIran.GetAssociations().GetAwaiter().GetResult();
+            //var fipIran = new FipiranCrawlerService(httpClient);
+            //fipIran.GetAssociations().GetAwaiter().GetResult();
 
             //var tseClient = new TseClientService();
             //tseClient.Test().GetAwaiter().GetResult();
 
-            //var tse = new Services.Crawlers.Tsetmc.TsetmcCrawlerService(httpClient);
+            var tse = new Services.Crawlers.Tsetmc.TsetmcCrawlerService(httpClient);
 
             //
             //tse.GetAllCapitalIncreaseAsync().GetAwaiter().GetResult();
 
-            //tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
+            try
+            {
+                tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
+
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
             //tse.SaveSymbolData().GetAwaiter().GetResult();
             //var t3 = Task.Run(() =>
             //{

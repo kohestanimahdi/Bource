@@ -53,6 +53,16 @@ namespace Bource.Common.Utilities
             return result;
         }
 
+        public static decimal RegexConvertToDecimal(this string text)
+        {
+            text = text.GetNumberAsText();
+            var regex = new System.Text.RegularExpressions.Regex(@"\'([0-9]*|([0-9]*.[0-9]*))\'");
+            if (!regex.IsMatch(text))
+                return 0;
+
+            return regex.Match(text).Value.Replace("\"", "").Replace("\'", "").ConvertToDecimal();
+        }
+
         public static long ConvertToLong(this string text)
         {
             text = text.GetNumberAsText();
