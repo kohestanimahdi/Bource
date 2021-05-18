@@ -22,6 +22,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         Task AddValuesOfMarketsIfNotExistsRangeAsync(List<ValueOfMarket> values, CancellationToken cancellationToken = default);
         Task AppendClosingPriceInfoAsync(List<ClosingPriceInfo> infos, CancellationToken cancellationToken = default);
         Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default);
+        Task<List<Symbol>> GetSymbolsByTypeAsync(IEnumerable<SymbolExistInType> existInTypes, CancellationToken cancellationToken = default);
         Task UpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default);
     }
 }

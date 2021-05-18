@@ -65,14 +65,29 @@ namespace Bource.Services.Crawlers.Tsetmc
         public async Task UpdateSymbolAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
+
             foreach (var symbol in symbols)
+                await UpdateSymbolAsync(symbol, cancellationToken);
+
+        }
+
+        private async Task UpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        {
+            try
             {
                 await GetSymbolInstructionAsync(symbol, cancellationToken);
                 await GetSymbolInformationAsync(symbol, cancellationToken);
                 await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
             }
-        }
+            catch (Exception)
+            {
+                if (numberOfTries < 2)
+                    await UpdateSymbolAsync(symbol, cancellationToken, numberOfTries + 1);
+                else
+                    throw;
+            }
 
+        }
         public async Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = new List<Symbol>();
@@ -127,7 +142,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             catch
             {
                 if (numberOfTries < 2)
-                    await GetSymbolInstructionAsync(symbol, cancellationToken, numberOfTries++);
+                    await GetSymbolInstructionAsync(symbol, cancellationToken, numberOfTries + 1);
                 else
                     throw;
             }
@@ -164,7 +179,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             catch
             {
                 if (numberOfTries < 2)
-                    await GetSymbolInstructionAsync(symbol, cancellationToken, numberOfTries++);
+                    await GetSymbolInstructionAsync(symbol, cancellationToken, numberOfTries + 1);
                 else
                     throw;
             }
@@ -223,7 +238,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             catch
             {
                 if (numberOfTries < 2)
-                    await GetNaturalAndLegalEntityAsync(InsCode, cancellationToken, numberOfTries++);
+                    await GetNaturalAndLegalEntityAsync(InsCode, cancellationToken, numberOfTries + 1);
                 else
                     throw;
             }
@@ -762,7 +777,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             catch
             {
                 if (numberOfTries < 2)
-                    await GetCapitalIncreaseAsync(insCode, cancellationToken, numberOfTries++);
+                    await GetCapitalIncreaseAsync(insCode, cancellationToken, numberOfTries + 1);
                 else
                     throw;
             }

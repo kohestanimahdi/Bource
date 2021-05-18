@@ -177,6 +177,9 @@ namespace Bource.Data.Informations.UnitOfWorks
         public Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))
             => symbolRepository.GetAllAsync(cancellationToken);
 
+        public Task<List<Symbol>> GetSymbolsByTypeAsync(IEnumerable<SymbolExistInType> existInTypes, CancellationToken cancellationToken = default(CancellationToken))
+            => symbolRepository.Table.Find(i => existInTypes.Contains(i.ExistInType)).ToListAsync(cancellationToken);
+
         public async Task AddNewNaturalAndLegalEntity(long insCode, List<NaturalAndLegalEntity> entities, CancellationToken cancellationToken = default(CancellationToken))
         {
             var existsItems = await naturalAndLegalEntityRepository.GetNaturalAndLegalEntityOfSymbolAsync(insCode, cancellationToken);
