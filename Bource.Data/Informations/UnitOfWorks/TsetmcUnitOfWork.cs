@@ -124,17 +124,6 @@ namespace Bource.Data.Informations.UnitOfWorks
             await OTCCashMarketAtGlanceRepository.AddAsync(oTCCashMarketAtGlance, cancellationToken);
         }
 
-        public async Task AddSymbolsIfNotExists(List<Symbol> symbols, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            var oldSymbols = await symbolRepository.GetAllAsync(cancellationToken);
-            foreach (var symbol in symbols)
-            {
-                var oldSymbol = oldSymbols.SingleOrDefault(i => i.InsCode == symbol.InsCode);
-                if (oldSymbol is null)
-                    await symbolRepository.AddAsync(symbol, cancellationToken);
-            }
-        }
-
         public async Task AddOrUpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (await symbolRepository.Table.Find(i => i.InsCode == symbol.InsCode).AnyAsync(cancellationToken))
@@ -143,17 +132,19 @@ namespace Bource.Data.Informations.UnitOfWorks
                 await symbolRepository.AddAsync(symbol, cancellationToken);
         }
 
-        public Task UpdateSymbolsAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
-        => symbolRepository.UpdateAsync(symbol, cancellationToken);
+        public Task AddSymbolsRangeAsync(List<Symbol> symbols, CancellationToken cancellationToken = default(CancellationToken))
+        => symbolRepository.AddRangeAsync(symbols, cancellationToken);
+
+        public Task UpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
+            => symbolRepository.UpdateAsync(symbol, cancellationToken);
 
         public async Task AddSymbolData(List<SymbolData> data, CancellationToken cancellationToken = default(CancellationToken))
         {
             var startDate = DateTime.Now;
-            int i = 0;
 
             var todayItems = await symbolDataRepository.Table.Find(i => i.LastUpdate >= DateTime.Today).ToListAsync(cancellationToken);
 
-            System.Console.WriteLine($"get  Data1 from db { (DateTime.Now - startDate).TotalSeconds}");
+            Console.WriteLine($"get  Data1 from db { (DateTime.Now - startDate).TotalSeconds}");
 
             List<SymbolData> itemsToSave = new();
 
@@ -167,36 +158,20 @@ namespace Bource.Data.Informations.UnitOfWorks
                     if (symbolData is null || !symbolData.Equals(item))
                     {
                         itemsToSave.Add(item);
-                        i++;
                     }
                 }
 
                 System.Console.WriteLine($"add to list { (DateTime.Now - startDate).TotalSeconds}");
             }
             else
-            {
-                startDate = DateTime.Now;
-
-                var symbols = data.Select(i => new Symbol
-                {
-                    InsCode = i.InsCode,
-                    Code12 = i.SymbolCode,
-                    Name = i.Name,
-                    Sign = i.Symbol,
-                    GroupId = i.SymbolGroup
-                }).ToList();
-
-                i = data.Count;
                 itemsToSave = data;
-                await AddSymbolsIfNotExists(symbols, cancellationToken);
-                System.Console.WriteLine($"save symbols { (DateTime.Now - startDate).TotalSeconds}");
-            }
+
 
             startDate = DateTime.Now;
             await symbolDataRepository.AddRangeAsync(itemsToSave, cancellationToken);
             System.Console.WriteLine($"save symbol data 1 { (DateTime.Now - startDate).TotalSeconds}");
 
-            Console.WriteLine($"Count of data: {i}");
+            Console.WriteLine($"Count of data: {itemsToSave.Count}");
         }
 
         public Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))

@@ -1,4 +1,5 @@
 ﻿using Bource.Common.Utilities;
+using Bource.Models.Data.Common;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
@@ -291,6 +292,17 @@ namespace Bource.Models.Data.Tsetmc
 
             GroupPE = groupPE;
         }
+
+        public Symbol GetSymbol()
+            => new Symbol
+            {
+                InsCode = InsCode,
+                Code12 = SymbolCode,
+                Name = Name,
+                Sign = Symbol,
+                GroupId = SymbolGroup,
+                ExistInType = Enums.SymbolExistInType.Tsetmc
+            };
     }
 
     public class SymbolTransaction

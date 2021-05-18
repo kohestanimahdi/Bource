@@ -1,5 +1,6 @@
 ﻿using Bource.Common.Models;
 using Bource.Data.Informations.UnitOfWorks;
+using Bource.Models.Data.Common;
 using Bource.Models.Data.Tsetmc;
 using Bource.Services.Crawlers.Tsetmc.Models;
 using Microsoft.Extensions.Logging;
@@ -18,10 +19,12 @@ namespace Bource.Services.Crawlers.Tsetmc
     public class TseSymbolDataProvider
     {
         private readonly ILogger<TsetmcCrawlerService> logger;
+        private readonly TsetmcCrawlerService tsetmcCrawlerService;
+        private readonly TseClientService TseClientService;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
         private static readonly List<SymbolData> SymbolData = new();
         private static readonly ConcurrentQueue<List<SymbolData>> SymbolDataQueue = new();
-        private static readonly Dictionary<string, FillSymbolData> oneTimeData = new();
+        private static readonly Dictionary<long, FillSymbolData> oneTimeData = new();
 
         public TseSymbolDataProvider(ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork)
         {
@@ -29,22 +32,25 @@ namespace Bource.Services.Crawlers.Tsetmc
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
         }
 
-        public TseSymbolDataProvider()
+        public TseSymbolDataProvider(HttpClient httpClient)
         {
             LoggerFactory loggerFactory = new LoggerFactory();
             logger = new Logger<TsetmcCrawlerService>(loggerFactory);
 
             tsetmcUnitOfWork = new TsetmcUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
+
+            tsetmcCrawlerService = new TsetmcCrawlerService(httpClient);
+            TseClientService = new TseClientService();
         }
 
 
-        public Dictionary<string, FillSymbolData> GetOneTimeData() => oneTimeData;
+        public Dictionary<long, FillSymbolData> GetOneTimeData() => oneTimeData;
         public void ClearOneTimeData() => oneTimeData.Clear();
         public static void FillOneTimeData(List<FillSymbolData> data)
         {
             foreach (var d in data)
-                if (!oneTimeData.ContainsKey(d.IId))
-                    oneTimeData[d.IId] = d;
+                if (!oneTimeData.ContainsKey(d.InsCode))
+                    oneTimeData[d.InsCode] = d;
         }
         public static void AddSymbolDataRange(List<SymbolData> data)
         {
@@ -53,16 +59,15 @@ namespace Bource.Services.Crawlers.Tsetmc
             if (oneTimeData.Any())
                 foreach (var d in data)
                 {
-                    if (oneTimeData.ContainsKey(d.IId))
+                    if (oneTimeData.ContainsKey(d.InsCode))
                     {
-                        var oneTime = oneTimeData[d.IId];
+                        var oneTime = oneTimeData[d.InsCode];
                         d.FillData(oneTime.MonthAverageValue, oneTime.FloatingStock, oneTime.GroupPE);
                     }
 
                     SymbolData.Add(d);
                 }
         }
-
         public async Task SaveSymbolDataFromQueue(CancellationToken cancellationToken = default(CancellationToken))
         {
             while (true)
@@ -81,5 +86,64 @@ namespace Bource.Services.Crawlers.Tsetmc
                     await Task.Delay(TimeSpan.FromSeconds(5));
             }
         }
+
+
+        public async Task AddOrUpdateSymbols(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var tseSymbols = await tsetmcCrawlerService.GetSymbolsAsync(cancellationToken);
+            var (tseClientSymbols, _) = await TseClientService.GetSymbolAndSharingAsync();
+            var existsSymbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
+
+            foreach (var symbol in existsSymbols)
+            {
+                var tseSymbol = tseSymbols.FirstOrDefault(i => i.InsCode == symbol.InsCode);
+                var tseClientSymbol = tseClientSymbols.FirstOrDefault(i => i.InsCode == symbol.InsCode);
+                if (tseSymbol is not null && tseClientSymbol is not null)
+                {
+                    //update both
+                    symbol.UpdateFromTsetmc(tseSymbol);
+                    symbol.UpdateFromTseClient(tseClientSymbol);
+                    symbol.ExistInType = Bource.Models.Data.Enums.SymbolExistInType.Both;
+
+                    tseSymbols.Remove(tseSymbol);
+                    tseClientSymbols.Remove(tseClientSymbol);
+                }
+                else if (tseSymbol is null && tseClientSymbol is not null)
+                {
+                    symbol.UpdateFromTseClient(tseClientSymbol);
+                    tseClientSymbols.Remove(tseClientSymbol);
+                }
+                else if (tseSymbol is not null && tseClientSymbol is null)
+                {
+                    symbol.UpdateFromTsetmc(tseSymbol);
+                    tseSymbols.Remove(tseSymbol);
+                }
+
+                await tsetmcUnitOfWork.UpdateSymbolAsync(symbol);
+            }
+
+            var symbolsToAdd = new List<Symbol>();
+            if (tseSymbols.Any() && tseClientSymbols.Any())
+            {
+                foreach (var tseSymbol in tseSymbols)
+                {
+                    var tseClientSymbol = tseClientSymbols.FirstOrDefault(i => i.InsCode == tseSymbol.InsCode);
+                    if (tseClientSymbol is not null)
+                    {
+                        tseSymbol.UpdateFromTseClient(tseClientSymbol);
+                        tseSymbol.ExistInType = Bource.Models.Data.Enums.SymbolExistInType.Both;
+
+                        tseClientSymbols.Remove(tseClientSymbol);
+                    }
+                    symbolsToAdd.Add(tseSymbol);
+                }
+            }
+
+            if (tseClientSymbols.Any())
+                symbolsToAdd.AddRange(tseClientSymbols);
+
+            await tsetmcUnitOfWork.AddSymbolsRangeAsync(symbolsToAdd, cancellationToken);
+        }
+
     }
 }

@@ -69,8 +69,30 @@ namespace Bource.Services.Crawlers.Tsetmc
             {
                 await GetSymbolInstructionAsync(symbol, cancellationToken);
                 await GetSymbolInformationAsync(symbol, cancellationToken);
-                await tsetmcUnitOfWork.UpdateSymbolsAsync(symbol, cancellationToken);
+                await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
             }
+        }
+
+        public async Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var symbols = new List<Symbol>();
+
+            var response = await GetLatestSymbolsResponseAsync(cancellationToken);
+            if (response is null)
+                return symbols;
+
+            var result = await response.Content.ReadAsStringAsync(cancellationToken);
+            var pageComponents = result.Split("@");
+            var symbolsData = pageComponents[2];
+
+            var symbolsSplitted = symbolsData.Split(";");
+            foreach (var item in symbolsSplitted)
+            {
+                var symbol = new SymbolData(item, DateTime.Now).GetSymbol();
+                symbols.Add(symbol);
+            }
+
+            return symbols;
         }
 
         private async Task GetSymbolInformationAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
@@ -110,7 +132,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                     throw;
             }
         }
-
         private async Task GetSymbolInstructionAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
@@ -260,13 +281,9 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             var startDate = DateTime.Now;
 
-            var response = await httpClient.GetAsync("tsev2/data/MarketWatchPlus.aspx", cancellationToken);
-            if (!response.IsSuccessStatusCode)
-            {
-                logger.LogError("Error in get symbol data");
-                Console.WriteLine("Error in get symbol data");
+            var response = await GetLatestSymbolsResponseAsync(cancellationToken);
+            if (response is null)
                 return;
-            }
 
             var result = await response.Content.ReadAsStringAsync(cancellationToken);
 
@@ -290,13 +307,9 @@ namespace Bource.Services.Crawlers.Tsetmc
             {
                 var symbolData = new SymbolData(item, lastModified);
                 symbolData.FillTransactions(transactionsDataDictionary[symbolData.InsCode]);
-
-
-
-
                 data.Add(symbolData);
-
             }
+
             System.Console.WriteLine($"Get symbol transactions Data:{ (DateTime.Now - startDate).TotalSeconds}");
             startDate = DateTime.Now;
             await GetLatestClientSymbolDataAsync(data, cancellationToken);
@@ -335,6 +348,8 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             TseSymbolDataProvider.FillOneTimeData(fillSymbolData);
         }
+
+
         private async Task FillSymbolDataAsync(List<FillSymbolData> symbolData, CancellationToken cancellationToken = default(CancellationToken))
         {
             HttpClientHandler handler = new HttpClientHandler()
@@ -390,6 +405,18 @@ namespace Bource.Services.Crawlers.Tsetmc
 
                 symbol.FillClientValues(columns);
             }
+        }
+        private async Task<HttpResponseMessage> GetLatestSymbolsResponseAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var response = await httpClient.GetAsync("tsev2/data/MarketWatchPlus.aspx", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError("Error in get symbol data");
+                Console.WriteLine("Error in get symbol data");
+                return null;
+            }
+
+            return response;
         }
 
         #endregion

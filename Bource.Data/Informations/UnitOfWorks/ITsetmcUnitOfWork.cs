@@ -17,11 +17,11 @@ namespace Bource.Data.Informations.UnitOfWorks
         Task AddOrUpdateSymbolGroups(List<SymbolGroup> symbolGroups, CancellationToken cancellationToken = default);
         Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default);
         Task AddSymbolData(List<SymbolData> data, CancellationToken cancellationToken = default);
-        Task AddSymbolsIfNotExists(List<Symbol> symbols, CancellationToken cancellationToken = default);
+        Task AddSymbolsRangeAsync(List<Symbol> symbols, CancellationToken cancellationToken = default);
         Task AddTopSupplyAndDemandRangeAsync(List<TopSupplyAndDemand> values, CancellationToken cancellationToken = default);
         Task AddValuesOfMarketsIfNotExistsRangeAsync(List<ValueOfMarket> values, CancellationToken cancellationToken = default);
         Task AppendClosingPriceInfoAsync(List<ClosingPriceInfo> infos, CancellationToken cancellationToken = default);
         Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default);
-        Task UpdateSymbolsAsync(Symbol symbol, CancellationToken cancellationToken = default);
+        Task UpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default);
     }
 }

@@ -48,7 +48,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                 stream2.Write(bytes, 0, bytes.Length);
             }
             stream.Position = 0L;
-            var stream1 = new System.IO.MemoryStream();
             byte[] buffer = new byte[stream.Length];
             stream.Read(buffer, 0, buffer.Length);
             byte[] dst = new byte[buffer.Length + 4];
@@ -57,13 +56,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             return Convert.ToBase64String(dst);
         }
 
-
-        public async Task UpdateSymbolAndSharingAsync(CancellationToken cancellationToken = default(CancellationToken))
-        {
-            var (symbols, shareInfos) = await GetSymbolAndSharingAsync(cancellationToken);
-        }
-
-        private async Task<(List<Symbol>, List<TseShareInfo>)> GetSymbolAndSharingAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<(List<Symbol>, List<TseShareInfo>)> GetSymbolAndSharingAsync()
         {
             var result = await tseClientSoap.InstrumentAndShareAsync(new InstrumentAndShareRequest
             {
@@ -78,7 +71,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             var symbolsText = text[0];
             var sharesText = text[1];
 
-            var symbols = (await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken)).ToDictionary(i => i.InsCode, j => j);
             var responseSymbols = new List<Symbol>();
             var responseShareInfos = new List<TseShareInfo>();
             if (!string.IsNullOrWhiteSpace(symbolsText) && symbolsText != "*")
@@ -87,23 +79,8 @@ namespace Bource.Services.Crawlers.Tsetmc
                 foreach (var item in array)
                 {
                     string[] row = item.Split(',');
-                    Symbol symbol;
-                    if (symbols.ContainsKey(Convert.ToInt64(row[0])))
-                    {
-
-                        symbol = symbols[Convert.ToInt64(row[0])];
-                        symbol.UpdateFromTseClientSoap(row);
-
-                        //await tsetmcUnitOfWork.AddOrUpdateSymbolAsync(symbol, cancellationToken);
-                    }
-
-                    else
-                    {
-                        symbol = new Symbol(row);
-                        //await tsetmcUnitOfWork.AddOrUpdateSymbolAsync(symbol, cancellationToken);
-                    }
+                    Symbol symbol = new Symbol(row);
                     responseSymbols.Add(symbol);
-
                 }
             }
             if (!string.IsNullOrEmpty(sharesText))
@@ -111,13 +88,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 string[] array2 = sharesText.Split(';');
                 for (int j = 0; j < array2.Length; j++)
                 {
-                    string[] row = array2[j].Split(',');
-                    TseShareInfo tseShareInfo = new TseShareInfo();
-                    tseShareInfo.Idn = Convert.ToInt64(row[0].ToString());
-                    tseShareInfo.InsCode = Convert.ToInt64(row[1].ToString());
-                    tseShareInfo.DEven = Convert.ToInt32(row[2].ToString());
-                    tseShareInfo.NumberOfShareNew = Convert.ToDecimal(row[3].ToString());
-                    tseShareInfo.NumberOfShareOld = Convert.ToDecimal(row[4].ToString());
+                    TseShareInfo tseShareInfo = new(array2[j]);
                     responseShareInfos.Add(tseShareInfo);
                 }
 
@@ -227,7 +198,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         public async Task GetInsturmentsClosingPriceAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            var (symbols, shareInfos) = await GetSymbolAndSharingAsync(cancellationToken);
+            var (symbols, shareInfos) = await GetSymbolAndSharingAsync();
 
             foreach (var item in symbols)
             {

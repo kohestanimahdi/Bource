@@ -1,4 +1,5 @@
 ﻿using Bource.Common.Utilities;
+using Bource.Models.Data.Enums;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
 
@@ -14,7 +15,7 @@ namespace Bource.Models.Data.Common
         {
             UpdateFromTseClientSoap(array);
         }
-
+        public SymbolExistInType ExistInType { get; set; }
         public string Name { get; set; }
         public string Sign { get; set; }
         public string LatinName { get; set; }
@@ -36,7 +37,7 @@ namespace Bource.Models.Data.Common
 
 
         [BsonIgnore]
-        public string InstrumentID
+        public string InstrumentId
         {
             get
             {
@@ -151,13 +152,13 @@ namespace Bource.Models.Data.Common
             GroupName = nodes[23].GetText();
             SubGroupCode = nodes[25].GetText();
             SubGroupName = nodes[27].GetText();
+            //ExistInType = SymbolExistInType.Tsetmc;
         }
 
         public void UpdateFromTseClientSoap(string[] array)
         {
-
             InsCode = Convert.ToInt64(array[0].ToString());
-            InstrumentID = array[1].ToString();
+            InstrumentId = array[1].ToString();
             LatinSymbol = array[2].ToString();
             LatinName = array[3].ToString();
             CompanyCode = array[4].ToString();
@@ -174,6 +175,45 @@ namespace Bource.Models.Data.Common
             CSecVal = array[15].ToString();
             CSoSecVal = array[16].ToString();
             YVal = array[17].ToString();
+            ExistInType = SymbolExistInType.TseClient;
+        }
+
+        public void UpdateFromTseClient(Symbol symbol)
+        {
+
+            InsCode = symbol.InsCode;
+            InstrumentId = symbol.InstrumentId;
+            LatinSymbol = symbol.LatinSymbol;
+            LatinName = symbol.LatinName;
+            CompanyCode = symbol.CompanyCode;
+            Sign = symbol.Sign;
+            Name = symbol.Name;
+            CIsin = symbol.CIsin;
+            DEven = symbol.DEven;
+            Flow = symbol.Flow;
+            LSoc30 = symbol.LSoc30;
+            CGdSVal = symbol.CGdSVal;
+            CGrValCot = symbol.CGrValCot;
+            YMarNSC = symbol.YMarNSC;
+            CComVal = symbol.CComVal;
+            CSecVal = symbol.CSecVal;
+            CSoSecVal = symbol.CSoSecVal;
+            YVal = symbol.YVal;
+            if (ExistInType != SymbolExistInType.Both)
+                ExistInType = SymbolExistInType.TseClient;
+        }
+
+        public void UpdateFromTsetmc(Symbol symbol)
+        {
+            InsCode = symbol.InsCode;
+            Code12 = symbol.Code12;
+            Name = symbol.Name;
+            Sign = symbol.Sign;
+            GroupId = symbol.GroupId;
+            ExistInType = symbol.ExistInType;
+
+            if (ExistInType != SymbolExistInType.Both)
+                ExistInType = SymbolExistInType.Tsetmc;
         }
     }
 

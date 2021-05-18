@@ -21,9 +21,12 @@ namespace Bource.Console
             //var fipIran = new FipiranCrawlerService(httpClient);
             //fipIran.GetAssociations().GetAwaiter().GetResult();
 
-            var tseClient = new TseClientService();
+            var TseSymbolDataProvider = new TseSymbolDataProvider(httpClient);
+            TseSymbolDataProvider.AddOrUpdateSymbols().GetAwaiter().GetResult();
+
+            //var tseClient = new TseClientService();
             //tseClient.Test().GetAwaiter().GetResult();
-            tseClient.GetInsturmentsClosingPriceAsync().GetAwaiter().GetResult();
+            //tseClient.GetInsturmentsClosingPriceAsync().GetAwaiter().GetResult();
             //tseClient.UpdateSymbolAndSharingAsync().GetAwaiter().GetResult();
 
             //var tse = new Services.Crawlers.Tsetmc.TsetmcCrawlerService(httpClient);
