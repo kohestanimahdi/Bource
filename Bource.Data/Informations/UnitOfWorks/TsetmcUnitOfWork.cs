@@ -2,6 +2,7 @@
 using Bource.Data.Informations.Repositories;
 using Bource.Data.Informations.Repositories.Tsetmc;
 using Bource.Models.Data.Common;
+using Bource.Models.Data.Enums;
 using Bource.Models.Data.Tsetmc;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -30,6 +31,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly CapitalIncreaseRepository capitalIncrease;
         private readonly IndicatorRepository indicatorRepository;
         private readonly SelectedIndicatorRepository selectedIndicatorRepository;
+        private readonly ClosingPriceInfoRepository closingPriceInfoRepository;
 
         public TsetmcUnitOfWork(IOptionsSnapshot<ApplicationSetting> options)
         {
@@ -45,6 +47,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             capitalIncrease = new(options.Value.mongoDbSetting);
             indicatorRepository = new(options.Value.mongoDbSetting);
             selectedIndicatorRepository = new(options.Value.mongoDbSetting);
+            closingPriceInfoRepository = new(options.Value.mongoDbSetting);
         }
 
         public TsetmcUnitOfWork(MongoDbSetting mongoDbSetting)
@@ -61,6 +64,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             capitalIncrease = new(mongoDbSetting);
             indicatorRepository = new(mongoDbSetting);
             selectedIndicatorRepository = new(mongoDbSetting);
+            closingPriceInfoRepository = new(mongoDbSetting);
         }
 
         public async Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default(CancellationToken))
@@ -129,6 +133,14 @@ namespace Bource.Data.Informations.UnitOfWorks
                 if (oldSymbol is null)
                     await symbolRepository.AddAsync(symbol, cancellationToken);
             }
+        }
+
+        public async Task AddOrUpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (await symbolRepository.Table.Find(i => i.IId == symbol.IId).AnyAsync(cancellationToken))
+                await symbolRepository.UpdateAsync(symbol, cancellationToken);
+            else
+                await symbolRepository.AddAsync(symbol, cancellationToken);
         }
 
         public Task UpdateSymbolsAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
@@ -216,6 +228,21 @@ namespace Bource.Data.Informations.UnitOfWorks
             }
 
             await capitalIncrease.AddRangeAsync(itemToSave, cancellationToken);
+        }
+
+        public async Task AppendClosingPriceInfoAsync(List<ClosingPriceInfo> infos, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (!infos.Any()) return;
+
+            long InsCode = infos.First().InsCode;
+            if (infos.Any(i => i.InsCode != InsCode))
+                throw new ArgumentException("All InsCodes must be same...");
+
+            var closingPriceTypes = infos.First().Type;
+            if (infos.Any(i => i.Type != closingPriceTypes))
+                throw new ArgumentException("All Types must be same...");
+
+            await closingPriceInfoRepository.AppendAsync(InsCode, closingPriceTypes, infos, cancellationToken);
         }
     }
 }

@@ -11,6 +11,7 @@ namespace Bource.Models.Data.Tsetmc
         {
 
         }
+
         public SelectedIndicator(string iid, HtmlNodeCollection tds)
         {
             var title = tds[0].GetText().Split('-');
@@ -23,6 +24,7 @@ namespace Bource.Models.Data.Tsetmc
             Max = tds[5].ConvertToDecimal();
             Min = tds[6].ConvertToDecimal();
         }
+
         public string Title { get; set; }
         public string IId { get; set; }
 

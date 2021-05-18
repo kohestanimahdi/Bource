@@ -1,4 +1,5 @@
 ﻿using Bource.Models.Data.Common;
+using Bource.Models.Data.Enums;
 using Bource.Models.Data.Tsetmc;
 using System.Collections.Generic;
 using System.Threading;
@@ -15,7 +16,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         Task AddMarketWatcherMessageIfNotExistsRangeAsync(List<MarketWatcherMessage> messages, CancellationToken cancellationToken = default);
 
         Task AddNewNaturalAndLegalEntity(string iid, List<NaturalAndLegalEntity> entities, CancellationToken cancellationToken = default);
-
+        Task AddOrUpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default);
         Task AddOrUpdateSymbolGroups(List<SymbolGroup> symbolGroups, CancellationToken cancellationToken = default);
         Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default);
         Task AddSymbolData(List<SymbolData> data, CancellationToken cancellationToken = default);
@@ -25,7 +26,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         Task AddTopSupplyAndDemandRangeAsync(List<TopSupplyAndDemand> values, CancellationToken cancellationToken = default);
 
         Task AddValuesOfMarketsIfNotExistsRangeAsync(List<ValueOfMarket> values, CancellationToken cancellationToken = default);
-
+        Task AppendClosingPriceInfoAsync(List<ClosingPriceInfo> infos, CancellationToken cancellationToken = default);
         Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default);
 
         Task UpdateSymbolsAsync(Symbol symbol, CancellationToken cancellationToken = default);

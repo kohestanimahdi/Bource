@@ -21,24 +21,26 @@ namespace Bource.Console
             //var fipIran = new FipiranCrawlerService(httpClient);
             //fipIran.GetAssociations().GetAwaiter().GetResult();
 
-            //var tseClient = new TseClientService();
+            var tseClient = new TseClientService();
             //tseClient.Test().GetAwaiter().GetResult();
+            tseClient.GetInsturmentsClosingPriceAsync().GetAwaiter().GetResult();
+            //tseClient.UpdateSymbolAndSharingAsync().GetAwaiter().GetResult();
 
-            var tse = new Services.Crawlers.Tsetmc.TsetmcCrawlerService(httpClient);
+            //var tse = new Services.Crawlers.Tsetmc.TsetmcCrawlerService(httpClient);
 
             //
             //tse.GetAllCapitalIncreaseAsync().GetAwaiter().GetResult();
 
-            try
-            {
-                tse.GetSelectedIndicatorAsync().GetAwaiter().GetResult();
+            //try
+            //{
+            //    tse.GetSelectedIndicatorAsync().GetAwaiter().GetResult();
 
-            }
-            catch (Exception ex)
-            {
+            //}
+            //catch (Exception ex)
+            //{
 
-                throw;
-            }
+            //    throw;
+            //}
             //tse.SaveSymbolData().GetAwaiter().GetResult();
             //var t3 = Task.Run(() =>
             //{
