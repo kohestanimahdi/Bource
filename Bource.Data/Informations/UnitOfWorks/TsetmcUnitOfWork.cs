@@ -69,7 +69,7 @@ namespace Bource.Data.Informations.UnitOfWorks
 
         public async Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var indicators = selectedIndicators.Select(i => new Indicator { IId = i.IId, Title = i.Title }).ToList();
+            var indicators = selectedIndicators.Select(i => new Indicator { InsCode = i.InsCode, Title = i.Title }).ToList();
             await indicatorRepository.AddIfNotExistsAsync(indicators, cancellationToken);
 
             await selectedIndicatorRepository.AddRangeAsync(selectedIndicators, cancellationToken);
@@ -129,7 +129,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             var oldSymbols = await symbolRepository.GetAllAsync(cancellationToken);
             foreach (var symbol in symbols)
             {
-                var oldSymbol = oldSymbols.SingleOrDefault(i => i.IId == symbol.IId);
+                var oldSymbol = oldSymbols.SingleOrDefault(i => i.InsCode == symbol.InsCode);
                 if (oldSymbol is null)
                     await symbolRepository.AddAsync(symbol, cancellationToken);
             }
@@ -137,7 +137,7 @@ namespace Bource.Data.Informations.UnitOfWorks
 
         public async Task AddOrUpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (await symbolRepository.Table.Find(i => i.IId == symbol.IId).AnyAsync(cancellationToken))
+            if (await symbolRepository.Table.Find(i => i.InsCode == symbol.InsCode).AnyAsync(cancellationToken))
                 await symbolRepository.UpdateAsync(symbol, cancellationToken);
             else
                 await symbolRepository.AddAsync(symbol, cancellationToken);
@@ -162,7 +162,7 @@ namespace Bource.Data.Informations.UnitOfWorks
                 startDate = DateTime.Now;
                 foreach (var item in data)
                 {
-                    var symbolData = todayItems.Where(i => i.IId == item.IId).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
+                    var symbolData = todayItems.Where(i => i.InsCode == item.InsCode).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
 
                     if (symbolData is null || !symbolData.Equals(item))
                     {
@@ -179,8 +179,8 @@ namespace Bource.Data.Informations.UnitOfWorks
 
                 var symbols = data.Select(i => new Symbol
                 {
-                    IId = i.IId,
-                    Code12 = i.InsCode,
+                    InsCode = i.InsCode,
+                    Code12 = i.SymbolCode,
                     Name = i.Name,
                     Sign = i.Symbol,
                     GroupId = i.SymbolGroup
@@ -202,9 +202,9 @@ namespace Bource.Data.Informations.UnitOfWorks
         public Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))
             => symbolRepository.GetAllAsync(cancellationToken);
 
-        public async Task AddNewNaturalAndLegalEntity(string iid, List<NaturalAndLegalEntity> entities, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task AddNewNaturalAndLegalEntity(long insCode, List<NaturalAndLegalEntity> entities, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var existsItems = await naturalAndLegalEntityRepository.GetNaturalAndLegalEntityOfSymbolAsync(iid, cancellationToken);
+            var existsItems = await naturalAndLegalEntityRepository.GetNaturalAndLegalEntityOfSymbolAsync(insCode, cancellationToken);
             List<NaturalAndLegalEntity> itemToSave = new();
 
             foreach (var entity in entities)
@@ -216,9 +216,9 @@ namespace Bource.Data.Informations.UnitOfWorks
             await naturalAndLegalEntityRepository.AddRangeAsync(itemToSave, cancellationToken);
         }
 
-        public async Task AddCapitalIncreaseAsync(string iid, List<CapitalIncrease> entities, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task AddCapitalIncreaseAsync(long insCode, List<CapitalIncrease> entities, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var existsItems = await capitalIncrease.GetCapitalIncreaseOfSymbolAsync(iid, cancellationToken);
+            var existsItems = await capitalIncrease.GetCapitalIncreaseOfSymbolAsync(insCode, cancellationToken);
             List<CapitalIncrease> itemToSave = new();
 
             foreach (var entity in entities)

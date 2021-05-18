@@ -13,7 +13,7 @@ namespace Bource.Data.Informations.Repositories
         {
         }
 
-        public Task<SymbolData> GetLastById(string iid, CancellationToken cancellationToken = default(CancellationToken))
-            => Table.Find(i => i.IId == iid).SortByDescending(i => i.LastUpdate).FirstOrDefaultAsync(cancellationToken);
+        public Task<SymbolData> GetLastById(long insCode, CancellationToken cancellationToken = default(CancellationToken))
+            => Table.Find(i => i.InsCode == insCode).SortByDescending(i => i.LastUpdate).FirstOrDefaultAsync(cancellationToken);
     }
 }

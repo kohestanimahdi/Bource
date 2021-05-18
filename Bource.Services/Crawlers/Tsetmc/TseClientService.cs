@@ -78,7 +78,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             var symbolsText = text[0];
             var sharesText = text[1];
 
-            var symbols = (await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken)).ToDictionary(i => i.IId, j => j);
+            var symbols = (await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken)).ToDictionary(i => i.InsCode, j => j);
             var responseSymbols = new List<Symbol>();
             var responseShareInfos = new List<TseShareInfo>();
             if (!string.IsNullOrWhiteSpace(symbolsText) && symbolsText != "*")
@@ -88,10 +88,10 @@ namespace Bource.Services.Crawlers.Tsetmc
                 {
                     string[] row = item.Split(',');
                     Symbol symbol;
-                    if (symbols.ContainsKey(row[0]))
+                    if (symbols.ContainsKey(Convert.ToInt64(row[0])))
                     {
 
-                        symbol = symbols[row[0]];
+                        symbol = symbols[Convert.ToInt64(row[0])];
                         symbol.UpdateFromTseClientSoap(row);
 
                         //await tsetmcUnitOfWork.AddOrUpdateSymbolAsync(symbol, cancellationToken);
@@ -306,9 +306,9 @@ namespace Bource.Services.Crawlers.Tsetmc
                     {
                         num2 = num2 * cp[i + 1].PriceYesterday / cp[i].PClosing;
                     }
-                    else if (types == ClosingPriceTypes.CapitalIncrease && cp[i].PClosing != cp[i + 1].PriceYesterday && tseShares.Exists((TseShareInfo p) => p.InsCode.ToString().Equals(symbol.IId) && p.DEven == cp[i + 1].DEven))
+                    else if (types == ClosingPriceTypes.CapitalIncrease && cp[i].PClosing != cp[i + 1].PriceYesterday && tseShares.Exists((TseShareInfo p) => p.InsCode == symbol.InsCode && p.DEven == cp[i + 1].DEven))
                     {
-                        num2 *= tseShares.Find((TseShareInfo p) => p.InsCode.ToString().Equals(symbol.IId) && p.DEven == cp[i + 1].DEven).NumberOfShareOld / tseShares.Find((TseShareInfo p) => p.InsCode.ToString().Equals(symbol.IId) && p.DEven == cp[i + 1].DEven).NumberOfShareNew;
+                        num2 *= tseShares.Find((TseShareInfo p) => p.InsCode == symbol.InsCode && p.DEven == cp[i + 1].DEven).NumberOfShareOld / tseShares.Find((TseShareInfo p) => p.InsCode == symbol.InsCode && p.DEven == cp[i + 1].DEven).NumberOfShareNew;
                     }
                     ClosingPriceInfo closingPriceInfo = new ClosingPriceInfo();
                     closingPriceInfo.InsCode = cp[i].InsCode;

@@ -11,12 +11,12 @@ namespace Bource.Models.Data.Tsetmc
         {
         }
 
-        public CapitalIncrease(string iid, HtmlNodeCollection nodes)
+        public CapitalIncrease(long insCode, HtmlNodeCollection nodes)
         {
             Date = nodes[0].GetAsDateTime();
             NewStock = nodes[1].GetAttributeValueAsDecimal();
             OldStock = nodes[2].GetAttributeValueAsDecimal();
-            IId = iid;
+            InsCode = insCode;
         }
 
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
@@ -25,6 +25,6 @@ namespace Bource.Models.Data.Tsetmc
         public decimal NewStock { get; set; }
         public decimal OldStock { get; set; }
 
-        public string IId { get; set; }
+        public long InsCode { get; set; }
     }
 }

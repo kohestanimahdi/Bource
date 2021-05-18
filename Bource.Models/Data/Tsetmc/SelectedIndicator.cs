@@ -12,11 +12,11 @@ namespace Bource.Models.Data.Tsetmc
 
         }
 
-        public SelectedIndicator(string iid, HtmlNodeCollection tds)
+        public SelectedIndicator(long insCode, HtmlNodeCollection tds)
         {
             var title = tds[0].GetText().Split('-');
             Title = title.Length > 1 ? title[1] : title[0];
-            IId = iid;
+            InsCode = insCode;
             PublishTime = DateTime.Parse(tds[1].GetText());
             Last = tds[2].ConvertToDecimal();
             Change = tds[3].ConvertToNegativePositiveDecimal();
@@ -26,7 +26,7 @@ namespace Bource.Models.Data.Tsetmc
         }
 
         public string Title { get; set; }
-        public string IId { get; set; }
+        public long InsCode { get; set; }
 
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime PublishTime { get; set; }

@@ -10,7 +10,7 @@ namespace Bource.Models.Data.Tsetmc
         {
         }
 
-        public NaturalAndLegalEntity(string iid, string[] items)
+        public NaturalAndLegalEntity(long insCode, string[] items)
         {
             Date = DateTime.ParseExact(items[0], "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture);
             BuyCountNatural = items[1].ConvertToLong();
@@ -25,14 +25,14 @@ namespace Bource.Models.Data.Tsetmc
             BuyPriceLegal = items[10].ConvertToDecimal();
             SellPriceNatural = items[11].ConvertToDecimal();
             SellPriceLegal = items[12].ConvertToDecimal();
-            IId = iid;
+            InsCode = insCode;
             CreateDate = DateTime.Now;
         }
 
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime Date { get; set; }
 
-        public string IId { get; set; }
+        public long InsCode { get; set; }
 
         public long BuyCountNatural { get; set; }
         public long BuyCountLegal { get; set; }

@@ -13,7 +13,7 @@ namespace Bource.Data.Informations.Repositories.Tsetmc
         {
         }
 
-        public Task<List<NaturalAndLegalEntity>> GetNaturalAndLegalEntityOfSymbolAsync(string iid, CancellationToken cancellationToken = default(CancellationToken))
-            => Table.Find(i => i.IId == iid).ToListAsync(cancellationToken);
+        public Task<List<NaturalAndLegalEntity>> GetNaturalAndLegalEntityOfSymbolAsync(long insCode, CancellationToken cancellationToken = default(CancellationToken))
+            => Table.Find(i => i.InsCode == insCode).ToListAsync(cancellationToken);
     }
 }

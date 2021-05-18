@@ -13,7 +13,7 @@ namespace Bource.Data.Informations.Repositories.Tsetmc
         {
         }
 
-        public Task<List<CapitalIncrease>> GetCapitalIncreaseOfSymbolAsync(string iid, CancellationToken cancellationToken = default(CancellationToken))
-            => Table.Find(i => i.IId == iid).ToListAsync(cancellationToken);
+        public Task<List<CapitalIncrease>> GetCapitalIncreaseOfSymbolAsync(long insCode, CancellationToken cancellationToken = default(CancellationToken))
+            => Table.Find(i => i.InsCode == insCode).ToListAsync(cancellationToken);
     }
 }

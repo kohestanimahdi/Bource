@@ -77,7 +77,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             try
             {
-                var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131M&i={symbol.IId}", cancellationToken);
+                var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131M&i={symbol.InsCode}", cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogError("Error in get Symbol Information");
@@ -168,19 +168,19 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             foreach (var symbol in symbols)
             {
-                await GetNaturalAndLegalEntityAsync(symbol.IId, cancellationToken);
+                await GetNaturalAndLegalEntityAsync(symbol.InsCode, cancellationToken);
             }
 
             System.Console.WriteLine($"save NaturalAndLegalEntity :{ (DateTime.Now - startDate).TotalSeconds}");
         }
 
-        private async Task GetNaturalAndLegalEntityAsync(string iid, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task GetNaturalAndLegalEntityAsync(long InsCode, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
                 List<NaturalAndLegalEntity> entities = new();
 
-                var response = await httpClient.GetAsync($"tsev2/data/clienttype.aspx?i={iid}", cancellationToken);
+                var response = await httpClient.GetAsync($"tsev2/data/clienttype.aspx?i={InsCode}", cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogError("Error in get Batural And LegalEntity");
@@ -194,15 +194,15 @@ namespace Bource.Services.Crawlers.Tsetmc
                 var rows = result.Split(";");
                 foreach (var row in rows)
                 {
-                    entities.Add(new NaturalAndLegalEntity(iid, row.Split(",")));
+                    entities.Add(new NaturalAndLegalEntity(InsCode, row.Split(",")));
                 }
 
-                await tsetmcUnitOfWork.AddNewNaturalAndLegalEntity(iid, entities, cancellationToken);
+                await tsetmcUnitOfWork.AddNewNaturalAndLegalEntity(InsCode, entities, cancellationToken);
             }
             catch
             {
                 if (numberOfTries < 2)
-                    await GetNaturalAndLegalEntityAsync(iid, cancellationToken, numberOfTries++);
+                    await GetNaturalAndLegalEntityAsync(InsCode, cancellationToken, numberOfTries++);
                 else
                     throw;
             }
@@ -277,7 +277,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             var symbolsData = pageComponents[2];
             var transactionsData = pageComponents[3];
 
-            var transactionsDataDictionary = transactionsData.Split(";").GroupBy(i => i.Split(",")[0]).ToDictionary(i => i.Key, j => j.ToList());
+            var transactionsDataDictionary = transactionsData.Split(";").GroupBy(i => i.Split(",")[0]).ToDictionary(i => Convert.ToInt64(i.Key), j => j.ToList());
 
             var symbolsSplitted = symbolsData.Split(";");
 
@@ -289,7 +289,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             foreach (var item in symbolsSplitted)
             {
                 var symbolData = new SymbolData(item, lastModified);
-                symbolData.FillTransactions(transactionsDataDictionary[symbolData.IId]);
+                symbolData.FillTransactions(transactionsDataDictionary[symbolData.InsCode]);
 
 
 
@@ -318,7 +318,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
-            var fillSymbolData = symbols.Select(i => new FillSymbolData(i.IId)).ToList();
+            var fillSymbolData = symbols.Select(i => new FillSymbolData(i.InsCode)).ToList();
             List<Task> tasks = new();
             int n = 0;
             int count = fillSymbolData.Count / 15;
@@ -353,7 +353,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         }
         private async Task<FillSymbolData> FillSymbolDataAsync(HttpClient client, FillSymbolData symboldata, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var response = await client.GetAsync($"loader.aspx?ParTree=151311&i={symboldata.IId}", cancellationToken);
+            var response = await client.GetAsync($"loader.aspx?ParTree=151311&i={symboldata.InsCode}", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Error in fill symbol data");
@@ -384,7 +384,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             foreach (var item in clientValues)
             {
                 var columns = item.Split(",");
-                var symbol = symbols.FirstOrDefault(i => i.IId == columns[0]);
+                var symbol = symbols.FirstOrDefault(i => i.InsCode == Convert.ToInt64(columns[0]));
                 if (symbol is null)
                     continue;
 
@@ -651,7 +651,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                     Volume = tds[2].GetAttributeValueAsDecimal(),
                     Value = tds[3].GetAttributeValueAsDecimal(),
                     Count = tds[4].ConvertToLong(),
-                    IId = tds[0].GetQueryString("i", baseUrl),
+                    InsCode = Convert.ToInt64(tds[0].GetQueryString("i", baseUrl)),
                     IsSupply = false
                 });
             }
@@ -659,8 +659,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             foreach (var item in supplytrs)
             {
                 var tds = item.SelectNodes("td");
-                var uri = new Uri(baseUrl + tds[0].SelectSingleNode("a").Attributes["href"].Value);
-                var queryDictionary = System.Web.HttpUtility.ParseQueryString(uri.Query);
                 values.Add(new TopSupplyAndDemand
                 {
                     CreateDate = DateTime.Now,
@@ -670,7 +668,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                     Volume = tds[2].GetAttributeValueAsDecimal(),
                     Value = tds[3].GetAttributeValueAsDecimal(),
                     Count = tds[4].ConvertToLong(),
-                    IId = queryDictionary["i"],
+                    InsCode = Convert.ToInt64(tds[0].GetQueryString("i", baseUrl)),
                     IsSupply = true
                 });
             }
@@ -694,17 +692,17 @@ namespace Bource.Services.Crawlers.Tsetmc
             var startDate = DateTime.Now;
             foreach (var symbol in symbols)
             {
-                await GetCapitalIncreaseAsync(symbol.IId, cancellationToken);
+                await GetCapitalIncreaseAsync(symbol.InsCode, cancellationToken);
             }
 
             System.Console.WriteLine($"save CapitalIncrease :{ (DateTime.Now - startDate).TotalSeconds}");
         }
 
-        private async Task GetCapitalIncreaseAsync(string iid, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task GetCapitalIncreaseAsync(long insCode, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
-                var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131H&i={iid}", cancellationToken);
+                var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131H&i={insCode}", cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogError("Error in Get Capital Increase");
@@ -729,15 +727,15 @@ namespace Bource.Services.Crawlers.Tsetmc
                 foreach (var tr in trs)
                 {
                     var tds = tr.SelectNodes("td");
-                    entities.Add(new CapitalIncrease(iid, tds));
+                    entities.Add(new CapitalIncrease(insCode, tds));
                 }
 
-                await tsetmcUnitOfWork.AddCapitalIncreaseAsync(iid, entities, cancellationToken);
+                await tsetmcUnitOfWork.AddCapitalIncreaseAsync(insCode, entities, cancellationToken);
             }
             catch
             {
                 if (numberOfTries < 2)
-                    await GetCapitalIncreaseAsync(iid, cancellationToken, numberOfTries++);
+                    await GetCapitalIncreaseAsync(insCode, cancellationToken, numberOfTries++);
                 else
                     throw;
             }
@@ -778,8 +776,8 @@ namespace Bource.Services.Crawlers.Tsetmc
             foreach (var tr in trs)
             {
                 var tds = tr.SelectNodes("td");
-                var iid = tds[0].GetQueryString("i", baseUrl);
-                entities.Add(new SelectedIndicator(iid, tds));
+                var insCode = Convert.ToInt64(tds[0].GetQueryString("i", baseUrl));
+                entities.Add(new SelectedIndicator(insCode, tds));
             }
 
             await tsetmcUnitOfWork.AddSelectedIndicatorsAsync(entities, cancellationToken);

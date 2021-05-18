@@ -5,9 +5,9 @@ namespace Bource.Services.Crawlers.Tsetmc.Models
 {
     public class FillSymbolData
     {
-        public FillSymbolData(string iid)
+        public FillSymbolData(long insCode)
         {
-            IId = iid;
+            InsCode = insCode;
         }
 
         public void FillDataFromPage(string html)
@@ -33,7 +33,7 @@ namespace Bource.Services.Crawlers.Tsetmc.Models
                 GroupPE = result.Value.RegexConvertToDecimal();
             }
         }
-        public string IId { get; set; }
+        public long InsCode { get; set; }
 
 
         [Display(Name = "سهام شناور")]

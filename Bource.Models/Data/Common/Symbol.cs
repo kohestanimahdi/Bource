@@ -19,8 +19,7 @@ namespace Bource.Models.Data.Common
         public string Sign { get; set; }
         public string LatinName { get; set; }
 
-
-        public string IId { get; set; }
+        public long InsCode { get; set; }
         public string Code12 { get; set; }
         public string Code5 { get; set; }
         public string Code4 { get; set; }
@@ -34,18 +33,7 @@ namespace Bource.Models.Data.Common
         public string SubGroupName { get; set; }
         public string SubGroupCode { get; set; }
 
-        [BsonIgnore]
-        public long InsCode
-        {
-            get
-            {
-                return System.Convert.ToInt64(IId);
-            }
-            set
-            {
-                IId = value.ToString();
-            }
-        }
+
 
         [BsonIgnore]
         public string InstrumentID

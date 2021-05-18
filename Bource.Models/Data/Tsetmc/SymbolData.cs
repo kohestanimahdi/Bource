@@ -19,8 +19,8 @@ namespace Bource.Models.Data.Tsetmc
 
             var data = dataLine.Split(",");
 
-            IId = data[0];
-            InsCode = data[1];
+            InsCode = Convert.ToInt64(data[0]);
+            SymbolCode = data[1];
             Symbol = data[2].FixPersianLetters();
             Name = data[3].FixPersianLetters();
             FirstPrice = Convert.ToDecimal(data[5]);
@@ -50,19 +50,14 @@ namespace Bource.Models.Data.Tsetmc
             SellTransactions = new List<SymbolTransaction>();
         }
 
-        //[BsonIgnore]
-        public string InsCode { get; set; }
+        public string SymbolCode { get; set; }
 
-        //[BsonIgnore]
-        public string IId { get; set; }
+        public long InsCode { get; set; }
 
-        //[BsonIgnore]
         public string Name { get; set; }
 
-        //[BsonIgnore]
         public string Symbol { get; set; }
 
-        //[BsonIgnore]
         public string SymbolGroup { get; set; }
 
 
