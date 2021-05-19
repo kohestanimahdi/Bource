@@ -20,6 +20,20 @@ namespace Bource.Services.Crawlers.Tsetmc
 {
     public class TsetmcCrawlerService : IScopedDependency
     {
+        private async Task DoFunctionsOnSymbolsWithProgressBar(List<Symbol> symbols, Func<Symbol, CancellationToken, int, Task> func, CancellationToken cancellationToken)
+        {
+            int n = 0;
+            Common.Utilities.ConsoleHelper.WriteProgressBar(n);
+
+            foreach (var symbol in symbols)
+            {
+                await func(symbol, cancellationToken, 0);
+                n++;
+                Common.Utilities.ConsoleHelper.WriteProgressBar((int)(n * 100.0 / symbols.Count), true);
+            }
+            Common.Utilities.ConsoleHelper.WriteProgressBar(100, true);
+        }
+
         #region Properties
         private TimeSpan RequestTimeout => TimeSpan.FromSeconds(2);
 
@@ -62,13 +76,13 @@ namespace Bource.Services.Crawlers.Tsetmc
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task UpdateSymbolAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task UpdateSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
-            foreach (var symbol in symbols)
-                await UpdateSymbolAsync(symbol, cancellationToken);
-
+            await DoFunctionsOnSymbolsWithProgressBar(symbols, UpdateSymbolAsync, cancellationToken);
+            //foreach (var symbol in symbols)
+            //    await UpdateSymbolAsync(symbol, cancellationToken);
         }
 
         private async Task UpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
@@ -195,28 +209,23 @@ namespace Bource.Services.Crawlers.Tsetmc
         /// <returns></returns>
         public async Task GetAllNaturalAndLegalEntityAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            var startDate = DateTime.Now;
 
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
-            System.Console.WriteLine($"Get symbols :{ (DateTime.Now - startDate).TotalSeconds}");
-            startDate = DateTime.Now;
+            await DoFunctionsOnSymbolsWithProgressBar(symbols, GetNaturalAndLegalEntityAsync, cancellationToken);
 
-            foreach (var symbol in symbols)
-            {
-                await GetNaturalAndLegalEntityAsync(symbol.InsCode, cancellationToken);
-            }
+            //foreach (var symbol in symbols)
+            //    await GetNaturalAndLegalEntityAsync(symbol, cancellationToken);
 
-            System.Console.WriteLine($"save NaturalAndLegalEntity :{ (DateTime.Now - startDate).TotalSeconds}");
         }
 
-        private async Task GetNaturalAndLegalEntityAsync(long InsCode, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task GetNaturalAndLegalEntityAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
                 List<NaturalAndLegalEntity> entities = new();
 
-                var response = await httpClient.GetAsync($"tsev2/data/clienttype.aspx?i={InsCode}", cancellationToken);
+                var response = await httpClient.GetAsync($"tsev2/data/clienttype.aspx?i={symbol.InsCode}", cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogError("Error in get Batural And LegalEntity");
@@ -230,15 +239,15 @@ namespace Bource.Services.Crawlers.Tsetmc
                 var rows = result.Split(";");
                 foreach (var row in rows)
                 {
-                    entities.Add(new NaturalAndLegalEntity(InsCode, row.Split(",")));
+                    entities.Add(new NaturalAndLegalEntity(symbol.InsCode, row.Split(",")));
                 }
 
-                await tsetmcUnitOfWork.AddNewNaturalAndLegalEntity(InsCode, entities, cancellationToken);
+                await tsetmcUnitOfWork.AddNewNaturalAndLegalEntity(symbol.InsCode, entities, cancellationToken);
             }
             catch
             {
                 if (numberOfTries < 2)
-                    await GetNaturalAndLegalEntityAsync(InsCode, cancellationToken, numberOfTries + 1);
+                    await GetNaturalAndLegalEntityAsync(symbol, cancellationToken, numberOfTries + 1);
                 else
                     throw;
             }
@@ -363,7 +372,6 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             TseSymbolDataProvider.FillOneTimeData(fillSymbolData);
         }
-
 
         private async Task FillSymbolDataAsync(List<FillSymbolData> symbolData, CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -731,20 +739,17 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
-            var startDate = DateTime.Now;
-            foreach (var symbol in symbols)
-            {
-                await GetCapitalIncreaseAsync(symbol.InsCode, cancellationToken);
-            }
+            await DoFunctionsOnSymbolsWithProgressBar(symbols, GetCapitalIncreaseAsync, cancellationToken);
+            //foreach (var symbol in symbols)
+            //    await GetCapitalIncreaseAsync(symbol, cancellationToken);
 
-            System.Console.WriteLine($"save CapitalIncrease :{ (DateTime.Now - startDate).TotalSeconds}");
         }
 
-        private async Task GetCapitalIncreaseAsync(long insCode, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task GetCapitalIncreaseAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
-                var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131H&i={insCode}", cancellationToken);
+                var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131H&i={symbol.InsCode}", cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogError("Error in Get Capital Increase");
@@ -769,15 +774,15 @@ namespace Bource.Services.Crawlers.Tsetmc
                 foreach (var tr in trs)
                 {
                     var tds = tr.SelectNodes("td");
-                    entities.Add(new CapitalIncrease(insCode, tds));
+                    entities.Add(new CapitalIncrease(symbol.InsCode, tds));
                 }
 
-                await tsetmcUnitOfWork.AddCapitalIncreaseAsync(insCode, entities, cancellationToken);
+                await tsetmcUnitOfWork.AddCapitalIncreaseAsync(symbol.InsCode, entities, cancellationToken);
             }
             catch
             {
                 if (numberOfTries < 2)
-                    await GetCapitalIncreaseAsync(insCode, cancellationToken, numberOfTries + 1);
+                    await GetCapitalIncreaseAsync(symbol, cancellationToken, numberOfTries + 1);
                 else
                     throw;
             }

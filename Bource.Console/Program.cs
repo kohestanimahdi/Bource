@@ -1,8 +1,14 @@
-﻿using Bource.Services.Crawlers.Tsetmc;
+﻿using Bource.Services.Crawlers.FipIran;
+using Bource.Services.Crawlers.Tsetmc;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Bource.Console
 {
@@ -12,87 +18,148 @@ namespace Bource.Console
 
         private static void Main(string[] args)
         {
-            var startDate = DateTime.Now;
+            //Common.Utilities.ConsoleHelper.WriteProgressBar(0);
+            //for (var i = 0; i <= 100; ++i)
+            //{
+            //    Common.Utilities.ConsoleHelper.WriteProgressBar(i, true);
+            //    Thread.Sleep(50);
+            //}
+
+            //System.Console.WriteLine();
+            //Common.Utilities.ConsoleHelper.WriteProgress(0);
+            //for (var i = 0; i <= 100; ++i)
+            //{
+            //    Common.Utilities.ConsoleHelper.WriteProgress(i, true);
+            //    Thread.Sleep(50);
+            //}
+
             HttpClientHandler handler = new HttpClientHandler()
             {
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
             };
             var httpClient = new HttpClient(handler);
-            var tse = new Services.Crawlers.Tsetmc.TsetmcCrawlerService(httpClient);
-            //var fipIran = new FipiranCrawlerService(httpClient);
-            //fipIran.GetAssociations().GetAwaiter().GetResult();
-
-            var TseSymbolDataProvider = new TseSymbolDataProvider(httpClient);
-            TseSymbolDataProvider.AddOrUpdateSymbols().GetAwaiter().GetResult();
-
-            tse.UpdateSymbolAsync().GetAwaiter().GetResult();
-
+            var httpClient2 = new HttpClient(handler);
+            var httpClient3 = new HttpClient(handler);
 
             var tseClient = new TseClientService();
-            //tseClient.Test().GetAwaiter().GetResult();
-            tseClient.GetInsturmentsClosingPriceAsync().GetAwaiter().GetResult();
-            //tseClient.UpdateSymbolAndSharingAsync().GetAwaiter().GetResult();
+            var tse = new TsetmcCrawlerService(httpClient);
+            var fipIran = new FipiranCrawlerService(httpClient2);
+            var TseSymbolDataProvider = new TseSymbolDataProvider(httpClient3);
+
+            int n = -1;
+            string input;
 
 
-            //
-            //tse.GetAllCapitalIncreaseAsync().GetAwaiter().GetResult();
+            PrintTableOfContent();
+            while (n != 0)
+            {
+                System.Console.WriteLine("****************************************************************************");
 
-            //try
-            //{
-            //    tse.GetSelectedIndicatorAsync().GetAwaiter().GetResult();
+                do
+                {
+                    System.Console.WriteLine("Enter Number:");
+                    input = System.Console.ReadLine();
+                } while (!Int32.TryParse(input, out n));
+                var startDate = DateTime.Now;
 
-            //}
-            //catch (Exception ex)
-            //{
+                try
+                {
 
-            //    throw;
-            //}
-            //tse.SaveSymbolData().GetAwaiter().GetResult();
-            //var t3 = Task.Run(() =>
-            //{
-            //    while (true)
-            //    {
-            //        var startTime = DateTime.Now;
+                    switch (n)
+                    {
+                        case 1:
+                            TseSymbolDataProvider.AddOrUpdateSymbols().GetAwaiter().GetResult();
+                            break;
+                        case 2:
+                            tse.UpdateSymbolsAsync().GetAwaiter().GetResult();
+                            break;
+                        case 3:
+                            tse.GetOrUpdateSymbolGroupsAsync().GetAwaiter().GetResult();
+                            break;
+                        case 4:
+                            tse.GetValueOfMarketAsync().GetAwaiter().GetResult();
+                            break;
+                        case 5:
+                            tse.GetMarketAtGlanceAsync().GetAwaiter().GetResult();
+                            break;
+                        case 6:
+                            tse.GetSelectedIndicatorAsync().GetAwaiter().GetResult();
+                            break;
+                        case 7:
+                            tse.GetMarketWatcherMessage().GetAwaiter().GetResult();
+                            break;
+                        case 8:
+                            tse.GetTopSupplyAndDemandAsync().GetAwaiter().GetResult();
+                            break;
+                        case 9:
+                            tse.GetAllNaturalAndLegalEntityAsync().GetAwaiter().GetResult();
+                            break;
+                        case 10:
+                            tse.GetAllCapitalIncreaseAsync().GetAwaiter().GetResult();
+                            break;
+                        case 11:
+                            tseClient.GetInsturmentsClosingPriceAsync().GetAwaiter().GetResult();
+                            break;
+                        case 12:
+                            fipIran.GetAssociations().GetAwaiter().GetResult();
+                            break;
+                        case 13:
+                            fipIran.GetNews(Models.Data.Enums.FipIranNewsTypes.WorldOfEconomy).GetAwaiter().GetResult();
+                            break;
+                        case 14:
+                            fipIran.GetNews(Models.Data.Enums.FipIranNewsTypes.AssembliesAndCompanies).GetAwaiter().GetResult();
+                            break;
+                        case 15:
+                            tse.FillOneTimeDataAsync().GetAwaiter().GetResult();
+                            break;
+                        case 16:
+                            while (true)
+                            {
+                                var t1 = Task.Run(() => tse.GetLatestSymbolDataAsync());
+                                var t2 = Task.Run(() => TseSymbolDataProvider.SaveSymbolDataFromQueue());
+                                t1.Start();
+                                t2.Start();
+                            }
+                            break;
 
-            //        tse.GetCashMarketAtGlanceAsync().GetAwaiter().GetResult();
+                        default:
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogException(ex);
+                }
 
-            //        var finishTime = DateTime.Now;
-            //        if ((finishTime - startTime).TotalSeconds < 1)
-            //            Task.Delay(finishTime - startTime).GetAwaiter().GetResult();
-            //    }
-            //});
 
-            // var t1 = Task.Run(() => tse.SaveSymbolData());
-            // var t2 = Task.Run(() =>
-            // {
-            //     while (true)
-            //     {
-            //         try
-            //         {
-            //             var startTime = DateTime.Now;
+                System.Console.WriteLine($"\nTime:{(DateTime.Now - startDate).TotalSeconds} Second");
 
-            //             tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
+            }
 
-            //             var finishTime = DateTime.Now;
-
-            //             System.Console.WriteLine($"{ (finishTime - startTime).TotalSeconds}");
-            //             System.Console.WriteLine($"*********************************************");
-
-            //             if ((finishTime - startTime).TotalSeconds < 1)
-            //                 Task.Delay(finishTime - startTime).GetAwaiter().GetResult();
-
-            //         }
-            //         catch (Exception ex)
-            //         {
-            //             LogException(ex);
-            //         }
-
-            //     }
-            // });
-
-            System.Console.WriteLine($"All app:{(DateTime.Now - startDate).TotalSeconds}");
         }
 
+        static void PrintTableOfContent()
+        {
+            Common.Utilities.ConsoleHelper.PrintTable(3,
+                "Number", "Operation", "PersianOperation",
+                "1", "Get Symbols", "دریافت لیست نمادها",
+                "2", "Fill Symbol Informations", "تکمیل اطلاعات شناسنامه و معرفی نمادها ",
+                "3", "Get Groups", "اطلاعات گروه نمادها",
+                "4", "Value Of Market", "ارزش بازار",
+                "5", "Market At Glance", "بازار نقدی در یک نگاه",
+                "6", "Selected Indicator", "دریافت لحظه ای شاخص های منتخب",
+                "7", "Market Watcher Message", "پیغام های ناظر بازار",
+                "8", "Top Supply And Demand", "برترین عرضه و تقاضا",
+                "9", "Natural And Legal Entity", "حقیقی و حقوقی",
+                "10", "Capital Increase", "افزایش سرمایه",
+                "11", "Tse Client", "اطلاعات کامل برنامه کلاینت",
+                "12", "Associations FipIran", "اطلاعات مجامع فیپ ایران",
+                "13", "News FipIran WorldOfEconomy", "خبرهای دنیای اقتصاد فیپ ایران",
+                "14", "News FipIran", "خبرهای مجامع و شرکت ها فیپ ایران",
+                "15", "First Time Main Symbol", "اطلاعات پایه روزانه نمادها",
+                "16", "Main Symbol", "اطلاعات پایه نمادها"
+                );
+        }
         public static void LogException(Exception exception)
         {
             lock (lockObject)
@@ -103,6 +170,9 @@ namespace Bource.Console
                 content += $"{exception.StackTrace}{Environment.NewLine}";
                 content += $"***********************************************************************************************{Environment.NewLine}";
                 File.AppendAllText(Path.Combine(Directory.GetCurrentDirectory(), "log.txt"), content);
+                System.Console.ForegroundColor = ConsoleColor.Red;
+                System.Console.WriteLine(content);
+                System.Console.ForegroundColor = ConsoleColor.Black;
             }
         }
     }

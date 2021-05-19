@@ -37,7 +37,8 @@ namespace Bource.Services.Crawlers.FipIran
             baseUrl = "http://www.fipiran.com/";
 
             httpClient.BaseAddress = new Uri(baseUrl);
-
+            LoggerFactory loggerFactory = new LoggerFactory();
+            logger = new Logger<FipiranCrawlerService>(loggerFactory);
             fipiranUnitOfWork = new FipiranUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
         }
 
