@@ -39,23 +39,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             tseClientSoap = new WebServiceTseClientSoapClient(WebServiceTseClientSoapClient.EndpointConfiguration.WebServiceTseClientSoap);
         }
 
-        public static string Compress(string text)
-        {
-            byte[] bytes = Encoding.UTF8.GetBytes(text);
-            MemoryStream stream = new MemoryStream();
-            using (var stream2 = new GZipStream(stream, CompressionMode.Compress, true))
-            {
-                stream2.Write(bytes, 0, bytes.Length);
-            }
-            stream.Position = 0L;
-            byte[] buffer = new byte[stream.Length];
-            stream.Read(buffer, 0, buffer.Length);
-            byte[] dst = new byte[buffer.Length + 4];
-            Buffer.BlockCopy(buffer, 0, dst, 4, buffer.Length);
-            Buffer.BlockCopy(BitConverter.GetBytes(bytes.Length), 0, dst, 0, 4);
-            return Convert.ToBase64String(dst);
-        }
-
         public async Task<(List<Symbol>, List<TseShareInfo>)> GetSymbolAndSharingAsync()
         {
             var result = await tseClientSoap.InstrumentAndShareAsync(new InstrumentAndShareRequest
@@ -96,11 +79,10 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             return (responseSymbols, responseShareInfos);
         }
-
-
         public async Task GetInsturmentsClosingPriceAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var (symbols, shareInfos) = await GetSymbolAndSharingAsync();
+
             List<Task> tasks = new();
             int n = 0;
             int count = symbols.Count / 15;
@@ -108,7 +90,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             while (n < symbols.Count)
             {
                 var subSymbols = symbols.Skip(n).Take(count).ToList();
-                tasks.Add(Task.Run(() => GetInsturmentsClosingPriceAsync(subSymbols, shareInfos, cancellationToken)));
+                tasks.Add(Task.Run(() => GetInsturmentsClosingPricesAsync(subSymbols, shareInfos, cancellationToken)));
                 n += count;
             }
 
@@ -116,18 +98,13 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         }
 
-        private async Task GetInsturmentsClosingPriceAsync(List<Symbol> symbols, List<TseShareInfo> shareInfos, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            foreach (var symbol in symbols)
-            {
-                await GetInsturmentsClosingPriceAsync(symbol, shareInfos, cancellationToken);
-            }
-        }
-        private async Task GetInsturmentsClosingPriceAsync(Symbol symbol, List<TseShareInfo> shareInfos, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task GetInsturmentsClosingPricesAsync(List<Symbol> symbols, List<TseShareInfo> shareInfos, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
-                string inscodeCompress = Compress($"{symbol.InsCode},0,0");
+                var requestText = string.Join(';', symbols.Select(i => $"{i.InsCode},0,0"));
+
+                string inscodeCompress = Common.Utilities.ApplicationHelpers.TseClientCompress(requestText);
 
                 var insturmentClosingPriceObject = await tseClientSoap.DecompressAndGetInsturmentClosingPriceAsync(
                     new DecompressAndGetInsturmentClosingPriceRequest
@@ -166,19 +143,26 @@ namespace Bource.Services.Crawlers.Tsetmc
                         }
                     }
 
-                    var capitalIncreaseAndProfitItems = ConvertToClosingPriceType(symbol, cpList, shareInfos, ClosingPriceTypes.CapitalIncreaseAndProfit);
-                    var capitalIncreaseItems = ConvertToClosingPriceType(symbol, cpList, shareInfos, ClosingPriceTypes.CapitalIncrease);
-                    cpList.ForEach(i => i.Type = ClosingPriceTypes.NoPriceAdjustment);
+                    if (cpList.Any())
+                    {
+                        var symbol = symbols.FirstOrDefault(i => i.InsCode == cpList.First().InsCode);
+                        if (symbol is not null)
+                        {
+                            var capitalIncreaseAndProfitItems = ConvertToClosingPriceType(symbol, cpList, shareInfos, ClosingPriceTypes.CapitalIncreaseAndProfit);
+                            var capitalIncreaseItems = ConvertToClosingPriceType(symbol, cpList, shareInfos, ClosingPriceTypes.CapitalIncrease);
+                            cpList.ForEach(i => i.Type = ClosingPriceTypes.NoPriceAdjustment);
 
-                    await tsetmcUnitOfWork.AppendClosingPriceInfoAsync(cpList, cancellationToken);
-                    await tsetmcUnitOfWork.AppendClosingPriceInfoAsync(capitalIncreaseAndProfitItems, cancellationToken);
-                    await tsetmcUnitOfWork.AppendClosingPriceInfoAsync(capitalIncreaseItems, cancellationToken);
+                            await tsetmcUnitOfWork.AppendClosingPriceInfoAsync(cpList.Where(i => i.ZTotTran != 0).ToList(), cancellationToken);
+                            await tsetmcUnitOfWork.AppendClosingPriceInfoAsync(capitalIncreaseAndProfitItems.Where(i => i.ZTotTran != 0).ToList(), cancellationToken);
+                            await tsetmcUnitOfWork.AppendClosingPriceInfoAsync(capitalIncreaseItems.Where(i => i.ZTotTran != 0).ToList(), cancellationToken);
+                        }
+                    }
                 }
             }
             catch (Exception)
             {
                 if (numberOfTries < 2)
-                    await GetInsturmentsClosingPriceAsync(symbol, shareInfos, cancellationToken, numberOfTries++);
+                    await GetInsturmentsClosingPricesAsync(symbols, shareInfos, cancellationToken, numberOfTries++);
                 else
                     throw;
             }

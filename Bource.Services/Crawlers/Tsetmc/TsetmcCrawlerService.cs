@@ -20,22 +20,10 @@ namespace Bource.Services.Crawlers.Tsetmc
 {
     public class TsetmcCrawlerService : IScopedDependency
     {
-        private async Task DoFunctionsOnSymbolsWithProgressBar(List<Symbol> symbols, Func<Symbol, CancellationToken, int, Task> func, CancellationToken cancellationToken)
-        {
-            int n = 0;
-            Common.Utilities.ConsoleHelper.WriteProgressBar(n);
 
-            foreach (var symbol in symbols)
-            {
-                await func(symbol, cancellationToken, 0);
-                n++;
-                Common.Utilities.ConsoleHelper.WriteProgressBar((int)(n * 100.0 / symbols.Count), true);
-            }
-            Common.Utilities.ConsoleHelper.WriteProgressBar(100, true);
-        }
 
         #region Properties
-        private TimeSpan RequestTimeout => TimeSpan.FromSeconds(2);
+        private TimeSpan RequestTimeout => TimeSpan.FromSeconds(10);
 
         public static string baseUrl = "http://www.tsetmc.com/";
         private readonly HttpClient httpClient;
@@ -80,10 +68,14 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
-            await DoFunctionsOnSymbolsWithProgressBar(symbols, UpdateSymbolAsync, cancellationToken);
+            //await Common.Utilities.ApplicationHelpers.DoFunctionsWithProgressBar<Symbol>(symbols, UpdateSymbolAsync, cancellationToken);
+            await Common.Utilities.ApplicationHelpers.DoFunctionsOFListWithMultiTask<Symbol>(symbols, UpdateSymbolAsync, cancellationToken);
+
             //foreach (var symbol in symbols)
             //    await UpdateSymbolAsync(symbol, cancellationToken);
         }
+
+
 
         private async Task UpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
@@ -131,8 +123,8 @@ namespace Bource.Services.Crawlers.Tsetmc
                 var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131M&i={symbol.InsCode}", cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
-                    logger.LogError("Error in get Symbol Information");
-                    Console.WriteLine("Error in get Symbol Information");
+                    logger.LogError($"Error in get Symbol Information {symbol.InsCode}");
+                    Console.WriteLine($"Error in get Symbol Information {symbol.InsCode}");
                     return;
                 }
                 var html = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -168,8 +160,8 @@ namespace Bource.Services.Crawlers.Tsetmc
                 var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131V&s={symbol.Sign}", cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
-                    logger.LogError("Error in get SymbolInstruction");
-                    Console.WriteLine("Error in get SymbolInstruction");
+                    logger.LogError($"Error in get Symbol Instruction {symbol.InsCode}");
+                    Console.WriteLine($"Error in get Symbol Instruction {symbol.InsCode}");
                     return;
                 }
                 var html = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -212,10 +204,18 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
-            await DoFunctionsOnSymbolsWithProgressBar(symbols, GetNaturalAndLegalEntityAsync, cancellationToken);
+            //await DoFunctionsOnSymbolsWithMultiTask(symbols, GetAllNaturalAndLegalEntityAsync, cancellationToken);
+            await Common.Utilities.ApplicationHelpers.DoFunctionsWithProgressBar<Symbol>(symbols, GetNaturalAndLegalEntityAsync, cancellationToken);
 
             //foreach (var symbol in symbols)
             //    await GetNaturalAndLegalEntityAsync(symbol, cancellationToken);
+
+        }
+        public async Task GetAllNaturalAndLegalEntityAsync(List<Symbol> symbols, CancellationToken cancellationToken = default(CancellationToken))
+        {
+
+            foreach (var symbol in symbols)
+                await GetNaturalAndLegalEntityAsync(symbol, cancellationToken);
 
         }
 
@@ -739,7 +739,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
-            await DoFunctionsOnSymbolsWithProgressBar(symbols, GetCapitalIncreaseAsync, cancellationToken);
+            await Common.Utilities.ApplicationHelpers.DoFunctionsWithProgressBar<Symbol>(symbols, GetCapitalIncreaseAsync, cancellationToken);
             //foreach (var symbol in symbols)
             //    await GetCapitalIncreaseAsync(symbol, cancellationToken);
 

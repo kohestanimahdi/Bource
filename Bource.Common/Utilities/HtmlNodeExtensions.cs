@@ -14,7 +14,7 @@ namespace Bource.Common.Utilities
             => node.ConvertToDecimal() * (node.HasClass("mn") ? -1 : 1);
 
         public static string GetText(this HtmlNode node)
-            => node.InnerText.Replace("&nbsp;", "").Trim().FixPersianLetters();
+            => node.InnerText.Replace("&nbsp;", "").Replace('‌', ' ').Trim().FixPersianLetters();
 
         public static string GetNumberAsText(this string text)
             => text.Trim().FixedNumbersToEn().ToLower().Replace("&nbsp;", "").Replace('(', ' ').Replace(')', ' ').Replace(",", "").Replace("k", "000").Replace("B", "000000000");

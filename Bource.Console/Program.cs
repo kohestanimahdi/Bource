@@ -1,4 +1,5 @@
-﻿using Bource.Services.Crawlers.FipIran;
+﻿using Bource.Services.Crawlers.Codal360;
+using Bource.Services.Crawlers.FipIran;
 using Bource.Services.Crawlers.Tsetmc;
 using System;
 using System.Collections.Generic;
@@ -40,11 +41,13 @@ namespace Bource.Console
             var httpClient = new HttpClient(handler);
             var httpClient2 = new HttpClient(handler);
             var httpClient3 = new HttpClient(handler);
+            var httpClient4 = new HttpClient(handler);
 
             var tseClient = new TseClientService();
             var tse = new TsetmcCrawlerService(httpClient);
             var fipIran = new FipiranCrawlerService(httpClient2);
             var TseSymbolDataProvider = new TseSymbolDataProvider(httpClient3);
+            var codal360CrawlerService = new Codal360CrawlerService(httpClient4);
 
             int n = -1;
             string input;
@@ -121,7 +124,12 @@ namespace Bource.Console
                                 t2.Start();
                             }
                             break;
-
+                        case 17:
+                            codal360CrawlerService.UpdateSymbolsCodalURLAsync().GetAwaiter().GetResult();
+                            break;
+                        case 18:
+                            codal360CrawlerService.UpdateSymbolsCodalImageAsync().GetAwaiter().GetResult();
+                            break;
                         default:
                             break;
                     }

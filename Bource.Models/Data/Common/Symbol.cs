@@ -15,6 +15,14 @@ namespace Bource.Models.Data.Common
         {
             UpdateFromTseClientSoap(array);
         }
+        public string CodalImage { get; set; }
+        public string CodalURL { get; set; }
+        public string CodalCompanyId { get; set; }
+        public string CodalTitle { get; set; }
+        public string CodalType { get; set; }
+        public string CodalClassification { get; set; }
+        public string CodalCode { get; set; }
+
         public SymbolExistInType ExistInType { get; set; }
         public string Name { get; set; }
         public string Sign { get; set; }
@@ -158,23 +166,23 @@ namespace Bource.Models.Data.Common
         public void UpdateFromTseClientSoap(string[] array)
         {
             InsCode = Convert.ToInt64(array[0].ToString());
-            InstrumentId = array[1].ToString();
-            LatinSymbol = array[2].ToString();
-            LatinName = array[3].ToString();
-            CompanyCode = array[4].ToString();
-            Sign = array[5].ToString();
-            Name = array[6].ToString();
-            CIsin = array[7].ToString();
+            InstrumentId = array[1].ToString()?.Replace('‌', ' ');
+            LatinSymbol = array[2].ToString()?.Replace('‌', ' ');
+            LatinName = array[3].ToString()?.Replace('‌', ' ');
+            CompanyCode = array[4].ToString()?.Replace('‌', ' ');
+            Sign = array[5].ToString()?.Replace('‌', ' ');
+            Name = array[6].ToString()?.Replace('‌', ' ');
+            CIsin = array[7].ToString()?.Replace('‌', ' ');
             DEven = Convert.ToInt32(array[8].ToString());
             Flow = Convert.ToByte(array[9].ToString());
-            LSoc30 = array[10].ToString();
-            CGdSVal = array[11].ToString();
-            CGrValCot = array[12].ToString();
-            YMarNSC = array[13].ToString();
-            CComVal = array[14].ToString();
-            CSecVal = array[15].ToString();
-            CSoSecVal = array[16].ToString();
-            YVal = array[17].ToString();
+            LSoc30 = array[10].ToString()?.Replace('‌', ' ');
+            CGdSVal = array[11].ToString()?.Replace('‌', ' ');
+            CGrValCot = array[12].ToString()?.Replace('‌', ' ');
+            YMarNSC = array[13].ToString()?.Replace('‌', ' ');
+            CComVal = array[14].ToString()?.Replace('‌', ' ');
+            CSecVal = array[15].ToString()?.Replace('‌', ' ');
+            CSoSecVal = array[16].ToString()?.Replace('‌', ' ');
+            YVal = array[17].ToString()?.Replace('‌', ' ');
             ExistInType = SymbolExistInType.TseClient;
         }
 
