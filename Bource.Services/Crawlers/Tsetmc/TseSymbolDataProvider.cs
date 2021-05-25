@@ -105,7 +105,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             var tseSymbols = await tsetmcCrawlerService.GetSymbolsAsync(cancellationToken);
             var (tseClientSymbols, _) = await TseClientService.GetSymbolAndSharingAsync();
-            var regex = new System.Text.RegularExpressions.Regex(".*[0-9]");
+            var regex = new System.Text.RegularExpressions.Regex(@"[^0-9]+\d{1}$");
             tseSymbols = tseSymbols.Where(p => !regex.IsMatch(p.Sign)).ToList();
             tseClientSymbols = tseClientSymbols.Where(p => !regex.IsMatch(p.Sign)).ToList();
 

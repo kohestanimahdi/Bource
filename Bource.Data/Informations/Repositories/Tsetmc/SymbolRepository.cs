@@ -1,5 +1,6 @@
 ﻿using Bource.Common.Models;
 using Bource.Models.Data.Common;
+using MongoDB.Driver;
 
 namespace Bource.Data.Informations.Repositories
 {
@@ -8,6 +9,7 @@ namespace Bource.Data.Informations.Repositories
         public SymbolRepository(MongoDbSetting dbSetting)
             : base(dbSetting)
         {
+
         }
     }
 }

@@ -25,6 +25,29 @@ namespace Bource.Data.Informations.Repositories
             var tableName = typeof(TEntity).Name.PluralizingNameConvention();
 
             Table = mongoDatabase.GetCollection<TEntity>(tableName);
+
+            var properties = typeof(TEntity).GetProperties();
+            var insCodeProperty = properties.FirstOrDefault(i => i.Name.ToLower().Equals("inscode"));
+            if (insCodeProperty is not null)
+                CreateIndex(insCodeProperty.Name);
+
+        }
+
+
+        protected void CreateIndex(FieldDefinition<TEntity> field)
+        {
+            var symbolBuilder = Builders<TEntity>.IndexKeys;
+            var indexModel = new CreateIndexModel<TEntity>(symbolBuilder.Ascending(field));
+
+            Table.Indexes.CreateOne(indexModel);
+        }
+
+        protected void CreateIndex(string fieldName)
+        {
+            var symbolBuilder = Builders<TEntity>.IndexKeys;
+            var indexModel = new CreateIndexModel<TEntity>(symbolBuilder.Ascending(fieldName));
+
+            Table.Indexes.CreateOne(indexModel);
         }
 
         #region Async Method
