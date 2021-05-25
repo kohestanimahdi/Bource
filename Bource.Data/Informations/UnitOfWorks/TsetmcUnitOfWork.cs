@@ -17,7 +17,6 @@ namespace Bource.Data.Informations.UnitOfWorks
 {
     public class TsetmcUnitOfWork : ITsetmcUnitOfWork, ISingletonDependency
     {
-        private static DateTime LastSymbolSave = DateTime.Now;
 
         private readonly SymbolGroupRepository symbolGroupRepository;
         private readonly SymbolDataRepository symbolDataRepository;

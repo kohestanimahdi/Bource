@@ -11,6 +11,7 @@ namespace Bource.Data.Informations.Repositories
         public SymbolDataRepository(MongoDbSetting dbSetting)
             : base(dbSetting)
         {
+            CreateAscendingIndex(nameof(SymbolData.LastUpdate));
         }
 
         public Task<SymbolData> GetLastById(long insCode, CancellationToken cancellationToken = default(CancellationToken))
