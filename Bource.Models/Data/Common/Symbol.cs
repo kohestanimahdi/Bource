@@ -166,23 +166,23 @@ namespace Bource.Models.Data.Common
         public void UpdateFromTseClientSoap(string[] array)
         {
             InsCode = Convert.ToInt64(array[0].ToString());
-            InstrumentId = array[1].ToString()?.Replace('‌', ' ');
-            LatinSymbol = array[2].ToString()?.Replace('‌', ' ');
-            LatinName = array[3].ToString()?.Replace('‌', ' ');
-            CompanyCode = array[4].ToString()?.Replace('‌', ' ');
-            Sign = array[5].ToString()?.Replace('‌', ' ');
-            Name = array[6].ToString()?.Replace('‌', ' ');
-            CIsin = array[7].ToString()?.Replace('‌', ' ');
+            InstrumentId = array[1].ToString()?.Replace('‌', ' ').FixPersianLetters();
+            LatinSymbol = array[2].ToString()?.Replace('‌', ' ').FixPersianLetters();
+            LatinName = array[3].ToString()?.Replace('‌', ' ').FixPersianLetters();
+            CompanyCode = array[4].ToString()?.Replace('‌', ' ').FixPersianLetters();
+            Sign = array[5].ToString()?.Replace('‌', ' ').FixPersianLetters();
+            Name = array[6].ToString()?.Replace('‌', ' ').FixPersianLetters();
+            CIsin = array[7].ToString()?.Replace('‌', ' ').FixPersianLetters();
             DEven = Convert.ToInt32(array[8].ToString());
             Flow = Convert.ToByte(array[9].ToString());
-            LSoc30 = array[10].ToString()?.Replace('‌', ' ');
-            CGdSVal = array[11].ToString()?.Replace('‌', ' ');
-            CGrValCot = array[12].ToString()?.Replace('‌', ' ');
-            YMarNSC = array[13].ToString()?.Replace('‌', ' ');
-            CComVal = array[14].ToString()?.Replace('‌', ' ');
-            CSecVal = array[15].ToString()?.Replace('‌', ' ');
-            CSoSecVal = array[16].ToString()?.Replace('‌', ' ');
-            YVal = array[17].ToString()?.Replace('‌', ' ');
+            LSoc30 = array[10].ToString()?.Replace('‌', ' ').FixPersianLetters();
+            CGdSVal = array[11].ToString()?.Replace('‌', ' ').FixPersianLetters();
+            CGrValCot = array[12].ToString()?.Replace('‌', ' ').FixPersianLetters();
+            YMarNSC = array[13].ToString()?.Replace('‌', ' ').FixPersianLetters();
+            CComVal = array[14].ToString()?.Replace('‌', ' ').FixPersianLetters();
+            CSecVal = array[15].ToString()?.Replace('‌', ' ').FixPersianLetters();
+            CSoSecVal = array[16].ToString()?.Replace('‌', ' ').FixPersianLetters();
+            YVal = array[17].ToString()?.Replace('‌', ' ').FixPersianLetters();
             ExistInType = SymbolExistInType.TseClient;
         }
 
@@ -190,23 +190,23 @@ namespace Bource.Models.Data.Common
         {
 
             InsCode = symbol.InsCode;
-            InstrumentId = symbol.InstrumentId;
-            LatinSymbol = symbol.LatinSymbol;
-            LatinName = symbol.LatinName;
-            CompanyCode = symbol.CompanyCode;
-            Sign = symbol.Sign;
-            Name = symbol.Name;
-            CIsin = symbol.CIsin;
+            InstrumentId = symbol.InstrumentId.FixPersianLetters();
+            LatinSymbol = symbol.LatinSymbol.FixPersianLetters();
+            LatinName = symbol.LatinName.FixPersianLetters();
+            CompanyCode = symbol.CompanyCode.FixPersianLetters();
+            Sign = symbol.Sign.FixPersianLetters();
+            Name = symbol.Name.FixPersianLetters();
+            CIsin = symbol.CIsin.FixPersianLetters();
             DEven = symbol.DEven;
             Flow = symbol.Flow;
-            LSoc30 = symbol.LSoc30;
-            CGdSVal = symbol.CGdSVal;
-            CGrValCot = symbol.CGrValCot;
-            YMarNSC = symbol.YMarNSC;
-            CComVal = symbol.CComVal;
-            CSecVal = symbol.CSecVal;
-            CSoSecVal = symbol.CSoSecVal;
-            YVal = symbol.YVal;
+            LSoc30 = symbol.LSoc30.FixPersianLetters();
+            CGdSVal = symbol.CGdSVal.FixPersianLetters();
+            CGrValCot = symbol.CGrValCot.FixPersianLetters();
+            YMarNSC = symbol.YMarNSC.FixPersianLetters();
+            CComVal = symbol.CComVal.FixPersianLetters();
+            CSecVal = symbol.CSecVal.FixPersianLetters();
+            CSoSecVal = symbol.CSoSecVal.FixPersianLetters();
+            YVal = symbol.YVal.FixPersianLetters();
             if (ExistInType != SymbolExistInType.Both)
                 ExistInType = SymbolExistInType.TseClient;
         }
@@ -214,10 +214,10 @@ namespace Bource.Models.Data.Common
         public void UpdateFromTsetmc(Symbol symbol)
         {
             InsCode = symbol.InsCode;
-            Code12 = symbol.Code12;
-            Name = symbol.Name;
-            Sign = symbol.Sign;
-            GroupId = symbol.GroupId;
+            Code12 = symbol.Code12.FixPersianLetters();
+            Name = symbol.Name.FixPersianLetters();
+            Sign = symbol.Sign.FixPersianLetters();
+            GroupId = symbol.GroupId.FixPersianLetters();
             ExistInType = symbol.ExistInType;
 
             if (ExistInType != SymbolExistInType.Both)

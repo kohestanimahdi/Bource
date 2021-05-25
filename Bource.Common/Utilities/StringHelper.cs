@@ -1,4 +1,5 @@
 ﻿using Pluralize.NET.Core;
+using System.Text.RegularExpressions;
 
 namespace Bource.Common.Utilities
 {
@@ -356,7 +357,7 @@ namespace Bource.Common.Utilities
                 text = text.Replace(findString[i], replaceString[i]);
             }
 
-            return text;
+            return text.MergeInsideSpaces();
         }
 
         /// <summary>
@@ -397,5 +398,13 @@ namespace Bource.Common.Utilities
         /// <returns></returns>
         public static string PluralizingNameConvention(this string text)
             => pluralizer.Pluralize(text);
+
+
+        public static string MergeInsideSpaces(this string text)
+        {
+            RegexOptions options = RegexOptions.None;
+            Regex regex = new Regex("[ ]{2,}", options);
+            return regex.Replace(text, " ");
+        }
     }
 }

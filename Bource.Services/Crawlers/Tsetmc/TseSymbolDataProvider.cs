@@ -54,7 +54,10 @@ namespace Bource.Services.Crawlers.Tsetmc
         }
         public static void AddSymbolDataRange(List<SymbolData> data)
         {
+            var startTime = DateTime.Now;
+
             if (oneTimeData.Any())
+            {
                 foreach (var d in data)
                 {
                     if (oneTimeData.ContainsKey(d.InsCode))
@@ -71,6 +74,9 @@ namespace Bource.Services.Crawlers.Tsetmc
                     }
 
                 }
+
+                Console.WriteLine($"Enter to memory list: {(DateTime.Now - startTime).TotalSeconds}");
+            }
 
             SymbolDataQueue.Enqueue(data);
 
@@ -99,6 +105,10 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             var tseSymbols = await tsetmcCrawlerService.GetSymbolsAsync(cancellationToken);
             var (tseClientSymbols, _) = await TseClientService.GetSymbolAndSharingAsync();
+            var regex = new System.Text.RegularExpressions.Regex(".*[0-9]");
+            tseSymbols = tseSymbols.Where(p => !regex.IsMatch(p.Sign) && !p.Sign.EndsWith("ح")).ToList();
+            tseClientSymbols = tseClientSymbols.Where(p => !regex.IsMatch(p.Sign) && !p.Sign.EndsWith("ح")).ToList();
+
             var existsSymbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
             int n = 0;

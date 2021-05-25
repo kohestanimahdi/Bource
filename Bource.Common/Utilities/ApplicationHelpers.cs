@@ -42,11 +42,11 @@ namespace Bource.Common.Utilities
             Common.Utilities.ConsoleHelper.WriteProgressBar(100, true);
         }
 
-        public static Task DoFunctionsOFListWithMultiTask<T>(List<T> symbols, Func<T, CancellationToken, int, Task> func, CancellationToken cancellationToken)
+        public static Task DoFunctionsOFListWithMultiTask<T>(List<T> symbols, Func<T, CancellationToken, int, Task> func, CancellationToken cancellationToken, int numberOfThreads = 5)
         {
             List<Task> tasks = new();
             int n = 0;
-            int count = symbols.Count / 5;
+            int count = symbols.Count / numberOfThreads;
 
             while (n < symbols.Count)
             {

@@ -53,56 +53,65 @@ namespace Bource.Services.Crawlers.Codal360
         }
         public async Task UpdateSymbolsCodalImageAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            var symbols = (await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken)).Where(i => string.IsNullOrWhiteSpace(i.CodalURL)).ToList();
+            var symbols = (await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken)).Where(i => string.IsNullOrWhiteSpace(i.CodalImage) && !string.IsNullOrWhiteSpace(i.CodalURL)).ToList();
 
             await ApplicationHelpers.DoFunctionsOFListWithMultiTask<Symbol>(symbols, UpdateSymbolCodalImageAsync, cancellationToken);
         }
 
         private async Task UpdateSymbolCodalURLAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
-            var response = await httpClient.GetAsync($"fa/search_symbol/?q={symbol.Sign}", cancellationToken);
-            var companyName = symbol.CompanyName?.Split('.')[^1];
-
-            if (symbol.InsCode == 109297506785423)
+            try
             {
+                var response = await httpClient.GetAsync($"fa/search_symbol/?q={symbol.Sign.Trim()}", cancellationToken);
+                var companyName = symbol.CompanyName?.Split('.')[^1]?.Trim();
 
-            }
-            if (!response.IsSuccessStatusCode)
-            {
-                response = await httpClient.GetAsync($"fa/search_symbol/?q={companyName}", cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
-                    logger.LogError($"Error in Get Codal Url {symbol.InsCode}");
-                    Console.WriteLine($"Error in Get Codal Url {symbol.InsCode}");
+                    response = await httpClient.GetAsync($"fa/search_symbol/?q={companyName}", cancellationToken);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        logger.LogError($"Error in Get Codal Url {symbol.InsCode}");
+                        Console.WriteLine($"Error in Get Codal Url {symbol.InsCode}");
+                    }
+
+
                 }
 
+                var result = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            }
-
-            var result = await response.Content.ReadAsStringAsync(cancellationToken);
-
-            var responseObject = Newtonsoft.Json.JsonConvert.DeserializeObject<List<CodalSearchSymbolResponse>>(result);
-            if (responseObject is null || !responseObject.Any())
-            {
-                response = await httpClient.GetAsync($"fa/search_symbol/?q={companyName}", cancellationToken);
-                if (!response.IsSuccessStatusCode)
+                var responseObject = Newtonsoft.Json.JsonConvert.DeserializeObject<List<CodalSearchSymbolResponse>>(result);
+                if (responseObject is null || !responseObject.Any())
                 {
-                    logger.LogError($"Error in Get Codal Url {symbol.InsCode}");
-                    Console.WriteLine($"Error in Get Codal Url {symbol.InsCode}");
+                    response = await httpClient.GetAsync($"fa/search_symbol/?q={companyName}", cancellationToken);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        logger.LogError($"Error in Get Codal Url {symbol.InsCode}");
+                        Console.WriteLine($"Error in Get Codal Url {symbol.InsCode}");
+                        return;
+                    }
+                    result = await response.Content.ReadAsStringAsync(cancellationToken);
+                    responseObject = Newtonsoft.Json.JsonConvert.DeserializeObject<List<CodalSearchSymbolResponse>>(result);
+                }
+                if (responseObject is null || !responseObject.Any())
                     return;
-                }
-                result = await response.Content.ReadAsStringAsync(cancellationToken);
-                responseObject = Newtonsoft.Json.JsonConvert.DeserializeObject<List<CodalSearchSymbolResponse>>(result);
+
+                var item = responseObject.FirstOrDefault(i => i.Symbol.FixPersianLetters().Equals(symbol.Sign.FixPersianLetters()) || i.Title.FixPersianLetters().Equals(companyName.FixPersianLetters()));
+                if (item is null)
+                    return;
+
+                item.UpdateSymbol(symbol, baseUrl);
+                await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
             }
-            if (responseObject is null || !responseObject.Any())
-                return;
-
-            var item = responseObject.FirstOrDefault(i => i.Symbol.FixPersianLetters().Equals(symbol.Sign.FixPersianLetters()) || i.Title.FixPersianLetters().Equals(companyName.FixPersianLetters()));
-            if (item is null)
-                return;
-
-            item.UpdateSymbol(symbol, baseUrl);
-            await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
+            catch (Exception ex)
+            {
+                if (numberOfTries < 2)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    await UpdateSymbolCodalURLAsync(symbol, cancellationToken, numberOfTries + 1);
+                }
+                else
+                    throw;
+            }
         }
 
         private async Task UpdateSymbolCodalURLAsync2(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
@@ -141,8 +150,6 @@ namespace Bource.Services.Crawlers.Codal360
 
         private async Task UpdateSymbolCodalImageAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
-            if (!string.IsNullOrWhiteSpace(symbol.CodalImage))
-                return;
 
             var response = await httpClient.GetAsync(symbol.CodalURL, cancellationToken);
             if (!response.IsSuccessStatusCode)

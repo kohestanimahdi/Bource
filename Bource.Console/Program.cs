@@ -116,13 +116,23 @@ namespace Bource.Console
                             tse.FillOneTimeDataAsync().GetAwaiter().GetResult();
                             break;
                         case 16:
-                            while (true)
+
+                            Task.Run(() =>
                             {
-                                var t1 = Task.Run(() => tse.GetLatestSymbolDataAsync());
-                                var t2 = Task.Run(() => TseSymbolDataProvider.SaveSymbolDataFromQueue());
-                                t1.Start();
-                                t2.Start();
-                            }
+                                while (true) tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
+                            });
+                            Task.Run(() =>
+                            {
+                                while (true)
+                                {
+                                    var time = DateTime.Now;
+                                    TseSymbolDataProvider.SaveSymbolDataFromQueue().GetAwaiter().GetResult();
+                                    var delay = DateTime.Now - time;
+                                    if (delay < TimeSpan.FromSeconds(1))
+                                        Task.Delay(TimeSpan.FromSeconds(1) - delay).GetAwaiter().GetResult();
+                                }
+                            });
+
                             break;
                         case 17:
                             codal360CrawlerService.UpdateSymbolsCodalURLAsync().GetAwaiter().GetResult();

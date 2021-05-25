@@ -23,7 +23,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
 
         #region Properties
-        private TimeSpan RequestTimeout => TimeSpan.FromSeconds(10);
+        private TimeSpan RequestTimeout => TimeSpan.FromSeconds(3);
 
         public static string baseUrl = "http://www.tsetmc.com/";
         private readonly HttpClient httpClient;
@@ -303,7 +303,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         /// <returns></returns>
         public async Task GetLatestSymbolDataAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            var startDate = DateTime.Now;
+            var startTime = DateTime.Now;
 
             var response = await GetLatestSymbolsResponseAsync(cancellationToken);
             if (response is null)
@@ -324,9 +324,6 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             var data = new List<SymbolData>();
 
-            System.Console.WriteLine($"Get symbol Data:{ (DateTime.Now - startDate).TotalSeconds}");
-            startDate = DateTime.Now;
-
             foreach (var item in symbolsSplitted)
             {
                 var symbolData = new SymbolData(item, lastModified);
@@ -334,16 +331,14 @@ namespace Bource.Services.Crawlers.Tsetmc
                 data.Add(symbolData);
             }
 
-            System.Console.WriteLine($"Get symbol transactions Data:{ (DateTime.Now - startDate).TotalSeconds}");
-            startDate = DateTime.Now;
             await GetLatestClientSymbolDataAsync(data, cancellationToken);
-            System.Console.WriteLine($"Get symbol client Data:{ (DateTime.Now - startDate).TotalSeconds}");
-            startDate = DateTime.Now;
+            System.Console.WriteLine($"Get Datas:{(DateTime.Now - startTime).TotalSeconds}");
+
+
 
             // افزودن به لیست دیتاهای امروز و صف برای ذخیره سازی
             TseSymbolDataProvider.AddSymbolDataRange(data);
 
-            System.Console.WriteLine($"Save Data to queue:{(DateTime.Now - startDate).TotalSeconds}");
         }
 
         /// <summary>
