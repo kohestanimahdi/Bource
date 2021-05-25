@@ -53,7 +53,7 @@ namespace Bource.Services.Crawlers.Codal360
         }
         public async Task UpdateSymbolsCodalImageAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            var symbols = (await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken)).Where(i => string.IsNullOrWhiteSpace(i.CodalImage) && !string.IsNullOrWhiteSpace(i.CodalURL)).ToList();
+            var symbols = (await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken)).Where(i => string.IsNullOrWhiteSpace(i.Logo) && !string.IsNullOrWhiteSpace(i.CodalURL)).ToList();
 
             await ApplicationHelpers.DoFunctionsOFListWithMultiTask<Symbol>(symbols, UpdateSymbolCodalImageAsync, cancellationToken);
         }
@@ -172,7 +172,7 @@ namespace Bource.Services.Crawlers.Codal360
             if (source.Equals("/media//logo/logo.png")) return;
 
             var url = new Uri(baseUrl + (source.StartsWith("/") ? source.Remove(0, 1) : source));
-            symbol.CodalImage = url.ToString();
+            symbol.Logo = url.ToString();
             await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
         }
     }

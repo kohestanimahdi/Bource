@@ -32,6 +32,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly IndicatorRepository indicatorRepository;
         private readonly SelectedIndicatorRepository selectedIndicatorRepository;
         private readonly ClosingPriceInfoRepository closingPriceInfoRepository;
+        private readonly SymbolShareHolderRepository symbolShareHolderRepository;
 
         public TsetmcUnitOfWork(IOptionsSnapshot<ApplicationSetting> options)
         {
@@ -48,6 +49,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             indicatorRepository = new(options.Value.mongoDbSetting);
             selectedIndicatorRepository = new(options.Value.mongoDbSetting);
             closingPriceInfoRepository = new(options.Value.mongoDbSetting);
+            symbolShareHolderRepository = new(options.Value.mongoDbSetting);
         }
 
         public TsetmcUnitOfWork(MongoDbSetting mongoDbSetting)
@@ -65,6 +67,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             indicatorRepository = new(mongoDbSetting);
             selectedIndicatorRepository = new(mongoDbSetting);
             closingPriceInfoRepository = new(mongoDbSetting);
+            symbolShareHolderRepository = new(mongoDbSetting);
         }
 
         public async Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default(CancellationToken))
@@ -222,5 +225,8 @@ namespace Bource.Data.Informations.UnitOfWorks
 
             await closingPriceInfoRepository.AppendAsync(InsCode, closingPriceTypes, infos, cancellationToken);
         }
+
+        public Task AddTodaysSymbolShareHoldersAsync(long insCode, List<SymbolShareHolder> items, CancellationToken cancellationToken = default(CancellationToken))
+        => symbolShareHolderRepository.AddTodaysSymbolShareHoldersAsync(insCode, items, cancellationToken);
     }
 }

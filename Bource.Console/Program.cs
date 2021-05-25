@@ -1,4 +1,5 @@
-﻿using Bource.Services.Crawlers.Codal360;
+﻿using Bource.Services.Crawlers.AsanBource;
+using Bource.Services.Crawlers.Codal360;
 using Bource.Services.Crawlers.FipIran;
 using Bource.Services.Crawlers.Tsetmc;
 using System;
@@ -42,12 +43,14 @@ namespace Bource.Console
             var httpClient2 = new HttpClient(handler);
             var httpClient3 = new HttpClient(handler);
             var httpClient4 = new HttpClient(handler);
+            var httpClient5 = new HttpClient(handler);
 
             var tseClient = new TseClientService();
             var tse = new TsetmcCrawlerService(httpClient);
             var fipIran = new FipiranCrawlerService(httpClient2);
             var TseSymbolDataProvider = new TseSymbolDataProvider(httpClient3);
             var codal360CrawlerService = new Codal360CrawlerService(httpClient4);
+            var asanBourceCrawlerService = new AsanBourceCrawlerService(httpClient5);
 
             int n = -1;
             string input;
@@ -135,9 +138,18 @@ namespace Bource.Console
 
                             break;
                         case 17:
-                            codal360CrawlerService.UpdateSymbolsCodalURLAsync().GetAwaiter().GetResult();
+                            tse.GetSymbolsShareHoldersAsync().GetAwaiter().GetResult();
                             break;
                         case 18:
+                            tse.GetSymbolsShareHoldersAsync().GetAwaiter().GetResult();
+                            break;
+                        case 19:
+                            asanBourceCrawlerService.DownloadSymbolsImageAsync().GetAwaiter().GetResult();
+                            break;
+                        case 20:
+                            codal360CrawlerService.UpdateSymbolsCodalURLAsync().GetAwaiter().GetResult();
+                            break;
+                        case 21:
                             codal360CrawlerService.UpdateSymbolsCodalImageAsync().GetAwaiter().GetResult();
                             break;
                         default:
@@ -175,7 +187,11 @@ namespace Bource.Console
                 "13", "News FipIran WorldOfEconomy", "خبرهای دنیای اقتصاد فیپ ایران",
                 "14", "News FipIran", "خبرهای مجامع و شرکت ها فیپ ایران",
                 "15", "First Time Main Symbol", "اطلاعات پایه روزانه نمادها",
-                "16", "Main Symbol", "اطلاعات پایه نمادها"
+                "16", "Main Symbol", "اطلاعات پایه نمادها",
+                "17", "Symbols Share Holders", "اطلاعات سهامداران نماد",
+                "18", "Main Change Active ShareHolders", "سهامداران فعال نماد",
+                "19", "download symbol logo", "دریافت لوگوها",
+                "20", "Codal 360 url", "لینک کدال"
                 );
         }
         public static void LogException(Exception exception)

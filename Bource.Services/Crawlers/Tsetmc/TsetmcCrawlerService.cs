@@ -23,7 +23,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
 
         #region Properties
-        private TimeSpan RequestTimeout => TimeSpan.FromSeconds(3);
+        private TimeSpan RequestTimeout => TimeSpan.FromSeconds(10);
 
         public static string baseUrl = "http://www.tsetmc.com/";
         private readonly HttpClient httpClient;
@@ -209,13 +209,6 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             //foreach (var symbol in symbols)
             //    await GetNaturalAndLegalEntityAsync(symbol, cancellationToken);
-
-        }
-        public async Task GetAllNaturalAndLegalEntityAsync(List<Symbol> symbols, CancellationToken cancellationToken = default(CancellationToken))
-        {
-
-            foreach (var symbol in symbols)
-                await GetNaturalAndLegalEntityAsync(symbol, cancellationToken);
 
         }
 
@@ -825,6 +818,69 @@ namespace Bource.Services.Crawlers.Tsetmc
             await tsetmcUnitOfWork.AddSelectedIndicatorsAsync(entities, cancellationToken);
         }
 
+        #endregion
+
+        #region سهامداران
+
+        public async Task GetSymbolsShareHoldersAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
+            await Common.Utilities.ApplicationHelpers.DoFunctionsOFListWithMultiTask(symbols, GetSymbolShareHoldersAsync, cancellationToken);
+
+        }
+
+        private async Task GetSymbolShareHoldersAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(symbol.CompanyCode))
+                    return;
+
+                var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131T&c={symbol.CompanyCode}", cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                {
+                    logger.LogError("Error in Get Symbol Share Holders");
+                    Console.WriteLine("Error in Get Symbol Share Holders");
+                    return;
+                }
+
+                var html = await response.Content.ReadAsStringAsync(cancellationToken);
+                if (string.IsNullOrWhiteSpace(html))
+                    return;
+
+                var htmlDoc = new HtmlDocument();
+                htmlDoc.LoadHtml(html);
+
+                var table = htmlDoc.DocumentNode.SelectSingleNode("//table[@class='table1']");
+                if (table is null)
+                    return;
+
+                var rows = table.SelectNodes("tbody/tr");
+                if (rows is null)
+                    return;
+
+                var items = new List<SymbolShareHolder>();
+                foreach (var row in rows)
+                    items.Add(new SymbolShareHolder(symbol.InsCode, row));
+
+                if (items.Any())
+                    await tsetmcUnitOfWork.AddTodaysSymbolShareHoldersAsync(symbol.InsCode, items, cancellationToken);
+            }
+            catch (Exception)
+            {
+                if (numberOfTries < 2)
+                    await GetSymbolShareHoldersAsync(symbol, cancellationToken, numberOfTries + 1);
+                else
+                    throw;
+            }
+        }
+
+        public async Task GetChangeOfSharesOfActiveShareHoldersAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
+            await Common.Utilities.ApplicationHelpers.DoFunctionsOFListWithMultiTask(symbols, GetSymbolShareHoldersAsync, cancellationToken);
+
+        }
         #endregion
     }
 }

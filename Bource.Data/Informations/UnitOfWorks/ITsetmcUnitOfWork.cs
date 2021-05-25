@@ -18,6 +18,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default);
         Task AddSymbolData(List<SymbolData> data, CancellationToken cancellationToken = default);
         Task AddSymbolsRangeAsync(List<Symbol> symbols, CancellationToken cancellationToken = default);
+        Task AddTodaysSymbolShareHoldersAsync(long insCode, List<SymbolShareHolder> items, CancellationToken cancellationToken = default);
         Task AddTopSupplyAndDemandRangeAsync(List<TopSupplyAndDemand> values, CancellationToken cancellationToken = default);
         Task AddValuesOfMarketsIfNotExistsRangeAsync(List<ValueOfMarket> values, CancellationToken cancellationToken = default);
         Task AppendClosingPriceInfoAsync(List<ClosingPriceInfo> infos, CancellationToken cancellationToken = default);
