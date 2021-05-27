@@ -877,9 +877,69 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         public async Task GetChangeOfSharesOfActiveShareHoldersAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
-            await Common.Utilities.ApplicationHelpers.DoFunctionsOFListWithMultiTask(symbols, GetSymbolShareHoldersAsync, cancellationToken);
+            var response = await httpClient.GetAsync($"Loader.aspx?ParTree=15131I&t=0", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError("Error in Get Active Symbol Share Holders");
+                Console.WriteLine("Error in Get Active Symbol Share Holders");
+                return;
+            }
 
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (string.IsNullOrWhiteSpace(html))
+                return;
+
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(html);
+
+            var table = htmlDoc.DocumentNode.SelectSingleNode("//table[@class='table1']");
+            if (table is null)
+                return;
+
+            var header = table.SelectNodes("thead/tr/th");
+            if (header is null || header.Count < 2)
+                return;
+
+            var date = header[1].GetAsDateTime();
+            date = new DateTime(date.Year, date.Month, date.Day, DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);
+
+            var rows = table.SelectNodes("tbody/tr");
+            if (rows is null)
+                return;
+
+            var items = new List<ActiveSymbolShareHolder>();
+            ActiveSymbolShareHolder selectedItem = null;
+            foreach (var row in rows)
+            {
+                var tds = row.SelectNodes("td");
+                var div = tds[0].SelectSingleNode("div");
+                if (div is not null)
+                {
+                    if (selectedItem is not null)
+                        items.Add(selectedItem);
+
+                    selectedItem = new ActiveSymbolShareHolder
+                    {
+                        InsCode = Convert.ToInt64(div.GetQueryString("i", baseUrl)),
+                        SymbolName = div.GetText(),
+                        Time = date,
+                        Companies = new List<ActiveSymbolShareHolderCompany>()
+                    };
+                }
+
+                selectedItem.Companies.Add(new ActiveSymbolShareHolderCompany
+                {
+                    Name = tds[0].SelectSingleNode("li").GetText(),
+                    Share = tds[1].ConvertToDecimal(),
+                    ShareChange = tds[1].SelectSingleNode("div")?.ConvertToNegativePositiveDecimal() ?? 0
+                });
+            }
+
+            if (selectedItem is not null)
+                items.Add(selectedItem);
+
+            if (items.Any())
+                await tsetmcUnitOfWork.AddAdtiveSymbolShareHoldersAsync(items, cancellationToken);
         }
         #endregion
     }

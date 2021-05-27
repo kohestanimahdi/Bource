@@ -122,17 +122,20 @@ namespace Bource.Console
 
                             Task.Run(() =>
                             {
-                                while (true) tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
-                            });
-                            Task.Run(() =>
-                            {
-                                while (true)
+                                while (DateTime.Now.Hour >= 9 && DateTime.Now.Hour <= 13)
                                 {
                                     var time = DateTime.Now;
-                                    TseSymbolDataProvider.SaveSymbolDataFromQueue().GetAwaiter().GetResult();
+                                    tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
                                     var delay = DateTime.Now - time;
                                     if (delay < TimeSpan.FromSeconds(1))
                                         Task.Delay(TimeSpan.FromSeconds(1) - delay).GetAwaiter().GetResult();
+                                }
+                            });
+                            Task.Run(() =>
+                            {
+                                while (DateTime.Now.Hour >= 9 && DateTime.Now.Hour <= 15)
+                                {
+                                    TseSymbolDataProvider.SaveSymbolDataFromQueue().GetAwaiter().GetResult();
                                 }
                             });
 
@@ -141,7 +144,7 @@ namespace Bource.Console
                             tse.GetSymbolsShareHoldersAsync().GetAwaiter().GetResult();
                             break;
                         case 18:
-                            tse.GetSymbolsShareHoldersAsync().GetAwaiter().GetResult();
+                            tse.GetChangeOfSharesOfActiveShareHoldersAsync().GetAwaiter().GetResult();
                             break;
                         case 19:
                             asanBourceCrawlerService.DownloadSymbolsImageAsync().GetAwaiter().GetResult();

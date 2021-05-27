@@ -32,6 +32,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly SelectedIndicatorRepository selectedIndicatorRepository;
         private readonly ClosingPriceInfoRepository closingPriceInfoRepository;
         private readonly SymbolShareHolderRepository symbolShareHolderRepository;
+        private readonly ActiveSymbolShareHolderRepository activeSymbolShareHolderRepository;
 
         public TsetmcUnitOfWork(IOptionsSnapshot<ApplicationSetting> options)
         {
@@ -49,6 +50,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             selectedIndicatorRepository = new(options.Value.mongoDbSetting);
             closingPriceInfoRepository = new(options.Value.mongoDbSetting);
             symbolShareHolderRepository = new(options.Value.mongoDbSetting);
+            activeSymbolShareHolderRepository = new(options.Value.mongoDbSetting);
         }
 
         public TsetmcUnitOfWork(MongoDbSetting mongoDbSetting)
@@ -67,6 +69,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             selectedIndicatorRepository = new(mongoDbSetting);
             closingPriceInfoRepository = new(mongoDbSetting);
             symbolShareHolderRepository = new(mongoDbSetting);
+            activeSymbolShareHolderRepository = new(mongoDbSetting);
         }
 
         public async Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default(CancellationToken))
@@ -227,5 +230,8 @@ namespace Bource.Data.Informations.UnitOfWorks
 
         public Task AddTodaysSymbolShareHoldersAsync(long insCode, List<SymbolShareHolder> items, CancellationToken cancellationToken = default(CancellationToken))
         => symbolShareHolderRepository.AddTodaysSymbolShareHoldersAsync(insCode, items, cancellationToken);
+
+        public Task AddAdtiveSymbolShareHoldersAsync(List<ActiveSymbolShareHolder> items, CancellationToken cancellationToken = default(CancellationToken))
+        => activeSymbolShareHolderRepository.AddRangeAsync(items, cancellationToken);
     }
 }
