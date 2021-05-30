@@ -37,10 +37,28 @@ namespace Bource.Common.Utilities
         }
 
         public static long ConvertToLong(this HtmlNode node)
-        => node.SelectSingleNode("text()").InnerText.ConvertToLong();
+        {
+            try
+            {
+                return node.SelectSingleNode("text()").InnerText.ConvertToLong();
+            }
+            catch (NullReferenceException)
+            {
+                return node.InnerText.ConvertToLong();
+            }
+        }
 
         public static decimal ConvertToDecimal(this HtmlNode node)
-        => node.SelectSingleNode("text()").InnerText.ConvertToDecimal();
+        {
+            try
+            {
+                return node.SelectSingleNode("text()").InnerText.ConvertToDecimal();
+            }
+            catch (NullReferenceException)
+            {
+                return node.InnerText.ConvertToDecimal();
+            }
+        }
 
         public static decimal ConvertToDecimal(this string text)
         {
@@ -78,7 +96,12 @@ namespace Bource.Common.Utilities
 
         public static double ConvertToDouble(this HtmlNode node)
         {
-            string text = node.SelectSingleNode("text()").InnerText.GetNumberAsText();
+            string text;
+            if (node.SelectSingleNode("text()") is not null)
+                text = node.SelectSingleNode("text()").InnerText.GetNumberAsText();
+            else
+                text = node.InnerText.GetNumberAsText();
+
             if (string.IsNullOrWhiteSpace(text))
                 return 0;
 

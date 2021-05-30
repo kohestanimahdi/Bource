@@ -26,8 +26,18 @@ namespace Bource.Models.Data.Tsetmc
         }
 
         public string Title { get; set; }
-        public long InsCode { get; set; }
-
+        public long InsCode
+        {
+            get
+            {
+                return Convert.ToInt64(InsCodeValue);
+            }
+            set
+            {
+                InsCodeValue = value.ToString();
+            }
+        }
+        public string InsCodeValue { get; set; }
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime PublishTime { get; set; }
         public decimal Last { get; set; }

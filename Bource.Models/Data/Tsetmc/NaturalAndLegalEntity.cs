@@ -32,8 +32,18 @@ namespace Bource.Models.Data.Tsetmc
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime Date { get; set; }
 
-        public long InsCode { get; set; }
-
+        public long InsCode
+        {
+            get
+            {
+                return Convert.ToInt64(InsCodeValue);
+            }
+            set
+            {
+                InsCodeValue = value.ToString();
+            }
+        }
+        public string InsCodeValue { get; set; }
         public long BuyCountNatural { get; set; }
         public long BuyCountLegal { get; set; }
         public long SellCountNatural { get; set; }

@@ -1,5 +1,6 @@
 ﻿using Bource.Common.Utilities;
 using HtmlAgilityPack;
+using System;
 using System.Text.RegularExpressions;
 
 namespace Bource.Models.Data.Tsetmc
@@ -25,7 +26,18 @@ namespace Bource.Models.Data.Tsetmc
             if (match.Success)
                 ShareId = match.Value.Replace("\'", "").Split(',')[0];
         }
-        public long InsCode { get; set; }
+        public long InsCode
+        {
+            get
+            {
+                return Convert.ToInt64(InsCodeValue);
+            }
+            set
+            {
+                InsCodeValue = value.ToString();
+            }
+        }
+        public string InsCodeValue { get; set; }
         public string Name { get; set; }
         public string ShareId { get; set; }
         public decimal Share { get; set; }

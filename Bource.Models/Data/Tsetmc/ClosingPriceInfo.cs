@@ -36,7 +36,18 @@ namespace Bource.Models.Data.Tsetmc
             }
         }
 
-        public long InsCode { get; set; }
+        public long InsCode
+        {
+            get
+            {
+                return Convert.ToInt64(InsCodeValue);
+            }
+            set
+            {
+                InsCodeValue = value.ToString();
+            }
+        }
+        public string InsCodeValue { get; set; }
         public int DEven { get; set; }
         public decimal PClosing { get; set; }
         public decimal PDrCotVal { get; set; }

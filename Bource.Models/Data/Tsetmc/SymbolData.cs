@@ -53,8 +53,18 @@ namespace Bource.Models.Data.Tsetmc
 
         public string SymbolCode { get; set; }
 
-        public long InsCode { get; set; }
-
+        public long InsCode
+        {
+            get
+            {
+                return Convert.ToInt64(InsCodeValue);
+            }
+            set
+            {
+                InsCodeValue = value.ToString();
+            }
+        }
+        public string InsCodeValue { get; set; }
         public string Name { get; set; }
 
         public string Symbol { get; set; }

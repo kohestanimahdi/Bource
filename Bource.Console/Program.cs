@@ -209,7 +209,7 @@ namespace Bource.Console
                 File.AppendAllText(Path.Combine(Directory.GetCurrentDirectory(), "log.txt"), content);
                 System.Console.ForegroundColor = ConsoleColor.Red;
                 System.Console.WriteLine(content);
-                System.Console.ForegroundColor = ConsoleColor.Black;
+                System.Console.ForegroundColor = ConsoleColor.White;
             }
         }
     }

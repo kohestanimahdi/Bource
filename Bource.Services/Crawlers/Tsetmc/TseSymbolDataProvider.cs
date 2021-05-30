@@ -94,6 +94,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                     {
                         await tsetmcUnitOfWork.AddSymbolData(data, cancellationToken);
                         System.Console.WriteLine($"Save Data to database:{(DateTime.Now - startDate).TotalSeconds}");
+                        System.Console.WriteLine($"Count of Queue:{SymbolDataQueue.Count}");
                     }
                 }
                 else

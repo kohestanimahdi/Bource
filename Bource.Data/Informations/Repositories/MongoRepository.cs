@@ -31,6 +31,10 @@ namespace Bource.Data.Informations.Repositories
             if (insCodeProperty is not null)
                 CreateAscendingIndex(insCodeProperty.Name);
 
+            var insCodeValueProperty = properties.FirstOrDefault(i => i.Name.ToLower().Equals("inscodevalue"));
+            if (insCodeValueProperty is not null)
+                CreateAscendingIndex(insCodeValueProperty.Name);
+
         }
 
 

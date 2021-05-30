@@ -28,7 +28,7 @@ namespace Bource.Models.Data.Common
         public string Sign { get; set; }
         public string LatinName { get; set; }
 
-        public long InsCode { get; set; }
+
         public string Code12 { get; set; }
         public string Code5 { get; set; }
         public string Code4 { get; set; }
@@ -42,6 +42,18 @@ namespace Bource.Models.Data.Common
         public string SubGroupName { get; set; }
         public string SubGroupCode { get; set; }
 
+        public long InsCode
+        {
+            get
+            {
+                return Convert.ToInt64(InsCodeValue);
+            }
+            set
+            {
+                InsCodeValue = value.ToString();
+            }
+        }
+        public string InsCodeValue { get; set; }
 
 
         [BsonIgnore]
