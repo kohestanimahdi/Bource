@@ -23,7 +23,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
 
         #region Properties
-        private TimeSpan RequestTimeout => TimeSpan.FromSeconds(10);
+        private TimeSpan RequestTimeout => TimeSpan.FromSeconds(5);
 
         public static string baseUrl = "http://www.tsetmc.com/";
         private readonly HttpClient httpClient;
@@ -377,23 +377,34 @@ namespace Bource.Services.Crawlers.Tsetmc
 
 
         }
-        private async Task<FillSymbolData> FillSymbolDataAsync(HttpClient client, FillSymbolData symboldata, CancellationToken cancellationToken = default(CancellationToken))
+        private async Task<FillSymbolData> FillSymbolDataAsync(HttpClient client, FillSymbolData symboldata, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
-            var response = await client.GetAsync($"loader.aspx?ParTree=151311&i={symboldata.InsCode}", cancellationToken);
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                logger.LogError("Error in fill symbol data");
-                Console.WriteLine("Error in fill symbol data");
+                var response = await client.GetAsync($"loader.aspx?ParTree=151311&i={symboldata.InsCode}", cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                {
+                    logger.LogError("Error in fill symbol data");
+                    Console.WriteLine("Error in fill symbol data");
+                    return symboldata;
+                }
+
+                var result = await response.Content.ReadAsStringAsync(cancellationToken);
+                if (string.IsNullOrWhiteSpace(result))
+                    return symboldata;
+
+                symboldata.FillDataFromPage(result);
+
                 return symboldata;
             }
+            catch (Exception)
+            {
+                if (numberOfTries < 2)
+                    return await FillSymbolDataAsync(client, symboldata, cancellationToken, numberOfTries + 1);
+                else
+                    throw;
+            }
 
-            var result = await response.Content.ReadAsStringAsync(cancellationToken);
-            if (string.IsNullOrWhiteSpace(result))
-                return symboldata;
-
-            symboldata.FillDataFromPage(result);
-
-            return symboldata;
         }
         private async Task GetLatestClientSymbolDataAsync(List<SymbolData> symbols, CancellationToken cancellationToken = default(CancellationToken))
         {

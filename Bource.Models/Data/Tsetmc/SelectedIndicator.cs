@@ -19,8 +19,8 @@ namespace Bource.Models.Data.Tsetmc
             InsCode = insCode;
             PublishTime = DateTime.Parse(tds[1].GetText());
             Last = tds[2].ConvertToDecimal();
-            Change = tds[3].ConvertToNegativePositiveDecimal();
-            ChangePercent = tds[4].ConvertToNegativePositiveNumber();
+            Change = tds[3].SelectSingleNode("div")?.ConvertToNegativePositiveDecimal() ?? 0;
+            ChangePercent = tds[4].SelectSingleNode("div")?.ConvertToNegativePositiveNumber() ?? 0;
             Max = tds[5].ConvertToDecimal();
             Min = tds[6].ConvertToDecimal();
         }
@@ -38,6 +38,7 @@ namespace Bource.Models.Data.Tsetmc
             }
         }
         public string InsCodeValue { get; set; }
+
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime PublishTime { get; set; }
         public decimal Last { get; set; }

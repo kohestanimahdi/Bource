@@ -35,17 +35,19 @@ namespace Bource.Models.Data.Tsetmc
             YesterdayPrice = Convert.ToDecimal(data[13]);
             EPS = string.IsNullOrWhiteSpace(data[14]) ? null : Convert.ToDecimal(data[14]);
             BaseValue = Convert.ToDecimal(data[15]);
+            Status = Convert.ToInt32(data[17]);
             SymbolGroup = data[18];
             MaxAllowedPrice = Convert.ToDecimal(data[19]);
             MinAllowedPrice = Convert.ToDecimal(data[20]);
             Count = Convert.ToDecimal(data[21]);
             FinishPriceChange = FinishPrice - YesterdayPrice;
             LastPriceChange = NumberOfTransaction == 0 ? 0 : LastPrice - YesterdayPrice;
+            ValueOfMarket = Count * FinishPrice;
 
 
             PercentFinishPriceChange = YesterdayPrice != 0 ? Math.Round(100 * FinishPriceChange / YesterdayPrice, 2) : 0;
             PercentLastPriceChange = NumberOfTransaction == 0 || YesterdayPrice == 0 ? 0 : Math.Round(100 * LastPriceChange / YesterdayPrice, 2);
-            PE = EPS.HasValue && EPS.Value != 0 ? Math.Round(100 * FinishPrice / EPS.Value, 2) : null;
+            PE = EPS.HasValue && EPS.Value != 0 ? Math.Round(FinishPrice / EPS.Value, 2) : null;
 
             BuyTransactions = new List<SymbolTransaction>();
             SellTransactions = new List<SymbolTransaction>();
@@ -74,6 +76,9 @@ namespace Bource.Models.Data.Tsetmc
 
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime LastUpdate { get; set; }
+
+        [Display(Name = "وضعیت")]
+        public int Status { get; set; }
 
         [Display(Name = "تعداد معاملات")]
         public decimal NumberOfTransaction { get; set; }

@@ -52,6 +52,8 @@ namespace Bource.Console
             var codal360CrawlerService = new Codal360CrawlerService(httpClient4);
             var asanBourceCrawlerService = new AsanBourceCrawlerService(httpClient5);
 
+            //tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
+
             int n = -1;
             string input;
 
