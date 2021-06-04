@@ -1,6 +1,8 @@
 using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using Bource.Common.Models;
 using Bource.WebConfiguration.Configuration;
+using Bource.WebConfiguration.Middlewares;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -32,8 +34,10 @@ namespace Bource.JobServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<ApplicationSetting>(Configuration.GetSection(nameof(ApplicationSetting)));
             services.AddCustomHangfire(Configuration.GetConnectionString("RedisHangfire"));
             services.AddControllers();
+            services.AddCrawlerHttpClient(applicationSettings);
         }
         public void ConfigureContainer(ContainerBuilder builder)
         {
@@ -43,18 +47,15 @@ namespace Bource.JobServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.AddBuilders(env, AutofacContainer);
+            AutofacContainer = app.ApplicationServices.GetAutofacRoot();
 
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
+            app.AddCustomResponseHeaders();
 
+            app.UseCustomExceptionHandler();
 
             app.UseHttpsRedirection();
 
             app.UseCors("AllowAllOrigins");
-
 
             app.UseCustomHangfire();
 

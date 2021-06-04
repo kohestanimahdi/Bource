@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Bource.Services\Bource.Services.csproj" />
+    <ProjectReference Include="..\Bource.WebConfiguration\Bource.WebConfiguration.csproj" />
   </ItemGroup>
 
   <ItemGroup>

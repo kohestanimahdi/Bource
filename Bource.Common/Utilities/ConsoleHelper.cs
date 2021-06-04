@@ -42,12 +42,12 @@ namespace Bource.Common.Utilities
         private static void PrintRow(params string[] columns)
         {
             int width = (tableWidth - columns.Length) / columns.Length;
-            string row = "|";
+            StringBuilder row = new("|");
 
             foreach (string column in columns)
-                row += $"{AlignCentre(column, width)}|";
+                row.Append($"{AlignCentre(column, width)}|");
 
-            System.Console.WriteLine(row);
+            System.Console.WriteLine(row.ToString());
         }
 
         private static string AlignCentre(string text, int width)

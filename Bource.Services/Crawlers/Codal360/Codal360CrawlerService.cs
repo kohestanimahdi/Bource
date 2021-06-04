@@ -99,38 +99,6 @@ namespace Bource.Services.Crawlers.Codal360
             }
         }
 
-        private async Task UpdateSymbolCodalURLAsync2(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
-        {
-            if (string.IsNullOrWhiteSpace(symbol.CompanyName))
-                return;
-            var companyName = symbol.CompanyName.Split('.')[^1];
-
-            var response = await httpClient.GetAsync($"fa/publishers?symbol={companyName.Replace(' ', '+')}", cancellationToken);
-            if (!response.IsSuccessStatusCode)
-            {
-                logger.LogError($"Error in Get Codal Url {symbol.InsCode}");
-                return;
-            }
-
-            var html = await response.Content.ReadAsStringAsync(cancellationToken);
-
-            var htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(html);
-
-            var tds = htmlDoc.DocumentNode.SelectNodes("//tbody[@id='template-container']/tr");
-            if (tds is null)
-                return;
-
-            var trs = tds[0].SelectNodes("td/a");
-            if (trs is null || !trs.Any())
-                return;
-
-            var href = trs[0].Attributes["href"].Value;
-
-            var url = new Uri(baseUrl + (href.StartsWith("/") ? href.Remove(0, 1) : href));
-            symbol.CodalURL = url.ToString();
-            await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
-        }
 
         private async Task UpdateSymbolCodalImageAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {

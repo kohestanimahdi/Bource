@@ -257,6 +257,26 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         #region  در یک نگاه نماد
 
+        public async Task ScheduleLatestSymbolData()
+        {
+            await FillOneTimeDataAsync();
+            while (DateTime.Now.Hour >= 8 && DateTime.Now.Minute >= 30 && DateTime.Now.Hour <= 13)
+            {
+                try
+                {
+                    var time = DateTime.Now;
+                    GetLatestSymbolDataAsync().GetAwaiter().GetResult();
+                    var delay = DateTime.Now - time;
+                    if (delay < TimeSpan.FromSeconds(1))
+                        Task.Delay(TimeSpan.FromSeconds(1) - delay).GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "");
+                }
+            }
+        }
+
         /// <summary>
         /// دریافت اطلاعات لحظه ای هر نماد
         /// </summary>
@@ -338,6 +358,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             {
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
             };
+
             var client = new HttpClient(handler);
             client.BaseAddress = new Uri(baseUrl);
 

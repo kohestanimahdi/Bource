@@ -1,9 +1,11 @@
-﻿using Hangfire;
+﻿using Bource.Services.Crawlers.Tsetmc;
+using Hangfire;
 using Hangfire.Dashboard.BasicAuthorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Bource.WebConfiguration.Configuration
 {
@@ -59,7 +61,7 @@ namespace Bource.WebConfiguration.Configuration
             //RecurringJob.AddOrUpdate<PaymentScheduledTask>(nameof(PaymentScheduledTask), app => app.DoTask(), "*/15 * * * *");
             //RecurringJob.AddOrUpdate<PaymentScheduledTask>(nameof(PaymentScheduledTask), app => app.CheckPaymentsStatus(), "0 */1 * * *");
             //RecurringJob.AddOrUpdate<ReminderScheduledTask>(nameof(ReminderScheduledTask), app => app.DoTask(), "0 5-17 * * *");
-            //RecurringJob.AddOrUpdate<TurnDataInitializer>(nameof(TurnDataInitializer), app => app.InitializeData(), "0 0 * * 5");
+            //RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.FillOneTimeDataAsync), app => app.FillOneTimeDataAsync(CancellationToken.None), "0 4 * * *");
         }
     }
 }

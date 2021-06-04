@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Text.Json.Serialization;
 
@@ -23,7 +26,23 @@ namespace Bource.WebConfiguration.Configuration
             });
         }
 
+        public static void AddCrawlerHttpClient(this IServiceCollection services, ApplicationSetting applicationSetting)
+        {
+            HttpClientHandler handler = new()
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            };
 
+            foreach (var crawler in applicationSetting.CrawlerSettings)
+            {
+                services.AddHttpClient(crawler.Key)
+                            .ConfigureHttpClient(client =>
+                            {
+                                client.BaseAddress = new Uri(crawler.Url);
+                                client.Timeout = TimeSpan.FromSeconds(crawler.Timeout);
+                            }).ConfigurePrimaryHttpMessageHandler(() => handler);
+            }
+        }
         public static void AddAllowAllOriginsCors(this IServiceCollection services)
         {
             services.AddCors(o => o.AddPolicy("AllowAllOrigins", b =>
@@ -38,6 +57,7 @@ namespace Bource.WebConfiguration.Configuration
         public static void AddCustomServices(this IServiceCollection services, ApplicationSetting applicationSettings, IConfiguration configuration, string applicationTitle, params Assembly[] assemblies)
         {
             services.Configure<ApplicationSetting>(configuration.GetSection(nameof(ApplicationSetting)));
+
 
             //if (applicationSettings.ImportSetting.UseContext)
             //    services.AddDbContext(configuration);

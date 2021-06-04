@@ -318,6 +318,8 @@ namespace Bource.Models.Data.Tsetmc
                 GroupId = SymbolGroup,
                 ExistInType = Enums.SymbolExistInType.Tsetmc
             };
+
+
     }
 
     public class SymbolTransaction
@@ -334,5 +336,6 @@ namespace Bource.Models.Data.Tsetmc
 
             return false;
         }
+
     }
 }

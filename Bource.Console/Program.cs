@@ -4,30 +4,20 @@ using Bource.Services.Crawlers.AsanBource;
 using Bource.Services.Crawlers.Codal360;
 using Bource.Services.Crawlers.FipIran;
 using Bource.Services.Crawlers.Tsetmc;
+using Bource.WebConfiguration.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Bource.Console
 {
     internal static class Program
     {
-        private static object lockObject = new();
-
         private static void Main(string[] args)
         {
-            HttpClientHandler handler = new HttpClientHandler()
-            {
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
-            };
-
 
             var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
@@ -53,15 +43,7 @@ namespace Bource.Console
              .AddScoped<ITsetmcUnitOfWork, TsetmcUnitOfWork>()
              .AddScoped<IFipiranUnitOfWork, FipiranUnitOfWork>();
 
-            foreach (var crawler in applicationSetting.CrawlerSettings)
-            {
-                serviceProvider.AddHttpClient(crawler.Key)
-                            .ConfigureHttpClient(client =>
-                            {
-                                client.BaseAddress = new Uri(crawler.Url);
-                                client.Timeout = TimeSpan.FromSeconds(crawler.Timeout);
-                            }).ConfigurePrimaryHttpMessageHandler(() => handler);
-            }
+            serviceProvider.AddCrawlerHttpClient(applicationSetting);
 
             serviceProvider.Configure<ApplicationSetting>(configuration.GetSection("ApplicationSettings"));
 
@@ -143,7 +125,6 @@ namespace Bource.Console
                             tse.FillOneTimeDataAsync().GetAwaiter().GetResult();
                             break;
                         case 16:
-
                             Task.Run(() =>
                             {
                                 while (DateTime.Now.Hour >= 9 && DateTime.Now.Hour <= 13)
@@ -156,8 +137,9 @@ namespace Bource.Console
                                         if (delay < TimeSpan.FromSeconds(1))
                                             Task.Delay(TimeSpan.FromSeconds(1) - delay).GetAwaiter().GetResult();
                                     }
-                                    catch
+                                    catch (Exception ex)
                                     {
+                                        logger.LogError(ex, "");
                                     }
                                 }
                             });
