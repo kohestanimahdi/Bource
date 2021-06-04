@@ -64,5 +64,19 @@ namespace Bource.Common.Utilities
             foreach (var symbol in symbols)
                 await func(symbol, cancellationToken, 0);
         }
+
+        public static string HangfirePasswordGenerator(string password)
+        {
+            string result = string.Empty;
+            using (var cryptoProvider = System.Security.Cryptography.SHA1.Create())
+            {
+                byte[] passwordHash = cryptoProvider.ComputeHash(Encoding.UTF8.GetBytes(password));
+                result = "new byte[] { " +
+                   String.Join(",", passwordHash.Select(x => "0x" + x.ToString("x2")).ToArray())
+                    + " } ";
+            }
+
+            return result;
+        }
     }
 }
