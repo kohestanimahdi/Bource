@@ -126,19 +126,22 @@ namespace Bource.Console
                             {
                                 while (DateTime.Now.Hour >= 9 && DateTime.Now.Hour <= 13)
                                 {
-                                    var time = DateTime.Now;
-                                    tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
-                                    var delay = DateTime.Now - time;
-                                    if (delay < TimeSpan.FromSeconds(1))
-                                        Task.Delay(TimeSpan.FromSeconds(1) - delay).GetAwaiter().GetResult();
+                                    try
+                                    {
+                                        var time = DateTime.Now;
+                                        tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
+                                        var delay = DateTime.Now - time;
+                                        if (delay < TimeSpan.FromSeconds(1))
+                                            Task.Delay(TimeSpan.FromSeconds(1) - delay).GetAwaiter().GetResult();
+                                    }
+                                    catch
+                                    {
+                                    }
                                 }
                             });
                             Task.Run(() =>
                             {
-                                while (DateTime.Now.Hour >= 9 && DateTime.Now.Hour <= 15)
-                                {
-                                    TseSymbolDataProvider.SaveSymbolDataFromQueue().GetAwaiter().GetResult();
-                                }
+                                TseSymbolDataProvider.SaveSymbolDataFromQueue().GetAwaiter().GetResult();
                             });
 
                             break;
