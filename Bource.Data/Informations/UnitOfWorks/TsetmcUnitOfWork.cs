@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Bource.Data.Informations.UnitOfWorks
 {
@@ -33,8 +34,8 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly ClosingPriceInfoRepository closingPriceInfoRepository;
         private readonly SymbolShareHolderRepository symbolShareHolderRepository;
         private readonly ActiveSymbolShareHolderRepository activeSymbolShareHolderRepository;
-
-        public TsetmcUnitOfWork(IOptionsSnapshot<ApplicationSetting> options)
+        private readonly ILogger<TsetmcUnitOfWork> logger;
+        public TsetmcUnitOfWork(IOptionsSnapshot<ApplicationSetting> options, ILoggerFactory loggerFactory)
         {
             symbolGroupRepository = new(options.Value.mongoDbSetting);
             symbolDataRepository = new(options.Value.mongoDbSetting);
@@ -51,6 +52,8 @@ namespace Bource.Data.Informations.UnitOfWorks
             closingPriceInfoRepository = new(options.Value.mongoDbSetting);
             symbolShareHolderRepository = new(options.Value.mongoDbSetting);
             activeSymbolShareHolderRepository = new(options.Value.mongoDbSetting);
+
+            logger = loggerFactory?.CreateLogger<TsetmcUnitOfWork>() ?? throw new ArgumentNullException(nameof(loggerFactory));
         }
 
 
@@ -131,7 +134,7 @@ namespace Bource.Data.Informations.UnitOfWorks
 
             var todayItems = await symbolDataRepository.Table.Find(i => i.LastUpdate >= DateTime.Today).ToListAsync(cancellationToken);
 
-            Console.WriteLine($"get  Data1 from db { (DateTime.Now - startDate).TotalSeconds}");
+            logger.LogInformation($"get  Data from database: { (DateTime.Now - startDate).TotalSeconds}");
 
             List<SymbolData> itemsToSave = new();
 
@@ -148,17 +151,12 @@ namespace Bource.Data.Informations.UnitOfWorks
                     }
                 }
 
-                System.Console.WriteLine($"add to list { (DateTime.Now - startDate).TotalSeconds}");
             }
             else
                 itemsToSave = data;
 
 
-            startDate = DateTime.Now;
             await symbolDataRepository.AddRangeAsync(itemsToSave, cancellationToken);
-            System.Console.WriteLine($"save symbol data 1 { (DateTime.Now - startDate).TotalSeconds}");
-
-            Console.WriteLine($"Count of data: {itemsToSave.Count}");
         }
 
         public Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))

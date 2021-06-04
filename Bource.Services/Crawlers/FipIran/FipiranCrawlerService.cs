@@ -14,7 +14,6 @@ namespace Bource.Services.Crawlers.FipIran
 {
     public class FipiranCrawlerService : IFipiranCrawlerService, IScopedDependency
     {
-        private string baseUrl => httpClient.BaseAddress.ToString();
         private readonly HttpClient httpClient;
         private readonly ILogger<FipiranCrawlerService> logger;
         private readonly IFipiranUnitOfWork fipiranUnitOfWork;
@@ -27,7 +26,6 @@ namespace Bource.Services.Crawlers.FipIran
 
             this.fipiranUnitOfWork = fipiranUnitOfWork ?? throw new ArgumentNullException(nameof(fipiranUnitOfWork));
         }
-
 
 
         public async Task GetNews(FipIranNewsTypes type, CancellationToken cancellationToken = default(CancellationToken))
@@ -53,7 +51,6 @@ namespace Bource.Services.Crawlers.FipIran
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError($"Error in Get News Of FipIran {url}");
-                Console.WriteLine($"Error in Get News Of FipIran {url}");
             }
 
             var html = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -78,7 +75,6 @@ namespace Bource.Services.Crawlers.FipIran
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError($"Error in Get News Of FipIran Codal/Invitation");
-                Console.WriteLine($"Error in Get News Of FipIran Codal/Invitation");
             }
 
             var html = await response.Content.ReadAsStringAsync(cancellationToken);

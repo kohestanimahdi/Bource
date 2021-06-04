@@ -26,15 +26,19 @@ namespace Bource.Console
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
             };
 
+
             var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false)
             .AddEnvironmentVariables()
             .Build();
 
+            var applicationSetting = configuration.GetSection("ApplicationSettings").Get<ApplicationSetting>();
+
             var serviceProvider = new ServiceCollection()
              .AddLogging(builder =>
              {
+                 builder.AddConfiguration(configuration.GetSection("Logging"));
                  builder.AddConsole();
                  builder.AddDebug();
              })
@@ -47,36 +51,17 @@ namespace Bource.Console
              .AddScoped<ITsetmcUnitOfWork, TsetmcUnitOfWork>()
              .AddScoped<IFipiranUnitOfWork, FipiranUnitOfWork>();
 
-            serviceProvider.AddHttpClient(nameof(TsetmcCrawlerService))
-            .ConfigureHttpClient(client =>
+            foreach (var crawler in applicationSetting.CrawlerSettings)
             {
-                client.BaseAddress = new Uri("http://www.tsetmc.com/");
-                client.Timeout = TimeSpan.FromSeconds(5);
-            }).ConfigurePrimaryHttpMessageHandler(() => handler);
-
-            serviceProvider.AddHttpClient(nameof(FipiranCrawlerService))
-            .ConfigureHttpClient(client =>
-            {
-                client.BaseAddress = new Uri("http://www.fipiran.com/");
-                client.Timeout = TimeSpan.FromSeconds(5);
-            }).ConfigurePrimaryHttpMessageHandler(() => handler);
-
-            serviceProvider.AddHttpClient(nameof(Codal360CrawlerService))
-            .ConfigureHttpClient(client =>
-            {
-                client.BaseAddress = new Uri("https://codal360.ir/");
-                client.Timeout = TimeSpan.FromSeconds(5);
-            }).ConfigurePrimaryHttpMessageHandler(() => handler);
-
-            serviceProvider.AddHttpClient(nameof(AsanBourceCrawlerService))
-            .ConfigureHttpClient(client =>
-            {
-                client.BaseAddress = new Uri("https://asanbourse.ir/");
-                client.Timeout = TimeSpan.FromSeconds(5);
-            }).ConfigurePrimaryHttpMessageHandler(() => handler);
+                serviceProvider.AddHttpClient(crawler.Key)
+                            .ConfigureHttpClient(client =>
+                            {
+                                client.BaseAddress = new Uri(crawler.Url);
+                                client.Timeout = TimeSpan.FromSeconds(crawler.Timeout);
+                            }).ConfigurePrimaryHttpMessageHandler(() => handler);
+            }
 
             serviceProvider.Configure<ApplicationSetting>(configuration.GetSection("ApplicationSettings"));
-            //serviceProvider.AddTransient<ApplicationSetting>();
 
             var serviceProviderFactory = serviceProvider.BuildServiceProvider();
 
@@ -87,6 +72,7 @@ namespace Bource.Console
             var codal360CrawlerService = serviceProviderFactory.GetService<ICodal360CrawlerService>();
             var asanBourceCrawlerService = serviceProviderFactory.GetService<IAsanBourceCrawlerService>();
 
+            var logger = serviceProviderFactory.GetService<ILoggerFactory>().CreateLogger(nameof(Program));
 
             int n = -1;
             string input;
@@ -95,7 +81,7 @@ namespace Bource.Console
             PrintTableOfContent();
             while (n != 0)
             {
-                System.Console.WriteLine("****************************************************************************");
+                System.Console.WriteLine("\n****************************************************************************");
 
                 do
                 {
@@ -201,11 +187,10 @@ namespace Bource.Console
                 }
                 catch (Exception ex)
                 {
-                    LogException(ex);
+                    logger.LogError(ex, "");
                 }
 
-
-                System.Console.WriteLine($"\nTime:{(DateTime.Now - startDate).TotalSeconds} Second");
+                logger.LogInformation($"Time:{(DateTime.Now - startDate).TotalSeconds} Second");
 
             }
 
@@ -237,20 +222,20 @@ namespace Bource.Console
                 "20", "Codal 360 url", "لینک کدال"
                 );
         }
-        public static void LogException(Exception exception)
-        {
-            lock (lockObject)
-            {
-                var content = $"{DateTime.Now.ToLongTimeString()}{Environment.NewLine}";
-                content += $"{exception.Message}{Environment.NewLine}";
-                content += $"-------------------------------------------------------{Environment.NewLine}";
-                content += $"{exception.StackTrace}{Environment.NewLine}";
-                content += $"***********************************************************************************************{Environment.NewLine}";
-                File.AppendAllText(Path.Combine(Directory.GetCurrentDirectory(), "log.txt"), content);
-                System.Console.ForegroundColor = ConsoleColor.Red;
-                System.Console.WriteLine(content);
-                System.Console.ForegroundColor = ConsoleColor.White;
-            }
-        }
+        //public static void LogException(Exception exception)
+        //{
+        //    lock (lockObject)
+        //    {
+        //        var content = $"{DateTime.Now.ToLongTimeString()}{Environment.NewLine}";
+        //        content += $"{exception.Message}{Environment.NewLine}";
+        //        content += $"-------------------------------------------------------{Environment.NewLine}";
+        //        content += $"{exception.StackTrace}{Environment.NewLine}";
+        //        content += $"***********************************************************************************************{Environment.NewLine}";
+        //        File.AppendAllText(Path.Combine(Directory.GetCurrentDirectory(), "log.txt"), content);
+        //        System.Console.ForegroundColor = ConsoleColor.Red;
+        //        System.Console.WriteLine(content);
+        //        System.Console.ForegroundColor = ConsoleColor.White;
+        //    }
+        //}
     }
 }

@@ -49,15 +49,8 @@ namespace Bource.Services.Crawlers.Tsetmc
         public async Task UpdateSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
-
-            //await Common.Utilities.ApplicationHelpers.DoFunctionsWithProgressBar<Symbol>(symbols, UpdateSymbolAsync, cancellationToken);
             await Common.Utilities.ApplicationHelpers.DoFunctionsOFListWithMultiTask<Symbol>(symbols, UpdateSymbolAsync, cancellationToken);
-
-            //foreach (var symbol in symbols)
-            //    await UpdateSymbolAsync(symbol, cancellationToken);
         }
-
-
 
         private async Task UpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
@@ -106,7 +99,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogError($"Error in get Symbol Information {symbol.InsCode}");
-                    Console.WriteLine($"Error in get Symbol Information {symbol.InsCode}");
                     return;
                 }
                 var html = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -143,7 +135,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogError($"Error in get Symbol Instruction {symbol.InsCode}");
-                    Console.WriteLine($"Error in get Symbol Instruction {symbol.InsCode}");
                     return;
                 }
                 var html = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -186,12 +177,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
-            //await DoFunctionsOnSymbolsWithMultiTask(symbols, GetAllNaturalAndLegalEntityAsync, cancellationToken);
             await Common.Utilities.ApplicationHelpers.DoFunctionsWithProgressBar<Symbol>(symbols, GetNaturalAndLegalEntityAsync, cancellationToken);
-
-            //foreach (var symbol in symbols)
-            //    await GetNaturalAndLegalEntityAsync(symbol, cancellationToken);
-
         }
 
         private async Task GetNaturalAndLegalEntityAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
@@ -204,9 +190,9 @@ namespace Bource.Services.Crawlers.Tsetmc
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogError("Error in get Batural And LegalEntity");
-                    Console.WriteLine("Error in get Batural And LegalEntity");
                     return;
                 }
+
                 var result = await response.Content.ReadAsStringAsync(cancellationToken);
                 if (string.IsNullOrWhiteSpace(result))
                     return;
@@ -308,14 +294,14 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             await GetLatestClientSymbolDataAsync(data, cancellationToken);
 
-            System.Console.WriteLine($"Get Datas From Tse:{(DateTime.Now - startTime).TotalSeconds}");
+            logger.LogInformation($"Get Datas From Tse:{(DateTime.Now - startTime).TotalSeconds}");
 
 
             startTime = DateTime.Now;
             // افزودن به لیست دیتاهای امروز و صف برای ذخیره سازی
             TseSymbolDataProvider.AddSymbolDataToQueue(data);
 
-            System.Console.WriteLine($"Save To Queue:{(DateTime.Now - startTime).TotalSeconds}");
+            logger.LogInformation($"Save To Queue:{(DateTime.Now - startTime).TotalSeconds}");
 
         }
 
@@ -370,7 +356,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogError("Error in fill symbol data");
-                    Console.WriteLine("Error in fill symbol data");
                     return symboldata;
                 }
 
@@ -397,7 +382,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Error in get client symbol data");
-                Console.WriteLine("Error in get client symbol data");
                 return;
             }
 
@@ -419,7 +403,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Error in get symbol data");
-                Console.WriteLine("Error in get symbol data");
                 return null;
             }
 
@@ -435,8 +418,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             var response = await httpClient.GetAsync("Loader.aspx?ParTree=15", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogError("Error in Get Market At Glance ");
-                Console.WriteLine("Error in Get Market At Glance ");
+                logger.LogError("Error in Get Market At Glance");
                 return;
             }
 
@@ -548,7 +530,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Error in Market Watcher Message");
-                Console.WriteLine("Error in Market Watcher Message");
                 return messages;
             }
 
@@ -603,7 +584,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Error in Get value Of Market");
-                Console.WriteLine("Error in Get value Of Market");
                 return values;
             }
 
@@ -656,7 +636,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Error in Get Top Supply And Demand");
-                Console.WriteLine("Error in Get Top Supply And Demand");
                 return values;
             }
 
@@ -724,9 +703,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
             await Common.Utilities.ApplicationHelpers.DoFunctionsWithProgressBar<Symbol>(symbols, GetCapitalIncreaseAsync, cancellationToken);
-            //foreach (var symbol in symbols)
-            //    await GetCapitalIncreaseAsync(symbol, cancellationToken);
-
         }
 
         private async Task GetCapitalIncreaseAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
@@ -737,7 +713,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogError("Error in Get Capital Increase");
-                    Console.WriteLine("Error in Get Capital Increase");
                     return;
                 }
 
@@ -786,7 +761,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Error in Get Selected Indicator");
-                Console.WriteLine("Error in Get Selected Indicator");
                 return;
             }
 
@@ -836,7 +810,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogError("Error in Get Symbol Share Holders");
-                    Console.WriteLine("Error in Get Symbol Share Holders");
                     return;
                 }
 
@@ -877,7 +850,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Error in Get Active Symbol Share Holders");
-                Console.WriteLine("Error in Get Active Symbol Share Holders");
                 return;
             }
 

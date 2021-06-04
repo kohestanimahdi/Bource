@@ -75,7 +75,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                     d.FillData(oneTime.MonthAverageValue, oneTime.FloatingStock, oneTime.GroupPE);
                 }
             }
-            System.Console.WriteLine($"Mapping data:{(DateTime.Now - startTime).TotalSeconds}");
+            logger.LogInformation($"Mapping data:{(DateTime.Now - startTime).TotalSeconds}");
         }
 
         private void AddSymbolDataToMemory(List<SymbolData> data)
@@ -89,14 +89,14 @@ namespace Bource.Services.Crawlers.Tsetmc
                     SymbolDataBag.Add(d);
                 }
             }
-            System.Console.WriteLine($"Add In memory:{(DateTime.Now - startTime).TotalSeconds}");
+            logger.LogInformation($"Add In memory:{(DateTime.Now - startTime).TotalSeconds}");
         }
 
         private async Task AddSymbolDataToDataBase(List<SymbolData> data)
         {
             var startTime = DateTime.Now;
             await tsetmcUnitOfWork.AddSymbolData(data);
-            System.Console.WriteLine($"Add to database:{(DateTime.Now - startTime).TotalSeconds}");
+            logger.LogInformation($"Add to database:{(DateTime.Now - startTime).TotalSeconds}");
 
         }
 

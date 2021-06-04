@@ -27,8 +27,6 @@ namespace Bource.Services.Crawlers.Codal360
             logger = loggerFactory?.CreateLogger<Codal360CrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
             httpClient = httpClientFactory?.CreateClient(nameof(Codal360CrawlerService)) ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
-            httpClient.BaseAddress = new Uri(baseUrl);
-
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
         }
 
@@ -60,7 +58,6 @@ namespace Bource.Services.Crawlers.Codal360
                     if (!response.IsSuccessStatusCode)
                     {
                         logger.LogError($"Error in Get Codal Url {symbol.InsCode}");
-                        Console.WriteLine($"Error in Get Codal Url {symbol.InsCode}");
                     }
 
 
@@ -75,7 +72,6 @@ namespace Bource.Services.Crawlers.Codal360
                     if (!response.IsSuccessStatusCode)
                     {
                         logger.LogError($"Error in Get Codal Url {symbol.InsCode}");
-                        Console.WriteLine($"Error in Get Codal Url {symbol.InsCode}");
                         return;
                     }
                     result = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -91,7 +87,7 @@ namespace Bource.Services.Crawlers.Codal360
                 item.UpdateSymbol(symbol, baseUrl);
                 await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 if (numberOfTries < 2)
                 {
@@ -113,7 +109,6 @@ namespace Bource.Services.Crawlers.Codal360
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError($"Error in Get Codal Url {symbol.InsCode}");
-                Console.WriteLine($"Error in Get Codal Url {symbol.InsCode}");
                 return;
             }
 
@@ -144,7 +139,6 @@ namespace Bource.Services.Crawlers.Codal360
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError($"Error in Get Codal Image {symbol.InsCode}");
-                Console.WriteLine($"Error in Get Codal Image {symbol.InsCode}");
                 return;
             }
 
