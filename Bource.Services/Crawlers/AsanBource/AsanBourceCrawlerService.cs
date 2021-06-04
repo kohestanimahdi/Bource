@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace Bource.Services.Crawlers.AsanBource
 {
-    public class AsanBourceCrawlerService
+    public class AsanBourceCrawlerService : IAsanBourceCrawlerService, IScopedDependency
     {
         private string baseUrl { get; init; }
         private readonly HttpClient httpClient;

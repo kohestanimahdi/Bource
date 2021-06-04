@@ -16,13 +16,14 @@ using System.Threading.Tasks;
 
 namespace Bource.Services.Crawlers.Tsetmc
 {
-    public class TseSymbolDataProvider
+    public class TseSymbolDataProvider : ITseSymbolDataProvider, IScopedDependency
     {
         private readonly ILogger<TsetmcCrawlerService> logger;
         private readonly TsetmcCrawlerService tsetmcCrawlerService;
         private readonly TseClientService TseClientService;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
-        private static readonly List<SymbolData> SymbolData = new();
+        //private static readonly List<SymbolData> SymbolData = new();
+        private static readonly ConcurrentBag<SymbolData> SymbolDataBag = new();
         private static readonly ConcurrentQueue<List<SymbolData>> SymbolDataQueue = new();
         private static readonly Dictionary<long, FillSymbolData> oneTimeData = new();
 
@@ -52,55 +53,113 @@ namespace Bource.Services.Crawlers.Tsetmc
                 if (!oneTimeData.ContainsKey(d.InsCode))
                     oneTimeData[d.InsCode] = d;
         }
-        public static void AddSymbolDataRange(List<SymbolData> data)
+
+        public static void AddSymbolDataToQueue(List<SymbolData> data)
+            => SymbolDataQueue.Enqueue(data);
+
+        public void SaveSymbolData()
+        {
+            if (!SymbolDataQueue.IsEmpty)
+            {
+                List<SymbolData> data;
+                if (SymbolDataQueue.TryDequeue(out data))
+                {
+                    FillSymbolData(data);
+
+                    Task.Run(() => AddSymbolDataToMemory(data));
+                    Task.Run(() => AddSymbolDataToDataBase(data));
+                }
+            }
+        }
+
+        private void FillSymbolData(List<SymbolData> data)
         {
             var startTime = DateTime.Now;
-
-            if (oneTimeData.Any())
+            foreach (var d in data)
             {
-                foreach (var d in data)
+                if (oneTimeData.ContainsKey(d.InsCode))
                 {
-                    if (oneTimeData.ContainsKey(d.InsCode))
-                    {
-                        var oneTime = oneTimeData[d.InsCode];
-                        d.FillData(oneTime.MonthAverageValue, oneTime.FloatingStock, oneTime.GroupPE);
-                    }
-
-                    var lastSymbolData = SymbolData.Where(i => i.InsCode == d.InsCode).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
-
-                    if (lastSymbolData is null || !lastSymbolData.Equals(d))
-                    {
-                        SymbolData.Add(d);
-                    }
-
+                    var oneTime = oneTimeData[d.InsCode];
+                    d.FillData(oneTime.MonthAverageValue, oneTime.FloatingStock, oneTime.GroupPE);
                 }
-
-                Console.WriteLine($"Enter to memory list: {(DateTime.Now - startTime).TotalSeconds}");
             }
-
-            SymbolDataQueue.Enqueue(data);
-
+            System.Console.WriteLine($"Mapping data:{(DateTime.Now - startTime).TotalSeconds}");
         }
 
-        public async Task SaveSymbolDataFromQueue(CancellationToken cancellationToken = default(CancellationToken))
+        private void AddSymbolDataToMemory(List<SymbolData> data)
         {
-            while (true)
+            var startTime = DateTime.Now;
+            foreach (var d in data)
             {
-                var startDate = DateTime.Now;
-                if (!SymbolDataQueue.IsEmpty)
+                var lastSymbolData = SymbolDataBag.Where(i => i.InsCode == d.InsCode).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
+                if (lastSymbolData is null || !lastSymbolData.Equals(d))
                 {
-                    List<SymbolData> data;
-                    if (SymbolDataQueue.TryDequeue(out data))
-                    {
-                        await tsetmcUnitOfWork.AddSymbolData(data, cancellationToken);
-                        System.Console.WriteLine($"Save Data to database:{(DateTime.Now - startDate).TotalSeconds}");
-                        System.Console.WriteLine($"Count of Queue:{SymbolDataQueue.Count}");
-                    }
+                    SymbolDataBag.Add(d);
                 }
-                else
-                    await Task.Delay(TimeSpan.FromSeconds(5));
             }
+            System.Console.WriteLine($"Add In memory:{(DateTime.Now - startTime).TotalSeconds}");
         }
+
+        private async Task AddSymbolDataToDataBase(List<SymbolData> data)
+        {
+            var startTime = DateTime.Now;
+            await tsetmcUnitOfWork.AddSymbolData(data);
+            System.Console.WriteLine($"Add to database:{(DateTime.Now - startTime).TotalSeconds}");
+
+        }
+
+        #region OldCodeForSaveData
+        //public static void AddSymbolDataRange(List<SymbolData> data)
+        //{
+        //    var startTime = DateTime.Now;
+
+        //    if (oneTimeData.Any())
+        //    {
+        //        foreach (var d in data)
+        //        {
+        //            if (oneTimeData.ContainsKey(d.InsCode))
+        //            {
+        //                var oneTime = oneTimeData[d.InsCode];
+        //                d.FillData(oneTime.MonthAverageValue, oneTime.FloatingStock, oneTime.GroupPE);
+        //            }
+
+        //            var lastSymbolData = SymbolData.Where(i => i.InsCode == d.InsCode).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
+
+        //            if (lastSymbolData is null || !lastSymbolData.Equals(d))
+        //            {
+        //                SymbolData.Add(d);
+        //            }
+
+        //        }
+
+        //        Console.WriteLine($"Enter to memory list: {(DateTime.Now - startTime).TotalSeconds}");
+        //    }
+
+        //    SymbolDataQueue.Enqueue(data);
+
+        //}
+
+        //public async Task SaveSymbolDataFromQueue(CancellationToken cancellationToken = default(CancellationToken))
+        //{
+        //    while (true)
+        //    {
+        //        var startDate = DateTime.Now;
+        //        if (!SymbolDataQueue.IsEmpty)
+        //        {
+        //            List<SymbolData> data;
+        //            if (SymbolDataQueue.TryDequeue(out data))
+        //            {
+        //                await tsetmcUnitOfWork.AddSymbolData(data, cancellationToken);
+        //                System.Console.WriteLine($"Save Data to database:{(DateTime.Now - startDate).TotalSeconds}");
+        //                System.Console.WriteLine($"Count of Queue:{SymbolDataQueue.Count}");
+        //            }
+        //        }
+        //        else
+        //            await Task.Delay(TimeSpan.FromSeconds(5));
+        //    }
+        //}
+        #endregion
+
 
         public async Task AddOrUpdateSymbols(CancellationToken cancellationToken = default(CancellationToken))
         {

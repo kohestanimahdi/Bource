@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Bource.Services.Crawlers.FipIran
 {
-    public class FipiranCrawlerService
+    public class FipiranCrawlerService : IFipiranCrawlerService, IScopedDependency
     {
         private string baseUrl { get; init; }
         private readonly HttpClient httpClient;

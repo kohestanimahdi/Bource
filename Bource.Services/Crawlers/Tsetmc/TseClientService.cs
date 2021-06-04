@@ -17,7 +17,7 @@ using TseClient;
 
 namespace Bource.Services.Crawlers.Tsetmc
 {
-    public class TseClientService : IScopedDependency
+    public class TseClientService : ITseClientService, IScopedDependency
     {
         private readonly ILogger<TseClientService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;

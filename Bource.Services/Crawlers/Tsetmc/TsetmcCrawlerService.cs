@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 
 namespace Bource.Services.Crawlers.Tsetmc
 {
-    public class TsetmcCrawlerService : IScopedDependency
+    public class TsetmcCrawlerService : ITsetmcCrawlerService, IScopedDependency
     {
 
 
@@ -325,12 +325,15 @@ namespace Bource.Services.Crawlers.Tsetmc
             }
 
             await GetLatestClientSymbolDataAsync(data, cancellationToken);
-            System.Console.WriteLine($"Get Datas:{(DateTime.Now - startTime).TotalSeconds}");
+
+            System.Console.WriteLine($"Get Datas From Tse:{(DateTime.Now - startTime).TotalSeconds}");
 
 
-
+            startTime = DateTime.Now;
             // افزودن به لیست دیتاهای امروز و صف برای ذخیره سازی
-            TseSymbolDataProvider.AddSymbolDataRange(data);
+            TseSymbolDataProvider.AddSymbolDataToQueue(data);
+
+            System.Console.WriteLine($"Save To Queue:{(DateTime.Now - startTime).TotalSeconds}");
 
         }
 

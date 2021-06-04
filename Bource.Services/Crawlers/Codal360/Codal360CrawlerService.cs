@@ -16,7 +16,7 @@ using Bource.Services.Crawlers.Codal360.Models;
 
 namespace Bource.Services.Crawlers.Codal360
 {
-    public class Codal360CrawlerService
+    public class Codal360CrawlerService : ICodal360CrawlerService, IScopedDependency
     {
         private string baseUrl { get; init; }
         private readonly HttpClient httpClient;

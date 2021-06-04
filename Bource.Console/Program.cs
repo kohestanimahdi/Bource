@@ -1,15 +1,13 @@
-﻿using Bource.Services.Crawlers.AsanBource;
+﻿using Bource.Data.Informations.UnitOfWorks;
+using Bource.Services.Crawlers.AsanBource;
 using Bource.Services.Crawlers.Codal360;
 using Bource.Services.Crawlers.FipIran;
 using Bource.Services.Crawlers.Tsetmc;
+using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Bource.Console
@@ -20,25 +18,42 @@ namespace Bource.Console
 
         private static void Main(string[] args)
         {
-            //Common.Utilities.ConsoleHelper.WriteProgressBar(0);
-            //for (var i = 0; i <= 100; ++i)
-            //{
-            //    Common.Utilities.ConsoleHelper.WriteProgressBar(i, true);
-            //    Thread.Sleep(50);
-            //}
-
-            //System.Console.WriteLine();
-            //Common.Utilities.ConsoleHelper.WriteProgress(0);
-            //for (var i = 0; i <= 100; ++i)
-            //{
-            //    Common.Utilities.ConsoleHelper.WriteProgress(i, true);
-            //    Thread.Sleep(50);
-            //}
-
             HttpClientHandler handler = new HttpClientHandler()
             {
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
             };
+
+            var serviceProvider = new ServiceCollection()
+             .AddLogging()
+             .AddScoped<ITseClientService, TseClientService>()
+             .AddScoped<ITsetmcCrawlerService, TsetmcCrawlerService>()
+             .AddScoped<IFipiranCrawlerService, FipiranCrawlerService>()
+             .AddScoped<ITseSymbolDataProvider, TseSymbolDataProvider>()
+             .AddScoped<ICodal360CrawlerService, Codal360CrawlerService>()
+             .AddScoped<IAsanBourceCrawlerService, AsanBourceCrawlerService>()
+             .AddSingleton<ITsetmcUnitOfWork, TsetmcUnitOfWork>();
+
+            serviceProvider.AddHttpClient(nameof(TsetmcCrawlerService))
+            .ConfigureHttpClient(client =>
+            {
+                client.BaseAddress = new Uri(uri);
+                client.Timeout = TimeSpan.FromSeconds(5);
+            })
+            .ConfigurePrimaryHttpMessageHandler(
+                () => new HttpClientHandler() { CookieContainer = new CookieContainer() }
+            );
+
+
+
+            serviceProvider.BuildServiceProvider(true);
+
+            //configure console logging
+            //serviceProvider
+            //    .GetService<ILoggerFactory>().CreateLogger
+            //    .AddConsole(LogLevel.Debug);
+
+
+
             var httpClient = new HttpClient(handler);
             var httpClient2 = new HttpClient(handler);
             var httpClient3 = new HttpClient(handler);
@@ -141,7 +156,8 @@ namespace Bource.Console
                             });
                             Task.Run(() =>
                             {
-                                TseSymbolDataProvider.SaveSymbolDataFromQueue().GetAwaiter().GetResult();
+                                while (DateTime.Now.Hour >= 9 && DateTime.Now.Hour <= 14)
+                                    TseSymbolDataProvider.SaveSymbolData();
                             });
 
                             break;
