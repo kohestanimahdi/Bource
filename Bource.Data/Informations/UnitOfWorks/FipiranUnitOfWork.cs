@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Bource.Data.Informations.UnitOfWorks
 {
-    public class FipiranUnitOfWork : IFipiranUnitOfWork, ISingletonDependency
+    public class FipiranUnitOfWork : IFipiranUnitOfWork, IScopedDependency
     {
         private readonly FipIranNewsRepository fipIranNewsRepository;
         private readonly FipIranAssociationRepository fipIranAssociationRepository;

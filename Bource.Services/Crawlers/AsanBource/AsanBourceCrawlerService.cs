@@ -17,7 +17,7 @@ namespace Bource.Services.Crawlers.AsanBource
 {
     public class AsanBourceCrawlerService : IAsanBourceCrawlerService, IScopedDependency
     {
-        private string baseUrl { get; init; }
+        private string baseUrl => httpClient.BaseAddress.ToString();
         private readonly HttpClient httpClient;
         private readonly ILogger<AsanBourceCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
@@ -25,25 +25,13 @@ namespace Bource.Services.Crawlers.AsanBource
         public AsanBourceCrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork fipiranUnitOfWork)
         {
             logger = loggerFactory?.CreateLogger<AsanBourceCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
-            httpClient = httpClientFactory?.CreateClient() ?? throw new ArgumentNullException(nameof(httpClientFactory));
-            baseUrl = "https://asanbourse.ir/";
+            httpClient = httpClientFactory?.CreateClient(nameof(AsanBourceCrawlerService)) ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
             httpClient.BaseAddress = new Uri(baseUrl);
 
             this.tsetmcUnitOfWork = fipiranUnitOfWork ?? throw new ArgumentNullException(nameof(fipiranUnitOfWork));
         }
 
-        public AsanBourceCrawlerService(HttpClient httpClient)
-        {
-            this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-
-            baseUrl = "https://asanbourse.ir/";
-
-            httpClient.BaseAddress = new Uri(baseUrl);
-            LoggerFactory loggerFactory = new LoggerFactory();
-            logger = new Logger<AsanBourceCrawlerService>(loggerFactory);
-            tsetmcUnitOfWork = new TsetmcUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
-        }
 
         public async Task DownloadSymbolsImageAsync(CancellationToken cancellationToken = default(CancellationToken))
         {

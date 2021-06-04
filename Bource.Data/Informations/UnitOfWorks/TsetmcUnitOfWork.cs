@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace Bource.Data.Informations.UnitOfWorks
 {
-    public class TsetmcUnitOfWork : ITsetmcUnitOfWork, ISingletonDependency
+    public class TsetmcUnitOfWork : ITsetmcUnitOfWork, IScopedDependency
     {
 
         private readonly SymbolGroupRepository symbolGroupRepository;
@@ -53,24 +53,6 @@ namespace Bource.Data.Informations.UnitOfWorks
             activeSymbolShareHolderRepository = new(options.Value.mongoDbSetting);
         }
 
-        public TsetmcUnitOfWork(MongoDbSetting mongoDbSetting)
-        {
-            symbolGroupRepository = new(mongoDbSetting);
-            symbolDataRepository = new(mongoDbSetting);
-            symbolRepository = new(mongoDbSetting);
-            stockCashMarketAtGlanceRepository = new(mongoDbSetting);
-            OTCCashMarketAtGlanceRepository = new(mongoDbSetting);
-            marketWatcherMessageRepository = new(mongoDbSetting);
-            valueOfMarketRepository = new(mongoDbSetting);
-            topSupplyAndDemandRepository = new(mongoDbSetting);
-            naturalAndLegalEntityRepository = new(mongoDbSetting);
-            capitalIncrease = new(mongoDbSetting);
-            indicatorRepository = new(mongoDbSetting);
-            selectedIndicatorRepository = new(mongoDbSetting);
-            closingPriceInfoRepository = new(mongoDbSetting);
-            symbolShareHolderRepository = new(mongoDbSetting);
-            activeSymbolShareHolderRepository = new(mongoDbSetting);
-        }
 
         public async Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default(CancellationToken))
         {

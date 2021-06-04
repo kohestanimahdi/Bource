@@ -23,38 +23,20 @@ namespace Bource.Services.Crawlers.Tsetmc
 
 
         #region Properties
-        private TimeSpan RequestTimeout => TimeSpan.FromSeconds(5);
-
-        public static string baseUrl = "http://www.tsetmc.com/";
         private readonly HttpClient httpClient;
         private readonly ILogger<TsetmcCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
+        private string baseUrl => httpClient.BaseAddress.ToString();
         #endregion
 
         #region Constructors
         public TsetmcCrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork)
         {
             logger = loggerFactory?.CreateLogger<TsetmcCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
-            httpClient = httpClientFactory?.CreateClient() ?? throw new ArgumentNullException(nameof(httpClientFactory));
-
-            httpClient.BaseAddress = new Uri(baseUrl);
-            httpClient.Timeout = RequestTimeout;
-
+            httpClient = httpClientFactory?.CreateClient(nameof(TsetmcCrawlerService)) ?? throw new ArgumentNullException(nameof(httpClientFactory));
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
         }
 
-        public TsetmcCrawlerService(HttpClient httpClient)
-        {
-            this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-
-            httpClient.BaseAddress = new Uri(baseUrl);
-            httpClient.Timeout = RequestTimeout;
-
-            LoggerFactory loggerFactory = new LoggerFactory();
-            logger = new Logger<TsetmcCrawlerService>(loggerFactory);
-
-            tsetmcUnitOfWork = new TsetmcUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
-        }
         #endregion
 
         #region نمادها

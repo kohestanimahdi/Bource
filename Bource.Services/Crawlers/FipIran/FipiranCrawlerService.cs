@@ -14,7 +14,7 @@ namespace Bource.Services.Crawlers.FipIran
 {
     public class FipiranCrawlerService : IFipiranCrawlerService, IScopedDependency
     {
-        private string baseUrl { get; init; }
+        private string baseUrl => httpClient.BaseAddress.ToString();
         private readonly HttpClient httpClient;
         private readonly ILogger<FipiranCrawlerService> logger;
         private readonly IFipiranUnitOfWork fipiranUnitOfWork;
@@ -22,25 +22,13 @@ namespace Bource.Services.Crawlers.FipIran
         public FipiranCrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, IFipiranUnitOfWork fipiranUnitOfWork)
         {
             logger = loggerFactory?.CreateLogger<FipiranCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
-            httpClient = httpClientFactory?.CreateClient() ?? throw new ArgumentNullException(nameof(httpClientFactory));
-            baseUrl = "http://www.fipiran.com/";
+            httpClient = httpClientFactory?.CreateClient(nameof(FipiranCrawlerService)) ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
-            httpClient.BaseAddress = new Uri(baseUrl);
 
             this.fipiranUnitOfWork = fipiranUnitOfWork ?? throw new ArgumentNullException(nameof(fipiranUnitOfWork));
         }
 
-        public FipiranCrawlerService(HttpClient httpClient)
-        {
-            this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
-            baseUrl = "http://www.fipiran.com/";
-
-            httpClient.BaseAddress = new Uri(baseUrl);
-            LoggerFactory loggerFactory = new LoggerFactory();
-            logger = new Logger<FipiranCrawlerService>(loggerFactory);
-            fipiranUnitOfWork = new FipiranUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
-        }
 
         public async Task GetNews(FipIranNewsTypes type, CancellationToken cancellationToken = default(CancellationToken))
         {

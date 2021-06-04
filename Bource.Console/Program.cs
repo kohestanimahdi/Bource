@@ -1,9 +1,12 @@
-﻿using Bource.Data.Informations.UnitOfWorks;
+﻿using Bource.Common.Models;
+using Bource.Data.Informations.UnitOfWorks;
 using Bource.Services.Crawlers.AsanBource;
 using Bource.Services.Crawlers.Codal360;
 using Bource.Services.Crawlers.FipIran;
 using Bource.Services.Crawlers.Tsetmc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 using System.Net;
@@ -23,51 +26,67 @@ namespace Bource.Console
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
             };
 
+            var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false)
+            .AddEnvironmentVariables()
+            .Build();
+
             var serviceProvider = new ServiceCollection()
-             .AddLogging()
+             .AddLogging(builder =>
+             {
+                 builder.AddConsole();
+                 builder.AddDebug();
+             })
              .AddScoped<ITseClientService, TseClientService>()
              .AddScoped<ITsetmcCrawlerService, TsetmcCrawlerService>()
              .AddScoped<IFipiranCrawlerService, FipiranCrawlerService>()
              .AddScoped<ITseSymbolDataProvider, TseSymbolDataProvider>()
              .AddScoped<ICodal360CrawlerService, Codal360CrawlerService>()
              .AddScoped<IAsanBourceCrawlerService, AsanBourceCrawlerService>()
-             .AddSingleton<ITsetmcUnitOfWork, TsetmcUnitOfWork>();
+             .AddScoped<ITsetmcUnitOfWork, TsetmcUnitOfWork>()
+             .AddScoped<IFipiranUnitOfWork, FipiranUnitOfWork>();
 
             serviceProvider.AddHttpClient(nameof(TsetmcCrawlerService))
             .ConfigureHttpClient(client =>
             {
-                client.BaseAddress = new Uri(uri);
+                client.BaseAddress = new Uri("http://www.tsetmc.com/");
                 client.Timeout = TimeSpan.FromSeconds(5);
-            })
-            .ConfigurePrimaryHttpMessageHandler(
-                () => new HttpClientHandler() { CookieContainer = new CookieContainer() }
-            );
+            }).ConfigurePrimaryHttpMessageHandler(() => handler);
 
+            serviceProvider.AddHttpClient(nameof(FipiranCrawlerService))
+            .ConfigureHttpClient(client =>
+            {
+                client.BaseAddress = new Uri("http://www.fipiran.com/");
+                client.Timeout = TimeSpan.FromSeconds(5);
+            }).ConfigurePrimaryHttpMessageHandler(() => handler);
 
+            serviceProvider.AddHttpClient(nameof(Codal360CrawlerService))
+            .ConfigureHttpClient(client =>
+            {
+                client.BaseAddress = new Uri("https://codal360.ir/");
+                client.Timeout = TimeSpan.FromSeconds(5);
+            }).ConfigurePrimaryHttpMessageHandler(() => handler);
 
-            serviceProvider.BuildServiceProvider(true);
+            serviceProvider.AddHttpClient(nameof(AsanBourceCrawlerService))
+            .ConfigureHttpClient(client =>
+            {
+                client.BaseAddress = new Uri("https://asanbourse.ir/");
+                client.Timeout = TimeSpan.FromSeconds(5);
+            }).ConfigurePrimaryHttpMessageHandler(() => handler);
 
-            //configure console logging
-            //serviceProvider
-            //    .GetService<ILoggerFactory>().CreateLogger
-            //    .AddConsole(LogLevel.Debug);
+            serviceProvider.Configure<ApplicationSetting>(configuration.GetSection("ApplicationSettings"));
+            //serviceProvider.AddTransient<ApplicationSetting>();
 
+            var serviceProviderFactory = serviceProvider.BuildServiceProvider();
 
+            var tseClient = serviceProviderFactory.GetService<ITseClientService>();
+            var tse = serviceProviderFactory.GetService<ITsetmcCrawlerService>();
+            var fipIran = serviceProviderFactory.GetService<IFipiranCrawlerService>();
+            var TseSymbolDataProvider = serviceProviderFactory.GetService<ITseSymbolDataProvider>();
+            var codal360CrawlerService = serviceProviderFactory.GetService<ICodal360CrawlerService>();
+            var asanBourceCrawlerService = serviceProviderFactory.GetService<IAsanBourceCrawlerService>();
 
-            var httpClient = new HttpClient(handler);
-            var httpClient2 = new HttpClient(handler);
-            var httpClient3 = new HttpClient(handler);
-            var httpClient4 = new HttpClient(handler);
-            var httpClient5 = new HttpClient(handler);
-
-            var tseClient = new TseClientService();
-            var tse = new TsetmcCrawlerService(httpClient);
-            var fipIran = new FipiranCrawlerService(httpClient2);
-            var TseSymbolDataProvider = new TseSymbolDataProvider(httpClient3);
-            var codal360CrawlerService = new Codal360CrawlerService(httpClient4);
-            var asanBourceCrawlerService = new AsanBourceCrawlerService(httpClient5);
-
-            //tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
 
             int n = -1;
             string input;

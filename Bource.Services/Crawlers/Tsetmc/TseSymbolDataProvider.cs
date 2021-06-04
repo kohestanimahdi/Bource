@@ -19,30 +19,22 @@ namespace Bource.Services.Crawlers.Tsetmc
     public class TseSymbolDataProvider : ITseSymbolDataProvider, IScopedDependency
     {
         private readonly ILogger<TsetmcCrawlerService> logger;
-        private readonly TsetmcCrawlerService tsetmcCrawlerService;
-        private readonly TseClientService TseClientService;
+        private readonly ITsetmcCrawlerService tsetmcCrawlerService;
+        private readonly ITseClientService TseClientService;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
         //private static readonly List<SymbolData> SymbolData = new();
         private static readonly ConcurrentBag<SymbolData> SymbolDataBag = new();
         private static readonly ConcurrentQueue<List<SymbolData>> SymbolDataQueue = new();
         private static readonly Dictionary<long, FillSymbolData> oneTimeData = new();
 
-        public TseSymbolDataProvider(ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork)
+        public TseSymbolDataProvider(ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork, ITsetmcCrawlerService tsetmcCrawlerService, ITseClientService TseClientService)
         {
             logger = loggerFactory?.CreateLogger<TsetmcCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
+            this.tsetmcCrawlerService = tsetmcCrawlerService ?? throw new ArgumentNullException(nameof(tsetmcCrawlerService));
+            this.TseClientService = TseClientService ?? throw new ArgumentNullException(nameof(TseClientService));
         }
 
-        public TseSymbolDataProvider(HttpClient httpClient)
-        {
-            LoggerFactory loggerFactory = new LoggerFactory();
-            logger = new Logger<TsetmcCrawlerService>(loggerFactory);
-
-            tsetmcUnitOfWork = new TsetmcUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
-
-            tsetmcCrawlerService = new TsetmcCrawlerService(httpClient);
-            TseClientService = new TseClientService();
-        }
 
 
         public Dictionary<long, FillSymbolData> GetOneTimeData() => oneTimeData;

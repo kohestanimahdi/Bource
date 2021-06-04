@@ -18,32 +18,21 @@ namespace Bource.Services.Crawlers.Codal360
 {
     public class Codal360CrawlerService : ICodal360CrawlerService, IScopedDependency
     {
-        private string baseUrl { get; init; }
+        private string baseUrl => httpClient.BaseAddress.ToString();
         private readonly HttpClient httpClient;
         private readonly ILogger<Codal360CrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
         public Codal360CrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork)
         {
             logger = loggerFactory?.CreateLogger<Codal360CrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
-            httpClient = httpClientFactory?.CreateClient() ?? throw new ArgumentNullException(nameof(httpClientFactory));
-            baseUrl = "https://codal360.ir/";
+            httpClient = httpClientFactory?.CreateClient(nameof(Codal360CrawlerService)) ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
             httpClient.BaseAddress = new Uri(baseUrl);
 
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
         }
 
-        public Codal360CrawlerService(HttpClient httpClient)
-        {
-            this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
-            baseUrl = "https://codal360.ir/";
-
-            httpClient.BaseAddress = new Uri(baseUrl);
-            LoggerFactory loggerFactory = new LoggerFactory();
-            logger = new Logger<Codal360CrawlerService>(loggerFactory);
-            tsetmcUnitOfWork = new TsetmcUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
-        }
 
         public async Task UpdateSymbolsCodalURLAsync(CancellationToken cancellationToken = default(CancellationToken))
         {

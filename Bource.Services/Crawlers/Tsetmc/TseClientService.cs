@@ -32,13 +32,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             tseClientSoap = new WebServiceTseClientSoapClient(WebServiceTseClientSoapClient.EndpointConfiguration.WebServiceTseClientSoap);
         }
 
-        public TseClientService()
-        {
-            tsetmcUnitOfWork = new TsetmcUnitOfWork(new MongoDbSetting { ConnectionString = "mongodb://localhost:27017/", DataBaseName = "BourceInformation" });
-
-            tseClientSoap = new WebServiceTseClientSoapClient(WebServiceTseClientSoapClient.EndpointConfiguration.WebServiceTseClientSoap);
-        }
-
         public async Task<(List<Symbol>, List<TseShareInfo>)> GetSymbolAndSharingAsync()
         {
             var result = await tseClientSoap.InstrumentAndShareAsync(new InstrumentAndShareRequest
