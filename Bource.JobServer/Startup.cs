@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Sentry.AspNetCore;
 
 namespace Bource.JobServer
 {
@@ -47,6 +48,8 @@ namespace Bource.JobServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            //Sentry.SentrySdk.CaptureMessage("Hello Sentry");
+
             AutofacContainer = app.ApplicationServices.GetAutofacRoot();
 
             app.AddCustomResponseHeaders();
@@ -63,6 +66,8 @@ namespace Bource.JobServer
 
             app.UseAuthorization();
 
+            app.UseSentryTracing();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
@@ -71,3 +76,23 @@ namespace Bource.JobServer
         }
     }
 }
+// private readonly IHub _sentryHub;
+
+//     public HomeController(IHub sentryHub) => _sentryHub = sentryHub;
+
+//     [HttpGet("/person/{id}")]
+//     public IActionResult Person(string id)
+//     {
+//         var childSpan = _sentryHub.GetSpan()?.StartChild("additional-work");
+//         try
+//         {
+//             // Do the work that gets measured.
+
+//             childSpan?.Finish(SpanStatus.Ok);
+//         }
+//         catch (Exception e)
+//         {
+//             childSpan?.Finish(e);
+//             throw;
+//         }
+//     }

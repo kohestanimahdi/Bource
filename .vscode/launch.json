@@ -5,16 +5,36 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch (console)",
+            "name": ".NET Core Launch (web)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Bource.Console/bin/Debug/net5.0/Bource.Console.dll",
+            "program": "${workspaceFolder}/Bource.JobServer/bin/Debug/net5.0/Bource.JobServer.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/Bource.Console",
+            "cwd": "${workspaceFolder}/Bource.JobServer",
             "stopAtEntry": false,
-            "console": "internalConsole"
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Bource.JobServer/Views"
+            }
         },
+        // {
+        //     "name": ".NET Core Launch (console)",
+        //     "type": "coreclr",
+        //     "request": "launch",
+        //     "preLaunchTask": "build",
+        //     "program": "${workspaceFolder}/Bource.Console/bin/Debug/net5.0/Bource.Console.dll",
+        //     "args": [],
+        //     "cwd": "${workspaceFolder}/Bource.Console",
+        //     "stopAtEntry": false,
+        //     "console": "internalConsole"
+        // },
         {
             "name": ".NET Core Attach",
             "type": "coreclr",

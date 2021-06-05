@@ -4,6 +4,7 @@ using Hangfire.Dashboard.BasicAuthorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
+using System;
 using System.Diagnostics;
 using System.Threading;
 
@@ -49,15 +50,18 @@ namespace Bource.WebConfiguration.Configuration
                 DisplayStorageConnectionString = false,
                 AppPath = "https://kohestanimahdi.ir/"
             });
-#if !DEBUG
-            StartTasks();
-#endif
+            // #if !DEBUG
+            //             StartTasks();
+            // #endif
+            BackgroundJob.Schedule<TseSymbolDataProvider>(app => app.AddOrUpdateSymbols(CancellationToken.None), TimeSpan.FromMinutes(1));
+            BackgroundJob.Schedule<TsetmcCrawlerService>(app => app.UpdateSymbolsAsync(CancellationToken.None), TimeSpan.FromMinutes(2));
         }
 
         private static void StartTasks()
         {
             //BackgroundJob.Enqueue<UserAndRoleDataInitializer>(app => app.InitializeData());
-            //BackgroundJob.Schedule<TurnDataInitializer>(app => app.InitializeData(), TimeSpan.FromMinutes(1));
+            //BackgroundJob.Schedule<ITseSymbolDataProvider>(app => app.AddOrUpdateSymbols(CancellationToken.None), TimeSpan.FromMinutes(1));
+            //BackgroundJob.Schedule<TsetmcCrawlerService>(app => app.UpdateSymbolsAsync(CancellationToken.None), TimeSpan.FromMinutes(2));
             //RecurringJob.AddOrUpdate<PaymentScheduledTask>(nameof(PaymentScheduledTask), app => app.DoTask(), "*/15 * * * *");
             //RecurringJob.AddOrUpdate<PaymentScheduledTask>(nameof(PaymentScheduledTask), app => app.CheckPaymentsStatus(), "0 */1 * * *");
             //RecurringJob.AddOrUpdate<ReminderScheduledTask>(nameof(ReminderScheduledTask), app => app.DoTask(), "0 5-17 * * *");

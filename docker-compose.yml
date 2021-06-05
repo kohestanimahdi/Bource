@@ -1,0 +1,13 @@
+version: "3"
+services:
+  redis-server:
+    image: "redis"
+  mongo-db:
+    image: "mongo"
+    ports:
+      - "27018:27017"
+  project-app:
+    build: .
+    ports:
+      - "4002:443"
+      - "4003:80"

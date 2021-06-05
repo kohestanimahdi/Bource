@@ -18,7 +18,7 @@ namespace Bource.JobServer
                 {
                     webBuilder.UseStartup<Startup>();
                     //#if !DEBUG
-                    //                    webBuilder.UseSentry();
+                    webBuilder.UseSentry();
                     //#endif
                 });
     }
