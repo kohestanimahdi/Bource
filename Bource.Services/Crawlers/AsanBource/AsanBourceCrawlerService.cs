@@ -2,12 +2,8 @@
 using Bource.Common.Utilities;
 using Bource.Data.Informations.UnitOfWorks;
 using Bource.Models.Data.Common;
-using Bource.Models.Data.Enums;
-using Bource.Models.Data.FipIran;
-using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading;
@@ -50,7 +46,6 @@ namespace Bource.Services.Crawlers.AsanBource
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Error in Get Symbol Images");
-                Console.WriteLine("Error in Get Symbol Images");
                 return;
             }
             var fileBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);

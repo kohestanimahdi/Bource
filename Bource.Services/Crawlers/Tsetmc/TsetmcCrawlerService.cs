@@ -23,6 +23,9 @@ namespace Bource.Services.Crawlers.Tsetmc
 
 
         #region Properties
+        private readonly int numberOfTries = 5;
+        private readonly bool throwExceptions = false;
+
         private readonly HttpClient httpClient;
         private readonly ILogger<TsetmcCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
@@ -49,7 +52,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         public async Task UpdateSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
-            await Common.Utilities.ApplicationHelpers.DoFunctionsOFListWithMultiTask<Symbol>(symbols, UpdateSymbolAsync, cancellationToken);
+            await Common.Utilities.ApplicationHelpers.DoFunctionsOFListWithMultiTask<Symbol>(symbols, UpdateSymbolAsync, cancellationToken, 10);
         }
 
         private async Task UpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
@@ -60,12 +63,18 @@ namespace Bource.Services.Crawlers.Tsetmc
                 await GetSymbolInformationAsync(symbol, cancellationToken);
                 await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                if (numberOfTries < 2)
+                if (numberOfTries < this.numberOfTries)
                     await UpdateSymbolAsync(symbol, cancellationToken, numberOfTries + 1);
+
                 else
-                    throw;
+                {
+                    logger.LogError(ex, "");
+
+                    if (throwExceptions)
+                        throw;
+                }
             }
 
         }
@@ -119,12 +128,17 @@ namespace Bource.Services.Crawlers.Tsetmc
 
                 symbol.UpdateInforamtion(rows);
             }
-            catch
+            catch (Exception ex)
             {
-                if (numberOfTries < 2)
+                if (numberOfTries < this.numberOfTries)
                     await GetSymbolInstructionAsync(symbol, cancellationToken, numberOfTries + 1);
                 else
-                    throw;
+                {
+                    logger.LogError(ex, "");
+
+                    if (throwExceptions)
+                        throw;
+                }
             }
         }
         private async Task GetSymbolInstructionAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
@@ -155,12 +169,17 @@ namespace Bource.Services.Crawlers.Tsetmc
 
                 symbol.Introduction = new(rows);
             }
-            catch
+            catch (Exception ex)
             {
-                if (numberOfTries < 2)
+                if (numberOfTries < this.numberOfTries)
                     await GetSymbolInstructionAsync(symbol, cancellationToken, numberOfTries + 1);
                 else
-                    throw;
+                {
+                    logger.LogError(ex, "");
+
+                    if (throwExceptions)
+                        throw;
+                }
             }
         }
         #endregion
@@ -205,12 +224,17 @@ namespace Bource.Services.Crawlers.Tsetmc
 
                 await tsetmcUnitOfWork.AddNewNaturalAndLegalEntity(symbol.InsCode, entities, cancellationToken);
             }
-            catch
+            catch (Exception ex)
             {
-                if (numberOfTries < 2)
+                if (numberOfTries < this.numberOfTries)
                     await GetNaturalAndLegalEntityAsync(symbol, cancellationToken, numberOfTries + 1);
                 else
-                    throw;
+                {
+                    logger.LogError(ex, "");
+
+                    if (throwExceptions)
+                        throw;
+                }
             }
         }
         #endregion
@@ -335,65 +359,40 @@ namespace Bource.Services.Crawlers.Tsetmc
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
             var fillSymbolData = symbols.Select(i => new FillSymbolData(i.InsCode)).ToList();
-            List<Task> tasks = new();
-            int n = 0;
-            int count = fillSymbolData.Count / 15;
 
-            while (n < fillSymbolData.Count)
-            {
-                var subSymbols = fillSymbolData.Skip(n).Take(count).ToList();
-
-                tasks.Add(Task.Run(() => FillSymbolDataAsync(subSymbols, cancellationToken)));
-                n += count;
-            }
-
-            await Task.WhenAll(tasks);
+            await Common.Utilities.ApplicationHelpers.DoFunctionsOFListWithMultiTask(fillSymbolData, FillSymbolDataAsync, cancellationToken, 15);
 
             TseSymbolDataProvider.FillOneTimeData(fillSymbolData);
         }
 
-        private async Task FillSymbolDataAsync(List<FillSymbolData> symbolData, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            HttpClientHandler handler = new HttpClientHandler()
-            {
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
-            };
-
-            var client = new HttpClient(handler);
-            client.BaseAddress = new Uri(baseUrl);
-
-            for (int i = 0; i < symbolData.Count; i++)
-            {
-                symbolData[i] = await FillSymbolDataAsync(client, symbolData[i], cancellationToken);
-            }
-
-
-        }
-        private async Task<FillSymbolData> FillSymbolDataAsync(HttpClient client, FillSymbolData symboldata, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task FillSymbolDataAsync(FillSymbolData symboldata, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
-                var response = await client.GetAsync($"loader.aspx?ParTree=151311&i={symboldata.InsCode}", cancellationToken);
+                var response = await httpClient.GetAsync($"loader.aspx?ParTree=151311&i={symboldata.InsCode}", cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogError("Error in fill symbol data");
-                    return symboldata;
+                    return;
                 }
 
                 var result = await response.Content.ReadAsStringAsync(cancellationToken);
                 if (string.IsNullOrWhiteSpace(result))
-                    return symboldata;
+                    return;
 
                 symboldata.FillDataFromPage(result);
-
-                return symboldata;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                if (numberOfTries < 2)
-                    return await FillSymbolDataAsync(client, symboldata, cancellationToken, numberOfTries + 1);
+                if (numberOfTries < this.numberOfTries)
+                    await FillSymbolDataAsync(symboldata, cancellationToken, numberOfTries + 1);
                 else
-                    throw;
+                {
+                    logger.LogError(ex, "");
+
+                    if (throwExceptions)
+                        throw;
+                }
             }
 
         }
@@ -723,7 +722,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
-            await Common.Utilities.ApplicationHelpers.DoFunctionsWithProgressBar<Symbol>(symbols, GetCapitalIncreaseAsync, cancellationToken);
+            await Common.Utilities.ApplicationHelpers.DoFunctionsOFListWithMultiTask(symbols, GetCapitalIncreaseAsync, cancellationToken, 10);
         }
 
         private async Task GetCapitalIncreaseAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
@@ -759,12 +758,17 @@ namespace Bource.Services.Crawlers.Tsetmc
 
                 await tsetmcUnitOfWork.AddCapitalIncreaseAsync(symbol.InsCode, entities, cancellationToken);
             }
-            catch
+            catch (Exception ex)
             {
-                if (numberOfTries < 2)
+                if (numberOfTries < this.numberOfTries)
                     await GetCapitalIncreaseAsync(symbol, cancellationToken, numberOfTries + 1);
                 else
-                    throw;
+                {
+                    logger.LogError(ex, "");
+
+                    if (throwExceptions)
+                        throw;
+                }
             }
         }
         #endregion
@@ -856,12 +860,17 @@ namespace Bource.Services.Crawlers.Tsetmc
                 if (items.Any())
                     await tsetmcUnitOfWork.AddTodaysSymbolShareHoldersAsync(symbol.InsCode, items, cancellationToken);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                if (numberOfTries < 2)
+                if (numberOfTries < this.numberOfTries)
                     await GetSymbolShareHoldersAsync(symbol, cancellationToken, numberOfTries + 1);
                 else
-                    throw;
+                {
+                    logger.LogError(ex, "");
+
+                    if (throwExceptions)
+                        throw;
+                }
             }
         }
 

@@ -7,10 +7,7 @@ using Bource.Services.Crawlers.Tsetmc.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using TseClient;
@@ -19,6 +16,8 @@ namespace Bource.Services.Crawlers.Tsetmc
 {
     public class TseClientService : ITseClientService, IScopedDependency
     {
+        private readonly int numberOfTries = 5;
+        private readonly bool throwExceptions = false;
         private readonly ILogger<TseClientService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
         private readonly TseClient.WebServiceTseClientSoap tseClientSoap;
@@ -152,12 +151,19 @@ namespace Bource.Services.Crawlers.Tsetmc
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                if (numberOfTries < 2)
+                if (numberOfTries < this.numberOfTries)
                     await GetInsturmentsClosingPricesAsync(symbols, shareInfos, cancellationToken, numberOfTries++);
                 else
-                    throw;
+                {
+                    logger.LogError(ex, "");
+
+                    if (throwExceptions)
+                        throw;
+                    else
+                        return;
+                }
             }
 
         }

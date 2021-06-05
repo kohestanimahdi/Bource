@@ -1,0 +1,8 @@
+version: '1'
+services:
+  redis-server:
+	  image: 'redis'
+  project-app:
+    build: .
+    ports: 
+      - "4001:4001"
