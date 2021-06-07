@@ -16,16 +16,10 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly FipIranNewsRepository fipIranNewsRepository;
         private readonly FipIranAssociationRepository fipIranAssociationRepository;
 
-        public FipiranUnitOfWork(IOptionsSnapshot<ApplicationSetting> options)
+        public FipiranUnitOfWork(ApplicationSetting setting)
         {
-            fipIranNewsRepository = new(options.Value.mongoDbSetting);
-            fipIranAssociationRepository = new(options.Value.mongoDbSetting);
-        }
-
-        public FipiranUnitOfWork(MongoDbSetting mongoDbSetting)
-        {
-            fipIranNewsRepository = new(mongoDbSetting);
-            fipIranAssociationRepository = new(mongoDbSetting);
+            fipIranNewsRepository = new(setting.mongoDbSetting);
+            fipIranAssociationRepository = new(setting.mongoDbSetting);
         }
 
         public async Task AddIfNotExistNewsAsync(FipIranNewsTypes type, List<FipIranNews> fipIranNews, CancellationToken cancellationToken = default(CancellationToken))

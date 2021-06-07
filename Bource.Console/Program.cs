@@ -45,7 +45,7 @@ namespace Bource.Console
 
             serviceProvider.AddCrawlerHttpClient(applicationSetting);
 
-            serviceProvider.Configure<ApplicationSetting>(configuration.GetSection("ApplicationSettings"));
+            serviceProvider.AddSingleton<ApplicationSetting>(applicationSetting);
 
             var serviceProviderFactory = serviceProvider.BuildServiceProvider();
 
@@ -133,9 +133,9 @@ namespace Bource.Console
                                     {
                                         var time = DateTime.Now;
                                         tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
-                                        var delay = DateTime.Now - time;
-                                        if (delay < TimeSpan.FromSeconds(1))
-                                            Task.Delay(TimeSpan.FromSeconds(1) - delay).GetAwaiter().GetResult();
+                                        var delay = (DateTime.Now - time).TotalSeconds;
+                                        if (delay < 1 && delay > 0)
+                                            Task.Delay(TimeSpan.FromSeconds(1 - delay)).GetAwaiter().GetResult();
                                     }
                                     catch (Exception ex)
                                     {

@@ -1,0 +1,21 @@
+version: "3"
+services:
+  redis-server:
+    image: "redis"
+    restart: always
+  mongo-db:
+    image: "mongo"
+    restart: always
+    ports:
+      - "27018:27017"
+  project-app:
+    build:
+      context: ../
+      dockerfile: Bource.JobServer/Dockerfile
+    restart: always
+    ports:
+      - "4002:443"
+      - "4003:80"
+    depends_on:
+      - mongo-db
+      - redis-server

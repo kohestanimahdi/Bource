@@ -7,6 +7,7 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
+# COPY *.sln ./
 COPY ["Bource.Common/Bource.Common.csproj", "Bource.Common/"]
 COPY ["Bource.WebConfiguration/Bource.WebConfiguration.csproj", "Bource.WebConfiguration/"]
 COPY ["Bource.Data/Bource.Data.csproj", "Bource.Data/"]
@@ -25,6 +26,7 @@ RUN dotnet build "Bource.JobServer.csproj" -c Release -o /app/build
 
 FROM build AS publish
 RUN dotnet publish "Bource.JobServer.csproj" -c Release -o /app/publish
+RUN rm -rf obj
 
 FROM base AS final
 WORKDIR /app

@@ -35,23 +35,23 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly SymbolShareHolderRepository symbolShareHolderRepository;
         private readonly ActiveSymbolShareHolderRepository activeSymbolShareHolderRepository;
         private readonly ILogger<TsetmcUnitOfWork> logger;
-        public TsetmcUnitOfWork(IOptionsSnapshot<ApplicationSetting> options, ILoggerFactory loggerFactory)
+        public TsetmcUnitOfWork(ApplicationSetting setting, ILoggerFactory loggerFactory)
         {
-            symbolGroupRepository = new(options.Value.mongoDbSetting);
-            symbolDataRepository = new(options.Value.mongoDbSetting);
-            symbolRepository = new(options.Value.mongoDbSetting);
-            stockCashMarketAtGlanceRepository = new(options.Value.mongoDbSetting);
-            OTCCashMarketAtGlanceRepository = new(options.Value.mongoDbSetting);
-            marketWatcherMessageRepository = new(options.Value.mongoDbSetting);
-            valueOfMarketRepository = new(options.Value.mongoDbSetting);
-            topSupplyAndDemandRepository = new(options.Value.mongoDbSetting);
-            naturalAndLegalEntityRepository = new(options.Value.mongoDbSetting);
-            capitalIncrease = new(options.Value.mongoDbSetting);
-            indicatorRepository = new(options.Value.mongoDbSetting);
-            selectedIndicatorRepository = new(options.Value.mongoDbSetting);
-            closingPriceInfoRepository = new(options.Value.mongoDbSetting);
-            symbolShareHolderRepository = new(options.Value.mongoDbSetting);
-            activeSymbolShareHolderRepository = new(options.Value.mongoDbSetting);
+            symbolGroupRepository = new(setting.mongoDbSetting);
+            symbolDataRepository = new(setting.mongoDbSetting);
+            symbolRepository = new(setting.mongoDbSetting);
+            stockCashMarketAtGlanceRepository = new(setting.mongoDbSetting);
+            OTCCashMarketAtGlanceRepository = new(setting.mongoDbSetting);
+            marketWatcherMessageRepository = new(setting.mongoDbSetting);
+            valueOfMarketRepository = new(setting.mongoDbSetting);
+            topSupplyAndDemandRepository = new(setting.mongoDbSetting);
+            naturalAndLegalEntityRepository = new(setting.mongoDbSetting);
+            capitalIncrease = new(setting.mongoDbSetting);
+            indicatorRepository = new(setting.mongoDbSetting);
+            selectedIndicatorRepository = new(setting.mongoDbSetting);
+            closingPriceInfoRepository = new(setting.mongoDbSetting);
+            symbolShareHolderRepository = new(setting.mongoDbSetting);
+            activeSymbolShareHolderRepository = new(setting.mongoDbSetting);
 
             logger = loggerFactory?.CreateLogger<TsetmcUnitOfWork>() ?? throw new ArgumentNullException(nameof(loggerFactory));
         }

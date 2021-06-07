@@ -24,6 +24,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         #region Properties
         private readonly int numberOfTries = 5;
+        private readonly TimeSpan delayBetweenTimeouts = TimeSpan.FromSeconds(1);
         private readonly bool throwExceptions = false;
 
         private readonly HttpClient httpClient;
@@ -66,8 +67,12 @@ namespace Bource.Services.Crawlers.Tsetmc
             catch (Exception ex)
             {
                 if (numberOfTries < this.numberOfTries)
-                    await UpdateSymbolAsync(symbol, cancellationToken, numberOfTries + 1);
+                {
+                    if (numberOfTries == this.numberOfTries - 1)
+                        await Task.Delay(delayBetweenTimeouts);
 
+                    await UpdateSymbolAsync(symbol, cancellationToken, numberOfTries + 1);
+                }
                 else
                 {
                     logger.LogError(ex, "");
@@ -131,7 +136,12 @@ namespace Bource.Services.Crawlers.Tsetmc
             catch (Exception ex)
             {
                 if (numberOfTries < this.numberOfTries)
+                {
+                    if (numberOfTries == this.numberOfTries - 1)
+                        await Task.Delay(delayBetweenTimeouts);
+
                     await GetSymbolInstructionAsync(symbol, cancellationToken, numberOfTries + 1);
+                }
                 else
                 {
                     logger.LogError(ex, "");
@@ -172,7 +182,12 @@ namespace Bource.Services.Crawlers.Tsetmc
             catch (Exception ex)
             {
                 if (numberOfTries < this.numberOfTries)
+                {
+                    if (numberOfTries == this.numberOfTries - 1)
+                        await Task.Delay(delayBetweenTimeouts);
+
                     await GetSymbolInstructionAsync(symbol, cancellationToken, numberOfTries + 1);
+                }
                 else
                 {
                     logger.LogError(ex, "");
@@ -227,7 +242,12 @@ namespace Bource.Services.Crawlers.Tsetmc
             catch (Exception ex)
             {
                 if (numberOfTries < this.numberOfTries)
+                {
+                    if (numberOfTries == this.numberOfTries - 1)
+                        await Task.Delay(delayBetweenTimeouts);
+
                     await GetNaturalAndLegalEntityAsync(symbol, cancellationToken, numberOfTries + 1);
+                }
                 else
                 {
                     logger.LogError(ex, "");
@@ -341,11 +361,11 @@ namespace Bource.Services.Crawlers.Tsetmc
             logger.LogInformation($"Get Datas From Tse:{(DateTime.Now - startTime).TotalSeconds}");
 
 
-            startTime = DateTime.Now;
+            //startTime = DateTime.Now;
             // افزودن به لیست دیتاهای امروز و صف برای ذخیره سازی
             TseSymbolDataProvider.AddSymbolDataToQueue(data);
 
-            logger.LogInformation($"Save To Queue:{(DateTime.Now - startTime).TotalSeconds}");
+            //logger.LogInformation($"Save To Queue:{(DateTime.Now - startTime).TotalSeconds}");
 
         }
 
@@ -385,7 +405,12 @@ namespace Bource.Services.Crawlers.Tsetmc
             catch (Exception ex)
             {
                 if (numberOfTries < this.numberOfTries)
+                {
+                    if (numberOfTries == this.numberOfTries - 1)
+                        await Task.Delay(delayBetweenTimeouts);
+
                     await FillSymbolDataAsync(symboldata, cancellationToken, numberOfTries + 1);
+                }
                 else
                 {
                     logger.LogError(ex, "");
@@ -732,7 +757,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131H&i={symbol.InsCode}", cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
-                    logger.LogError("Error in Get Capital Increase");
+                    logger.LogError($"Error in Get Capital Increase {symbol.InsCode}");
                     return;
                 }
 
@@ -761,7 +786,12 @@ namespace Bource.Services.Crawlers.Tsetmc
             catch (Exception ex)
             {
                 if (numberOfTries < this.numberOfTries)
+                {
+                    if (numberOfTries == this.numberOfTries - 1)
+                        await Task.Delay(delayBetweenTimeouts);
+
                     await GetCapitalIncreaseAsync(symbol, cancellationToken, numberOfTries + 1);
+                }
                 else
                 {
                     logger.LogError(ex, "");
@@ -863,7 +893,12 @@ namespace Bource.Services.Crawlers.Tsetmc
             catch (Exception ex)
             {
                 if (numberOfTries < this.numberOfTries)
+                {
+                    if (numberOfTries == this.numberOfTries - 1)
+                        await Task.Delay(delayBetweenTimeouts);
+
                     await GetSymbolShareHoldersAsync(symbol, cancellationToken, numberOfTries + 1);
+                }
                 else
                 {
                     logger.LogError(ex, "");
