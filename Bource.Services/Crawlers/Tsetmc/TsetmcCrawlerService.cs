@@ -6,6 +6,7 @@ using Bource.Models.Data.Enums;
 using Bource.Models.Data.Tsetmc;
 using Bource.Services.Crawlers.Tsetmc.Models;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -26,19 +27,28 @@ namespace Bource.Services.Crawlers.Tsetmc
         private readonly int numberOfTries = 5;
         private readonly TimeSpan delayBetweenTimeouts = TimeSpan.FromSeconds(1);
         private readonly bool throwExceptions = false;
-
         private readonly HttpClient httpClient;
         private readonly ILogger<TsetmcCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
+        private readonly IDistributedCache distributedCache;
+        private readonly Dictionary<long, FillSymbolData> oneTimeSymbolData;
+
         private string baseUrl => httpClient.BaseAddress.ToString();
+
+        public Dictionary<long, FillSymbolData> OneTimeSymbolData => oneTimeSymbolData;
+
         #endregion
 
         #region Constructors
-        public TsetmcCrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork)
+        public TsetmcCrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork, IDistributedCache distributedCache)
         {
             logger = loggerFactory?.CreateLogger<TsetmcCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
             httpClient = httpClientFactory?.CreateClient(nameof(TsetmcCrawlerService)) ?? throw new ArgumentNullException(nameof(httpClientFactory));
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
+            this.distributedCache = distributedCache ?? throw new ArgumentNullException(nameof(distributedCache));
+
+
+            oneTimeSymbolData = distributedCache.GetValue<Dictionary<long, FillSymbolData>>(nameof(OneTimeSymbolData)) ?? new();
         }
 
         #endregion
@@ -98,7 +108,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             var symbolsSplitted = symbolsData.Split(";");
             foreach (var item in symbolsSplitted)
             {
-                var symbol = new SymbolData(item, DateTime.Now).GetSymbol();
+                var symbol = new SymbolData(item.Split(","), DateTime.Now).GetSymbol();
                 symbols.Add(symbol);
             }
 
@@ -348,10 +358,17 @@ namespace Bource.Services.Crawlers.Tsetmc
             var symbolsSplitted = symbolsData.Split(";");
 
             var data = new List<SymbolData>();
+            var statuses = await GetSymbolStatus(cancellationToken);
 
             foreach (var item in symbolsSplitted)
             {
-                var symbolData = new SymbolData(item, lastModified);
+                var dataLine = item.Split(",");
+                var isnCode = Convert.ToInt64(dataLine[0]);
+
+                if (statuses.ContainsKey(isnCode) && statuses[isnCode] != "مجاز")
+                    continue;
+
+                var symbolData = new SymbolData(dataLine, lastModified);
                 symbolData.FillTransactions(transactionsDataDictionary[symbolData.InsCode]);
                 data.Add(symbolData);
             }
@@ -369,6 +386,31 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         }
 
+        public async Task<Dictionary<long, string>> GetSymbolStatus(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            Dictionary<long, string> statuses = new();
+
+            var response = await httpClient.GetAsync($"Loader.aspx?ParTree=111C1411", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError("Error in fill symbol status");
+                return statuses;
+            }
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+            var regex = new System.Text.RegularExpressions.Regex("<td>[^<]*<\\/td>");
+            var matches = regex.Matches(html);
+            for (int i = 0; i < matches.Count - 4; i += 5)
+            {
+                var insCode = Convert.ToInt64(matches[i].Value.Split(',')[0].Replace("<td>", "").Replace("</td>", ""));
+                var status = matches[i + 3].Value.Replace("<td>", "").Replace("</td>", "");
+                statuses[insCode] = status;
+            }
+
+
+            return statuses;
+        }
+
         /// <summary>
         /// اطلاعاتی که روزانه یک بار از هر نماد آپدیت می‌شوند
         /// </summary>
@@ -382,7 +424,10 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             await Common.Utilities.ApplicationHelpers.DoFunctionsOFListWithMultiTask(fillSymbolData, FillSymbolDataAsync, cancellationToken, 15);
 
-            TseSymbolDataProvider.FillOneTimeData(fillSymbolData);
+            foreach (var d in fillSymbolData)
+                oneTimeSymbolData[d.InsCode] = d;
+
+            await distributedCache.SetValueAsync(nameof(OneTimeSymbolData), oneTimeSymbolData, 720);
         }
 
         private async Task FillSymbolDataAsync(FillSymbolData symboldata, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
@@ -413,7 +458,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 }
                 else
                 {
-                    logger.LogError(ex, "");
+                    logger.LogError(ex, $"{symboldata.InsCode}");
 
                     if (throwExceptions)
                         throw;

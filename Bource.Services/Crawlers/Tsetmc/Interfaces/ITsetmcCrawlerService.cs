@@ -1,4 +1,5 @@
 ﻿using Bource.Models.Data.Common;
+using Bource.Services.Crawlers.Tsetmc.Models;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,6 +8,8 @@ namespace Bource.Services.Crawlers.Tsetmc
 {
     public interface ITsetmcCrawlerService
     {
+        Dictionary<long, FillSymbolData> OneTimeSymbolData { get; }
+
         Task FillOneTimeDataAsync(CancellationToken cancellationToken = default);
         Task GetAllCapitalIncreaseAsync(CancellationToken cancellationToken = default);
         Task GetAllNaturalAndLegalEntityAsync(CancellationToken cancellationToken = default);

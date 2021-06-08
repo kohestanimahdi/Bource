@@ -43,6 +43,12 @@ namespace Bource.Console
              .AddScoped<ITsetmcUnitOfWork, TsetmcUnitOfWork>()
              .AddScoped<IFipiranUnitOfWork, FipiranUnitOfWork>();
 
+            serviceProvider.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = "localhost";
+                options.InstanceName = "RedisJobCache";
+            });
+
             serviceProvider.AddCrawlerHttpClient(applicationSetting);
 
             serviceProvider.AddSingleton<ApplicationSetting>(applicationSetting);
@@ -125,6 +131,7 @@ namespace Bource.Console
                             tse.FillOneTimeDataAsync().GetAwaiter().GetResult();
                             break;
                         case 16:
+
                             Task.Run(() =>
                             {
                                 while (DateTime.Now.Hour >= 9 && DateTime.Now.Hour <= 13)

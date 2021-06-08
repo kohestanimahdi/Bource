@@ -14,11 +14,9 @@ namespace Bource.Models.Data.Tsetmc
         {
         }
 
-        public SymbolData(string dataLine, DateTime lastModified)
+        public SymbolData(string[] data, DateTime lastModified)
         {
             LastUpdate = lastModified;
-
-            var data = dataLine.Split(",");
 
             InsCode = Convert.ToInt64(data[0]);
             SymbolCode = data[1];
@@ -43,7 +41,10 @@ namespace Bource.Models.Data.Tsetmc
             FinishPriceChange = FinishPrice - YesterdayPrice;
             LastPriceChange = NumberOfTransaction == 0 ? 0 : LastPrice - YesterdayPrice;
             ValueOfMarket = Count * FinishPrice;
+            if (InsCode == 7745894403636165 || InsCode == 28251956446987982)
+            {
 
+            }
 
             PercentFinishPriceChange = YesterdayPrice != 0 ? Math.Round(100 * FinishPriceChange / YesterdayPrice, 2) : 0;
             PercentLastPriceChange = NumberOfTransaction == 0 || YesterdayPrice == 0 ? 0 : Math.Round(100 * LastPriceChange / YesterdayPrice, 2);

@@ -39,6 +39,11 @@ namespace Bource.JobServer
             services.AddCustomHangfire(Configuration.GetConnectionString("RedisHangfire"));
             services.AddControllers();
             services.AddCrawlerHttpClient(applicationSettings);
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = "localhost";
+                options.InstanceName = "RedisJobCache";
+            });
         }
         public void ConfigureContainer(ContainerBuilder builder)
         {

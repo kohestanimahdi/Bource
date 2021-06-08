@@ -1,8 +1,10 @@
 ﻿using Bource.Common.Models;
+using Bource.Common.Utilities;
 using Bource.Data.Informations.UnitOfWorks;
 using Bource.Models.Data.Common;
 using Bource.Models.Data.Tsetmc;
 using Bource.Services.Crawlers.Tsetmc.Models;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -21,29 +23,25 @@ namespace Bource.Services.Crawlers.Tsetmc
         private readonly ILogger<TsetmcCrawlerService> logger;
         private readonly ITsetmcCrawlerService tsetmcCrawlerService;
         private readonly ITseClientService TseClientService;
+        private readonly IDistributedCache distributedCache;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
         //private static readonly List<SymbolData> SymbolData = new();
-        private static readonly ConcurrentBag<SymbolData> SymbolDataBag = new();
+        //private static readonly ConcurrentBag<SymbolData> SymbolDataBag = new();
         private static readonly ConcurrentQueue<List<SymbolData>> SymbolDataQueue = new();
-        private static readonly Dictionary<long, FillSymbolData> oneTimeData = new();
 
-        public TseSymbolDataProvider(ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork, ITsetmcCrawlerService tsetmcCrawlerService, ITseClientService TseClientService)
+        public TseSymbolDataProvider(
+            ILoggerFactory loggerFactory,
+            ITsetmcUnitOfWork tsetmcUnitOfWork,
+            ITsetmcCrawlerService tsetmcCrawlerService,
+            ITseClientService TseClientService,
+            IDistributedCache distributedCache
+            )
         {
             logger = loggerFactory?.CreateLogger<TsetmcCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
             this.tsetmcCrawlerService = tsetmcCrawlerService ?? throw new ArgumentNullException(nameof(tsetmcCrawlerService));
             this.TseClientService = TseClientService ?? throw new ArgumentNullException(nameof(TseClientService));
-        }
-
-
-
-        public Dictionary<long, FillSymbolData> GetOneTimeData() => oneTimeData;
-        public void ClearOneTimeData() => oneTimeData.Clear();
-        public static void FillOneTimeData(List<FillSymbolData> data)
-        {
-            foreach (var d in data)
-                if (!oneTimeData.ContainsKey(d.InsCode))
-                    oneTimeData[d.InsCode] = d;
+            this.distributedCache = distributedCache ?? throw new ArgumentNullException(nameof(distributedCache));
         }
 
         public static void AddSymbolDataToQueue(List<SymbolData> data)
@@ -66,30 +64,40 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         private void FillSymbolData(List<SymbolData> data)
         {
+
             var startTime = DateTime.Now;
             foreach (var d in data)
             {
-                if (oneTimeData.ContainsKey(d.InsCode))
+                if (tsetmcCrawlerService.OneTimeSymbolData.ContainsKey(d.InsCode))
                 {
-                    var oneTime = oneTimeData[d.InsCode];
+                    var oneTime = tsetmcCrawlerService.OneTimeSymbolData[d.InsCode];
                     d.FillData(oneTime.MonthAverageValue, oneTime.FloatingStock, oneTime.GroupPE);
                 }
             }
             logger.LogInformation($"Mapping data:{(DateTime.Now - startTime).TotalSeconds}");
         }
 
+        private static object addToMemoryObject = new();
         private void AddSymbolDataToMemory(List<SymbolData> data)
         {
             var startTime = DateTime.Now;
-            foreach (var d in data)
+            lock (addToMemoryObject)
             {
-                var lastSymbolData = SymbolDataBag.Where(i => i.InsCode == d.InsCode).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
-                if (lastSymbolData is null || !lastSymbolData.Equals(d))
+                var items = distributedCache.GetValue<List<SymbolData>>("SymbolDataForSaved") ?? new();
+
+                foreach (var d in data)
                 {
-                    SymbolDataBag.Add(d);
+                    var lastSymbolData = items.Where(i => i.InsCode == d.InsCode).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
+                    if (lastSymbolData is null || !lastSymbolData.Equals(d))
+                    {
+                        items.Add(d);
+                    }
                 }
+                distributedCache.SetValue("SymbolDataForSaved", items, 720);
+
+                logger.LogInformation($"Add In memory:{(DateTime.Now - startTime).TotalSeconds}");
             }
-            logger.LogInformation($"Add In memory:{(DateTime.Now - startTime).TotalSeconds}");
+
         }
 
         private async Task AddSymbolDataToDataBase(List<SymbolData> data)
