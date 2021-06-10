@@ -1,4 +1,5 @@
-﻿using Bource.Common.Models;
+﻿using Bource.Common.Exceptions;
+using Bource.Common.Models;
 using Bource.Common.Utilities;
 using Bource.Data.Informations.UnitOfWorks;
 using Bource.Models.Data.Common;
@@ -24,6 +25,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
 
         #region Properties
+        private bool isMarketOpen = true;
         private readonly int numberOfTries = 5;
         private readonly TimeSpan delayBetweenTimeouts = TimeSpan.FromSeconds(1);
         private readonly bool throwExceptions = false;
@@ -36,6 +38,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         private string baseUrl => httpClient.BaseAddress.ToString();
 
         public Dictionary<long, FillSymbolData> OneTimeSymbolData => oneTimeSymbolData;
+        public bool IsMarketOpen => isMarketOpen;
 
         #endregion
 
@@ -313,16 +316,18 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         public async Task ScheduleLatestSymbolData()
         {
-            await FillOneTimeDataAsync();
-            while (DateTime.Now.Hour >= 8 && DateTime.Now.Minute >= 30 && DateTime.Now.Hour <= 13)
+            if (DateTime.Now.Hour < 9)
+                throw new ServerException("قبل از ساعت 9 قادر به اجرای این عملیات نیستید");
+
+            while (DateTime.Now.Hour >= 9 && IsMarketOpen)
             {
                 try
                 {
                     var time = DateTime.Now;
-                    GetLatestSymbolDataAsync().GetAwaiter().GetResult();
+                    await GetLatestSymbolDataAsync();
                     var delay = DateTime.Now - time;
                     if (delay < TimeSpan.FromSeconds(1))
-                        Task.Delay(TimeSpan.FromSeconds(1) - delay).GetAwaiter().GetResult();
+                        await Task.Delay(TimeSpan.FromSeconds(1) - delay);
                 }
                 catch (Exception ex)
                 {
@@ -520,7 +525,9 @@ namespace Bource.Services.Crawlers.Tsetmc
             var stockCashMarketAtGlance = GetStockCashMarketAtGlance(htmlDoc);
             var OTCCashMarketAtGlance = GetOTCCashMarketAtGlance(htmlDoc);
 
-            await distributedCache.SetValueAsync("IsMarketOpen", stockCashMarketAtGlance.IsOpen && OTCCashMarketAtGlance.IsOpen, 1);
+            isMarketOpen = stockCashMarketAtGlance.IsOpen && OTCCashMarketAtGlance.IsOpen;
+
+            await distributedCache.SetValueAsync(nameof(IsMarketOpen), IsMarketOpen, 1);
 
             await tsetmcUnitOfWork.AddCashMarketAtGlance(stockCashMarketAtGlance, OTCCashMarketAtGlance, cancellationToken);
         }

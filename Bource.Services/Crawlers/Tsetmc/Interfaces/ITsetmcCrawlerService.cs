@@ -9,6 +9,7 @@ namespace Bource.Services.Crawlers.Tsetmc
     public interface ITsetmcCrawlerService
     {
         Dictionary<long, FillSymbolData> OneTimeSymbolData { get; }
+        bool IsMarketOpen { get; }
 
         Task FillOneTimeDataAsync(CancellationToken cancellationToken = default);
         Task GetAllCapitalIncreaseAsync(CancellationToken cancellationToken = default);

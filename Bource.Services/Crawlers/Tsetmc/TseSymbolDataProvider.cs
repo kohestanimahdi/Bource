@@ -47,6 +47,14 @@ namespace Bource.Services.Crawlers.Tsetmc
         public static void AddSymbolDataToQueue(List<SymbolData> data)
             => SymbolDataQueue.Enqueue(data);
 
+        public void ScheduleSaveLatestSymbolData()
+        {
+            while (DateTime.Now.Hour < 16 || Convert.ToBoolean(distributedCache.GetString(nameof(tsetmcCrawlerService.IsMarketOpen)) ?? "false"))
+            {
+                SaveSymbolData();
+            }
+        }
+
         public void SaveSymbolData()
         {
             if (!SymbolDataQueue.IsEmpty)

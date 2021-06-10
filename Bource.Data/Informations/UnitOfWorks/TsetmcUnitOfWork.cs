@@ -106,11 +106,9 @@ namespace Bource.Data.Informations.UnitOfWorks
         public Task AddOrUpdateSymbolGroups(List<SymbolGroup> symbolGroups, CancellationToken cancellationToken = default(CancellationToken))
             => symbolGroupRepository.AddOrUpdateSymbolGroups(symbolGroups, cancellationToken);
 
-        public async Task AddCashMarketAtGlance(CashMarketAtGlance stockCashMarketAtGlance, CashMarketAtGlance oTCCashMarketAtGlance, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            await cashMarketAtGlanceRepository.AddAsync(stockCashMarketAtGlance, cancellationToken);
-            await cashMarketAtGlanceRepository.AddAsync(oTCCashMarketAtGlance, cancellationToken);
-        }
+        public Task AddCashMarketAtGlance(CashMarketAtGlance stockCashMarketAtGlance, CashMarketAtGlance oTCCashMarketAtGlance, CancellationToken cancellationToken = default(CancellationToken))
+        => cashMarketAtGlanceRepository.AddRangeAsync(new CashMarketAtGlance[] { stockCashMarketAtGlance, oTCCashMarketAtGlance }, cancellationToken);
+
 
         public async Task AddOrUpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
         {
