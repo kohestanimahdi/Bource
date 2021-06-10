@@ -7,11 +7,11 @@ namespace Bource.Common.Utilities
 {
     public static class CacheExtensions
     {
-        public static async Task<T> GetValueAsync<T>(this IDistributedCache cache, string name) where T : class
+        public static async Task<T> GetValueAsync<T>(this IDistributedCache cache, string name)
         {
             var objectCache = await cache.GetStringAsync(name);
             if (objectCache is null)
-                return null;
+                return default(T);
 
             return JsonConvert.DeserializeObject<T>(objectCache);
         }
@@ -28,11 +28,11 @@ namespace Bource.Common.Utilities
             await cache.SetStringAsync(name, JsonConvert.SerializeObject(value), options);
         }
 
-        public static T GetValue<T>(this IDistributedCache cache, string name) where T : class
+        public static T GetValue<T>(this IDistributedCache cache, string name)
         {
             var objectCache = cache.GetString(name);
             if (objectCache is null)
-                return null;
+                return default(T);
 
             return JsonConvert.DeserializeObject<T>(objectCache);
         }

@@ -49,7 +49,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         public void ScheduleSaveLatestSymbolData()
         {
-            while (DateTime.Now.Hour < 16 || Convert.ToBoolean(distributedCache.GetString(nameof(tsetmcCrawlerService.IsMarketOpen)) ?? "false"))
+            while (DateTime.Now.Hour < 16 || distributedCache.GetValue<bool>(nameof(tsetmcCrawlerService.IsMarketOpen)))
             {
                 SaveSymbolData();
             }
