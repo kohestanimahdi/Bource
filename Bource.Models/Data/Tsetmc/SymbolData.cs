@@ -41,10 +41,7 @@ namespace Bource.Models.Data.Tsetmc
             FinishPriceChange = FinishPrice - YesterdayPrice;
             LastPriceChange = NumberOfTransaction == 0 ? 0 : LastPrice - YesterdayPrice;
             ValueOfMarket = Count * FinishPrice;
-            if (InsCode == 7745894403636165 || InsCode == 28251956446987982)
-            {
 
-            }
 
             PercentFinishPriceChange = YesterdayPrice != 0 ? Math.Round(100 * FinishPriceChange / YesterdayPrice, 2) : 0;
             PercentLastPriceChange = NumberOfTransaction == 0 || YesterdayPrice == 0 ? 0 : Math.Round(100 * LastPriceChange / YesterdayPrice, 2);
@@ -320,7 +317,10 @@ namespace Bource.Models.Data.Tsetmc
                 ExistInType = Enums.SymbolExistInType.Tsetmc
             };
 
-
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode();
+        }
     }
 
     public class SymbolTransaction
@@ -336,6 +336,11 @@ namespace Bource.Models.Data.Tsetmc
                 return Order == transaction.Order && Number == transaction.Number && Value == transaction.Value && Price == transaction.Price;
 
             return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return ToString().GetHashCode();
         }
 
     }

@@ -213,20 +213,6 @@ namespace Bource.Console
                 "20", "Codal 360 url", "لینک کدال"
                 );
         }
-        //public static void LogException(Exception exception)
-        //{
-        //    lock (lockObject)
-        //    {
-        //        var content = $"{DateTime.Now.ToLongTimeString()}{Environment.NewLine}";
-        //        content += $"{exception.Message}{Environment.NewLine}";
-        //        content += $"-------------------------------------------------------{Environment.NewLine}";
-        //        content += $"{exception.StackTrace}{Environment.NewLine}";
-        //        content += $"***********************************************************************************************{Environment.NewLine}";
-        //        File.AppendAllText(Path.Combine(Directory.GetCurrentDirectory(), "log.txt"), content);
-        //        System.Console.ForegroundColor = ConsoleColor.Red;
-        //        System.Console.WriteLine(content);
-        //        System.Console.ForegroundColor = ConsoleColor.White;
-        //    }
-        //}
+
     }
 }

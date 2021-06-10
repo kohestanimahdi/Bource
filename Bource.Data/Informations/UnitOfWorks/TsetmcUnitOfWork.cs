@@ -22,8 +22,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly SymbolGroupRepository symbolGroupRepository;
         private readonly SymbolDataRepository symbolDataRepository;
         private readonly SymbolRepository symbolRepository;
-        private readonly StockCashMarketAtGlanceRepository stockCashMarketAtGlanceRepository;
-        private readonly OTCCashMarketAtGlanceRepository OTCCashMarketAtGlanceRepository;
+        private readonly CashMarketAtGlanceRepository cashMarketAtGlanceRepository;
         private readonly MarketWatcherMessageRepository marketWatcherMessageRepository;
         private readonly ValueOfMarketRepository valueOfMarketRepository;
         private readonly TopSupplyAndDemandRepository topSupplyAndDemandRepository;
@@ -40,8 +39,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             symbolGroupRepository = new(setting.mongoDbSetting);
             symbolDataRepository = new(setting.mongoDbSetting);
             symbolRepository = new(setting.mongoDbSetting);
-            stockCashMarketAtGlanceRepository = new(setting.mongoDbSetting);
-            OTCCashMarketAtGlanceRepository = new(setting.mongoDbSetting);
+            cashMarketAtGlanceRepository = new(setting.mongoDbSetting);
             marketWatcherMessageRepository = new(setting.mongoDbSetting);
             valueOfMarketRepository = new(setting.mongoDbSetting);
             topSupplyAndDemandRepository = new(setting.mongoDbSetting);
@@ -108,10 +106,10 @@ namespace Bource.Data.Informations.UnitOfWorks
         public Task AddOrUpdateSymbolGroups(List<SymbolGroup> symbolGroups, CancellationToken cancellationToken = default(CancellationToken))
             => symbolGroupRepository.AddOrUpdateSymbolGroups(symbolGroups, cancellationToken);
 
-        public async Task AddCashMarketAtGlance(StockCashMarketAtGlance stockCashMarketAtGlance, OTCCashMarketAtGlance oTCCashMarketAtGlance, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task AddCashMarketAtGlance(CashMarketAtGlance stockCashMarketAtGlance, CashMarketAtGlance oTCCashMarketAtGlance, CancellationToken cancellationToken = default(CancellationToken))
         {
-            await stockCashMarketAtGlanceRepository.AddAsync(stockCashMarketAtGlance, cancellationToken);
-            await OTCCashMarketAtGlanceRepository.AddAsync(oTCCashMarketAtGlance, cancellationToken);
+            await cashMarketAtGlanceRepository.AddAsync(stockCashMarketAtGlance, cancellationToken);
+            await cashMarketAtGlanceRepository.AddAsync(oTCCashMarketAtGlance, cancellationToken);
         }
 
         public async Task AddOrUpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))

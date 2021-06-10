@@ -1,10 +1,11 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
+﻿using Bource.Models.Data.Enums;
+using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Bource.Models.Data.Tsetmc
 {
-    public class StockCashMarketAtGlance : MongoDataEntity
+    public class CashMarketAtGlance : MongoDataEntity
     {
         [Display(Name = "وضعیت بازار")]
         public string Status { get; set; }
@@ -21,6 +22,9 @@ namespace Bource.Models.Data.Tsetmc
         [Display(Name = "تغییرات شاخص کل-هم وزن")]
         public decimal OverallIndexEqualWeightChange { get; set; }
 
+        [Display(Name = "ارزش بازار اول و دوم")]
+        public decimal ValueOfFirstAndSecondMarket { get; set; }
+
         [Display(Name = "ارزش بازار")]
         public decimal ValueOfMarket { get; set; }
 
@@ -36,5 +40,10 @@ namespace Bource.Models.Data.Tsetmc
 
         [Display(Name = "حجم معاملات")]
         public decimal Turnover { get; set; }
+
+        public MarketType Market { get; set; }
+
+        [BsonIgnore]
+        public bool IsOpen => Status != "بسته";
     }
 }

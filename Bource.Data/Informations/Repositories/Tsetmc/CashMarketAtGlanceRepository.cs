@@ -3,9 +3,9 @@ using Bource.Models.Data.Tsetmc;
 
 namespace Bource.Data.Informations.Repositories.Tsetmc
 {
-    public class StockCashMarketAtGlanceRepository : MongoRepository<StockCashMarketAtGlance>
+    public class CashMarketAtGlanceRepository : MongoRepository<CashMarketAtGlance>
     {
-        public StockCashMarketAtGlanceRepository(MongoDbSetting dbSetting)
+        public CashMarketAtGlanceRepository(MongoDbSetting dbSetting)
             : base(dbSetting)
         {
         }

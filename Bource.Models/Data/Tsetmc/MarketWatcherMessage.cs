@@ -22,5 +22,10 @@ namespace Bource.Models.Data.Tsetmc
             }
             return false;
         }
+
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode();
+        }
     }
 }

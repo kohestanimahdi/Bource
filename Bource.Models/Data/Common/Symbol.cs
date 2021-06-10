@@ -172,7 +172,6 @@ namespace Bource.Models.Data.Common
             GroupName = nodes[23].GetText();
             SubGroupCode = nodes[25].GetText();
             SubGroupName = nodes[27].GetText();
-            //ExistInType = SymbolExistInType.Tsetmc;
         }
 
         public void UpdateFromTseClientSoap(string[] array)

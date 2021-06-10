@@ -45,5 +45,7 @@ namespace Bource.Models.Data.FipIran
             }
             return false;
         }
+
+        public override int GetHashCode() => Id.GetHashCode();
     }
 }

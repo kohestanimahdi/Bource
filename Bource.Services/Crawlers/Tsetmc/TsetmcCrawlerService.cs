@@ -520,10 +520,12 @@ namespace Bource.Services.Crawlers.Tsetmc
             var stockCashMarketAtGlance = GetStockCashMarketAtGlance(htmlDoc);
             var OTCCashMarketAtGlance = GetOTCCashMarketAtGlance(htmlDoc);
 
+            await distributedCache.SetValueAsync("IsMarketOpen", stockCashMarketAtGlance.IsOpen && OTCCashMarketAtGlance.IsOpen, 1);
+
             await tsetmcUnitOfWork.AddCashMarketAtGlance(stockCashMarketAtGlance, OTCCashMarketAtGlance, cancellationToken);
         }
 
-        private StockCashMarketAtGlance GetStockCashMarketAtGlance(HtmlDocument htmlDoc)
+        private CashMarketAtGlance GetStockCashMarketAtGlance(HtmlDocument htmlDoc)
         {
             var node = htmlDoc.DocumentNode.SelectSingleNode("//div[@id='TseTab1Elm']");
 
@@ -532,13 +534,13 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             var tables = TseTab1ElmDoc.DocumentNode.SelectNodes("//table[@class='table1']");
 
-            StockCashMarketAtGlance stockCashMarketAtGlance = null;
+            CashMarketAtGlance stockCashMarketAtGlance = null;
             if (tables.Any())
             {
                 var trs = tables.First().SelectNodes("tbody/tr/td");
                 if (trs.Any())
                 {
-                    stockCashMarketAtGlance = new StockCashMarketAtGlance
+                    stockCashMarketAtGlance = new CashMarketAtGlance
                     {
                         CreateDate = DateTime.Now,
                         Status = trs[1].GetText(),
@@ -551,6 +553,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                         NumberOfTransaction = trs[11].ConvertToDecimal(),
                         ValueOfTransaction = trs[13].GetAttributeValueAsDecimal(),
                         Turnover = trs[15].GetAttributeValueAsDecimal(),
+                        Market = MarketType.Stock
                     };
                 }
             }
@@ -558,7 +561,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             return stockCashMarketAtGlance;
         }
 
-        private OTCCashMarketAtGlance GetOTCCashMarketAtGlance(HtmlDocument htmlDoc)
+        private CashMarketAtGlance GetOTCCashMarketAtGlance(HtmlDocument htmlDoc)
         {
             var node = htmlDoc.DocumentNode.SelectSingleNode("//div[@id='IfbTab1Elm']");
 
@@ -567,13 +570,13 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             var tables = TseTab1ElmDoc.DocumentNode.SelectNodes("//table[@class='table1']");
 
-            OTCCashMarketAtGlance stockCashMarketAtGlance = null;
+            CashMarketAtGlance stockCashMarketAtGlance = null;
             if (tables.Any())
             {
                 var trs = tables.First().SelectNodes("tbody/tr/td");
                 if (trs.Any())
                 {
-                    stockCashMarketAtGlance = new OTCCashMarketAtGlance
+                    stockCashMarketAtGlance = new CashMarketAtGlance
                     {
                         CreateDate = DateTime.Now,
                         Status = trs[1].GetText(),
@@ -585,6 +588,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                         NumberOfTransaction = trs[9].ConvertToDecimal(),
                         ValueOfTransaction = trs[11].GetAttributeValueAsDecimal(),
                         Turnover = trs[13].GetAttributeValueAsDecimal(),
+                        Market = MarketType.OTC
                     };
                 }
             }

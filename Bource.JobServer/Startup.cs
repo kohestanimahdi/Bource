@@ -41,7 +41,7 @@ namespace Bource.JobServer
             services.AddCrawlerHttpClient(applicationSettings);
             services.AddStackExchangeRedisCache(options =>
             {
-                options.Configuration = "localhost";
+                options.Configuration = Configuration.GetConnectionString("RedisJobCache");
                 options.InstanceName = "RedisJobCache";
             });
         }

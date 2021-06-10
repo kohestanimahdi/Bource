@@ -24,5 +24,10 @@ namespace Bource.Models.Data.Tsetmc
                 return Title == indicator.Title && InsCode == indicator.InsCode;
             return false;
         }
+
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode();
+        }
     }
 }
