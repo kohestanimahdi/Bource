@@ -153,7 +153,7 @@ namespace Bource.Console
                             Task.Run(() =>
                             {
                                 while (DateTime.Now.Hour >= 9 && DateTime.Now.Hour <= 14)
-                                    TseSymbolDataProvider.SaveSymbolData();
+                                    TseSymbolDataProvider.SaveSymbolData().GetAwaiter().GetResult();
                             });
 
                             break;

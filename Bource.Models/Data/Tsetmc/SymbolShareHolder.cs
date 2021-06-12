@@ -18,7 +18,7 @@ namespace Bource.Models.Data.Tsetmc
             Name = tds[0].GetText();
             Share = tds[1].GetAttributeValueAsDecimal();
             Percent = tds[2].ConvertToDouble();
-            ShareChange = tds[3].ConvertToDecimal();
+            ShareChange = tds[3].GetAttributeValueAsDecimal();
 
             var onClick = row.Attributes["onclick"].Value;
             var regex = new Regex("\'[0-9]*,.*\'");

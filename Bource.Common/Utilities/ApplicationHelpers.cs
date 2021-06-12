@@ -80,5 +80,18 @@ namespace Bource.Common.Utilities
 
             return result;
         }
+
+        public static async Task DoFuncEverySecond(Func<CancellationToken, Task> func, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var startTime = DateTime.Now;
+            while (DateTime.Now < startTime.AddMinutes(1))
+            {
+                var time = DateTime.Now;
+                await func(cancellationToken);
+                var delay = DateTime.Now - time;
+                if (delay < TimeSpan.FromSeconds(1))
+                    await Task.Delay(TimeSpan.FromSeconds(1) - delay);
+            }
+        }
     }
 }

@@ -14,8 +14,8 @@ services:
       dockerfile: Bource.JobServer/Dockerfile
     restart: always
     ports:
-      - "4002:443"
-      - "4003:80"
+      - "8186:443"
+      - "8187:80"
     depends_on:
       - mongo-db
       - redis-server

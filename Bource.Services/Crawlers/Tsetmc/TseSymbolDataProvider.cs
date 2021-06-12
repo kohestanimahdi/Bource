@@ -3,16 +3,12 @@ using Bource.Common.Utilities;
 using Bource.Data.Informations.UnitOfWorks;
 using Bource.Models.Data.Common;
 using Bource.Models.Data.Tsetmc;
-using Bource.Services.Crawlers.Tsetmc.Models;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,66 +43,44 @@ namespace Bource.Services.Crawlers.Tsetmc
         public static void AddSymbolDataToQueue(List<SymbolData> data)
             => SymbolDataQueue.Enqueue(data);
 
-        public void ScheduleSaveLatestSymbolData()
-        {
-            while (DateTime.Now.Hour < 16 || distributedCache.GetValue<bool>(nameof(tsetmcCrawlerService.IsMarketOpen)))
-            {
-                SaveSymbolData();
-            }
-        }
+        public Task SaveSymbolDataEverySecond(CancellationToken cancellationToken = default(CancellationToken))
+            => ApplicationHelpers.DoFuncEverySecond(SaveSymbolData, cancellationToken);
 
-        public void SaveSymbolData()
+        public async Task SaveSymbolData(CancellationToken cancellationToken = default(CancellationToken))
         {
             if (!SymbolDataQueue.IsEmpty)
             {
                 List<SymbolData> data;
                 if (SymbolDataQueue.TryDequeue(out data))
                 {
-                    FillSymbolData(data);
-
-                    Task.Run(() => AddSymbolDataToMemory(data));
-                    Task.Run(() => AddSymbolDataToDataBase(data));
+                    await AddSymbolDataToDataBase(data);
                 }
             }
         }
 
-        private void FillSymbolData(List<SymbolData> data)
-        {
 
-            var startTime = DateTime.Now;
-            foreach (var d in data)
-            {
-                if (tsetmcCrawlerService.OneTimeSymbolData.ContainsKey(d.InsCode))
-                {
-                    var oneTime = tsetmcCrawlerService.OneTimeSymbolData[d.InsCode];
-                    d.FillData(oneTime.MonthAverageValue, oneTime.FloatingStock, oneTime.GroupPE);
-                }
-            }
-            logger.LogInformation($"Mapping data:{(DateTime.Now - startTime).TotalSeconds}");
-        }
+        //private static object addToMemoryObject = new();
+        //private void AddSymbolDataToMemory(List<SymbolData> data)
+        //{
+        //    var startTime = DateTime.Now;
+        //    lock (addToMemoryObject)
+        //    {
+        //        var items = distributedCache.GetValue<List<SymbolData>>("SymbolDataForSaved") ?? new();
 
-        private static object addToMemoryObject = new();
-        private void AddSymbolDataToMemory(List<SymbolData> data)
-        {
-            var startTime = DateTime.Now;
-            lock (addToMemoryObject)
-            {
-                var items = distributedCache.GetValue<List<SymbolData>>("SymbolDataForSaved") ?? new();
+        //        foreach (var d in data)
+        //        {
+        //            var lastSymbolData = items.Where(i => i.InsCode == d.InsCode).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
+        //            if (lastSymbolData is null || !lastSymbolData.Equals(d))
+        //            {
+        //                items.Add(d);
+        //            }
+        //        }
+        //        distributedCache.SetValue("SymbolDataForSaved", items, 720);
 
-                foreach (var d in data)
-                {
-                    var lastSymbolData = items.Where(i => i.InsCode == d.InsCode).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
-                    if (lastSymbolData is null || !lastSymbolData.Equals(d))
-                    {
-                        items.Add(d);
-                    }
-                }
-                distributedCache.SetValue("SymbolDataForSaved", items, 720);
+        //        logger.LogInformation($"Add In memory:{(DateTime.Now - startTime).TotalSeconds}");
+        //    }
 
-                logger.LogInformation($"Add In memory:{(DateTime.Now - startTime).TotalSeconds}");
-            }
-
-        }
+        //}
 
         private async Task AddSymbolDataToDataBase(List<SymbolData> data)
         {
@@ -179,8 +153,6 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             var existsSymbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
-            int n = 0;
-            Common.Utilities.ConsoleHelper.WriteProgressBar(n);
 
             foreach (var symbol in existsSymbols)
             {
@@ -209,10 +181,8 @@ namespace Bource.Services.Crawlers.Tsetmc
 
                 await tsetmcUnitOfWork.UpdateSymbolAsync(symbol);
 
-                n++;
-                Common.Utilities.ConsoleHelper.WriteProgressBar((int)(n * 100.0 / existsSymbols.Count), true);
             }
-            Common.Utilities.ConsoleHelper.WriteProgressBar(100, true);
+
 
             var symbolsToAdd = new List<Symbol>();
             if (tseSymbols.Any() && tseClientSymbols.Any())

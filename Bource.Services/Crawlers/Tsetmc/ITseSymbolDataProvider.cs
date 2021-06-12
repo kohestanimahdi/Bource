@@ -8,6 +8,6 @@ namespace Bource.Services.Crawlers.Tsetmc
     public interface ITseSymbolDataProvider
     {
         Task AddOrUpdateSymbols(CancellationToken cancellationToken = default);
-        void SaveSymbolData();
+        Task SaveSymbolData(CancellationToken cancellationToken = default(CancellationToken));
     }
 }

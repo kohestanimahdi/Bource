@@ -25,8 +25,12 @@ namespace Bource.Services.Crawlers.Tsetmc
 
 
         #region Properties
+
         private bool isMarketOpen = true;
+        private List<SymbolData> lastSymbolData;
+
         private readonly int numberOfTries = 5;
+        private static readonly List<SymbolData> SymbolData = new();
         private readonly TimeSpan delayBetweenTimeouts = TimeSpan.FromSeconds(1);
         private readonly bool throwExceptions = false;
         private readonly HttpClient httpClient;
@@ -34,6 +38,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
         private readonly IDistributedCache distributedCache;
         private readonly Dictionary<long, FillSymbolData> oneTimeSymbolData;
+
 
         private string baseUrl => httpClient.BaseAddress.ToString();
 
@@ -52,6 +57,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
 
             oneTimeSymbolData = distributedCache.GetValue<Dictionary<long, FillSymbolData>>(nameof(OneTimeSymbolData)) ?? new();
+            lastSymbolData = new();
         }
 
         #endregion
@@ -313,27 +319,30 @@ namespace Bource.Services.Crawlers.Tsetmc
         #endregion
 
         #region  در یک نگاه نماد
+        public Task ScheduleLatestSymbolDataEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
+        => ApplicationHelpers.DoFuncEverySecond(ScheduleLatestSymbolData, cancellationToken);
 
-        public async Task ScheduleLatestSymbolData()
+        public async Task ScheduleLatestSymbolData(CancellationToken cancellationToken = default(CancellationToken))
         {
             if (DateTime.Now.Hour < 9)
                 throw new ServerException("قبل از ساعت 9 قادر به اجرای این عملیات نیستید");
 
-            while (DateTime.Now.Hour >= 9 && IsMarketOpen)
+            if (!IsMarketOpen)
+                return;
+
+            try
             {
-                try
-                {
-                    var time = DateTime.Now;
-                    await GetLatestSymbolDataAsync();
-                    var delay = DateTime.Now - time;
-                    if (delay < TimeSpan.FromSeconds(1))
-                        await Task.Delay(TimeSpan.FromSeconds(1) - delay);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "");
-                }
+                var time = DateTime.Now;
+                await GetLatestSymbolDataAsync();
+                var delay = DateTime.Now - time;
+                if (delay < TimeSpan.FromSeconds(1))
+                    await Task.Delay(TimeSpan.FromSeconds(1) - delay);
             }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "");
+            }
+
         }
 
         /// <summary>
@@ -363,15 +372,15 @@ namespace Bource.Services.Crawlers.Tsetmc
             var symbolsSplitted = symbolsData.Split(";");
 
             var data = new List<SymbolData>();
-            var statuses = await GetSymbolStatus(cancellationToken);
+            //var statuses = await GetSymbolStatus(cancellationToken);
 
             foreach (var item in symbolsSplitted)
             {
                 var dataLine = item.Split(",");
-                var isnCode = Convert.ToInt64(dataLine[0]);
+                //var isnCode = Convert.ToInt64(dataLine[0]);
 
-                if (statuses.ContainsKey(isnCode) && statuses[isnCode] != "مجاز")
-                    continue;
+                //if (statuses.ContainsKey(isnCode) && statuses[isnCode] != "مجاز")
+                //    continue;
 
                 var symbolData = new SymbolData(dataLine, lastModified);
                 symbolData.FillTransactions(transactionsDataDictionary[symbolData.InsCode]);
@@ -383,13 +392,33 @@ namespace Bource.Services.Crawlers.Tsetmc
             logger.LogInformation($"Get Datas From Tse:{(DateTime.Now - startTime).TotalSeconds}");
 
 
-            //startTime = DateTime.Now;
+            startTime = DateTime.Now;
             // افزودن به لیست دیتاهای امروز و صف برای ذخیره سازی
-            TseSymbolDataProvider.AddSymbolDataToQueue(data);
 
-            //logger.LogInformation($"Save To Queue:{(DateTime.Now - startTime).TotalSeconds}");
+            List<SymbolData> symbolsToSave = new();
+
+            foreach (var d in data)
+            {
+                var last = lastSymbolData.Where(i => i.InsCode == d.InsCode).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
+                if (last is null || !last.Equals(d))
+                {
+                    if (OneTimeSymbolData.ContainsKey(d.InsCode))
+                    {
+                        var oneTime = OneTimeSymbolData[d.InsCode];
+                        d.FillData(oneTime.MonthAverageValue, oneTime.FloatingStock, oneTime.GroupPE);
+                    }
+                    symbolsToSave.Add(d);
+                }
+            }
+            lastSymbolData = data;
+
+            SymbolData.AddRange(symbolsToSave);
+            TseSymbolDataProvider.AddSymbolDataToQueue(symbolsToSave);
+
+            logger.LogInformation($"Save To List:{(DateTime.Now - startTime).TotalSeconds}");
 
         }
+
 
         public async Task<Dictionary<long, string>> GetSymbolStatus(CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -507,6 +536,13 @@ namespace Bource.Services.Crawlers.Tsetmc
         #endregion
 
         #region بازار نقدی در یک نگاه
+        public Task GetMarketAtGlanceScheduleEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
+        => ApplicationHelpers.DoFuncEverySecond(GetMarketAtGlanceScheduleAsync, cancellationToken);
+        public async Task GetMarketAtGlanceScheduleAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (IsMarketOpen)
+                await GetMarketAtGlanceAsync(cancellationToken);
+        }
 
         public async Task GetMarketAtGlanceAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -713,6 +749,9 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         #region عرضه و تقاضا
 
+        public Task GetTopSupplyAndDemandEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
+        => ApplicationHelpers.DoFuncEverySecond(GetTopSupplyAndDemandAsync, cancellationToken);
+
         /// <summary>
         /// دریافت اطلاعات بیشترین عرضه و تقاضای بورس و فرابورس
         /// </summary>
@@ -860,6 +899,10 @@ namespace Bource.Services.Crawlers.Tsetmc
         #endregion
 
         #region شاخص‌ها
+
+        public Task GetSelectedIndicatorEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
+        => ApplicationHelpers.DoFuncEverySecond(GetSelectedIndicatorAsync, cancellationToken);
+
 
         /// <summary>
         /// دریافت لحظه ای شاخص های منتخب

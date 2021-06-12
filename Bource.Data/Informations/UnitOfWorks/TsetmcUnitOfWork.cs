@@ -124,36 +124,39 @@ namespace Bource.Data.Informations.UnitOfWorks
         public Task UpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
             => symbolRepository.UpdateAsync(symbol, cancellationToken);
 
-        public async Task AddSymbolData(List<SymbolData> data, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            var startDate = DateTime.Now;
+        //public async Task AddSymbolData(List<SymbolData> data, CancellationToken cancellationToken = default(CancellationToken))
+        //{
+        //    var startDate = DateTime.Now;
 
-            var todayItems = await symbolDataRepository.Table.Find(i => i.LastUpdate >= DateTime.Today).ToListAsync(cancellationToken);
+        //    var todayItems = await symbolDataRepository.Table.Find(i => i.LastUpdate >= DateTime.Today).ToListAsync(cancellationToken);
 
-            logger.LogInformation($"get  Data from database: { (DateTime.Now - startDate).TotalSeconds}");
+        //    logger.LogInformation($"get  Data from database: { (DateTime.Now - startDate).TotalSeconds}");
 
-            List<SymbolData> itemsToSave = new();
+        //    List<SymbolData> itemsToSave = new();
 
-            if (todayItems is not null && todayItems.Any())
-            {
-                startDate = DateTime.Now;
-                foreach (var item in data)
-                {
-                    var symbolData = todayItems.Where(i => i.InsCode == item.InsCode).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
+        //    if (todayItems is not null && todayItems.Any())
+        //    {
+        //        startDate = DateTime.Now;
+        //        foreach (var item in data)
+        //        {
+        //            var symbolData = todayItems.Where(i => i.InsCode == item.InsCode).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
 
-                    if (symbolData is null || !symbolData.Equals(item))
-                    {
-                        itemsToSave.Add(item);
-                    }
-                }
+        //            if (symbolData is null || !symbolData.Equals(item))
+        //            {
+        //                itemsToSave.Add(item);
+        //            }
+        //        }
 
-            }
-            else
-                itemsToSave = data;
+        //    }
+        //    else
+        //        itemsToSave = data;
 
 
-            await symbolDataRepository.AddRangeAsync(itemsToSave, cancellationToken);
-        }
+        //    await symbolDataRepository.AddRangeAsync(itemsToSave, cancellationToken);
+        //}
+
+        public Task AddSymbolData(List<SymbolData> data, CancellationToken cancellationToken = default(CancellationToken))
+        => symbolDataRepository.AddRangeAsync(data, cancellationToken);
 
         public Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))
             => symbolRepository.GetAllAsync(cancellationToken);
