@@ -413,12 +413,20 @@ namespace Bource.Services.Crawlers.Tsetmc
             lastSymbolData = data;
 
             SymbolData.AddRange(symbolsToSave);
-            TseSymbolDataProvider.AddSymbolDataToQueue(symbolsToSave);
-
             logger.LogInformation($"Save To List:{(DateTime.Now - startTime).TotalSeconds}");
+
+            //TseSymbolDataProvider.AddSymbolDataToQueue(symbolsToSave);
+            await AddSymbolDataToDataBase(symbolsToSave);
 
         }
 
+        private async Task AddSymbolDataToDataBase(List<SymbolData> data)
+        {
+            var startTime = DateTime.Now;
+            await tsetmcUnitOfWork.AddSymbolData(data);
+            logger.LogInformation($"Add to database:{(DateTime.Now - startTime).TotalSeconds}");
+
+        }
 
         public async Task<Dictionary<long, string>> GetSymbolStatus(CancellationToken cancellationToken = default(CancellationToken))
         {

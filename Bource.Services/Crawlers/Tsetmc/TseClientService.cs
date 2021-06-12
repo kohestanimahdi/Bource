@@ -74,7 +74,6 @@ namespace Bource.Services.Crawlers.Tsetmc
         public async Task GetInsturmentsClosingPriceAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var (symbols, shareInfos) = await GetSymbolAndSharingAsync();
-
             List<Task> tasks = new();
             int n = 0;
             int count = symbols.Count / 15;
@@ -112,49 +111,14 @@ namespace Bource.Services.Crawlers.Tsetmc
                 if (insturmentClosingPrice.Equals("*"))
                     return;
 
-                foreach (string text in insturmentClosingPrice.Split('@'))
-                {
-                    if (string.IsNullOrEmpty(text))
-                        continue;
-
-                    List<ClosingPriceInfo> cpList = new();
-                    string[] items = text.Split(';');
-
-                    foreach (var row in items)
-                    {
-                        try
-                        {
-                            ClosingPriceInfo closingPriceInfo = new(row);
-
-                            cpList.Add(closingPriceInfo);
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.LogError(ex, "UpdateClosingPrices[Row:" + row + "]");
-                            continue;
-                        }
-                    }
-
-                    if (cpList.Any())
-                    {
-                        var symbol = symbols.FirstOrDefault(i => i.InsCode == cpList.First().InsCode);
-                        if (symbol is not null)
-                        {
-                            var capitalIncreaseAndProfitItems = ConvertToClosingPriceType(symbol, cpList, shareInfos, ClosingPriceTypes.CapitalIncreaseAndProfit);
-                            var capitalIncreaseItems = ConvertToClosingPriceType(symbol, cpList, shareInfos, ClosingPriceTypes.CapitalIncrease);
-                            cpList.ForEach(i => i.Type = ClosingPriceTypes.NoPriceAdjustment);
-
-                            await tsetmcUnitOfWork.AppendClosingPriceInfoAsync(cpList.Where(i => i.ZTotTran != 0).ToList(), cancellationToken);
-                            await tsetmcUnitOfWork.AppendClosingPriceInfoAsync(capitalIncreaseAndProfitItems.Where(i => i.ZTotTran != 0).ToList(), cancellationToken);
-                            await tsetmcUnitOfWork.AppendClosingPriceInfoAsync(capitalIncreaseItems.Where(i => i.ZTotTran != 0).ToList(), cancellationToken);
-                        }
-                    }
-                }
+                await SaveClosingPriceInfo(symbols, shareInfos, insturmentClosingPrice, ClosingPriceTypes.NoPriceAdjustment, cancellationToken);
+                await SaveClosingPriceInfo(symbols, shareInfos, insturmentClosingPrice, ClosingPriceTypes.CapitalIncreaseAndProfit, cancellationToken);
+                await SaveClosingPriceInfo(symbols, shareInfos, insturmentClosingPrice, ClosingPriceTypes.CapitalIncrease, cancellationToken);
             }
             catch (Exception ex)
             {
                 if (numberOfTries < this.numberOfTries)
-                    await GetInsturmentsClosingPricesAsync(symbols, shareInfos, cancellationToken, numberOfTries++);
+                    await GetInsturmentsClosingPricesAsync(symbols, shareInfos, cancellationToken, numberOfTries + 1);
                 else
                 {
                     logger.LogError(ex, "");
@@ -168,9 +132,54 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         }
 
-        public List<ClosingPriceInfo> ConvertToClosingPriceType(Symbol symbol, List<ClosingPriceInfo> cp, List<TseShareInfo> tseShares, ClosingPriceTypes types)
+        private async Task SaveClosingPriceInfo(List<Symbol> symbols, List<TseShareInfo> shareInfos, string insturmentClosingPrice, ClosingPriceTypes types, CancellationToken cancellationToken)
+        {
+            foreach (string text in insturmentClosingPrice.Split('@'))
+            {
+                if (string.IsNullOrEmpty(text))
+                    continue;
+
+                List<ClosingPriceInfo> cpList = new();
+                string[] items = text.Split(';');
+
+                foreach (var row in items)
+                {
+                    try
+                    {
+                        ClosingPriceInfo closingPriceInfo = new(row, types);
+
+                        cpList.Add(closingPriceInfo);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "UpdateClosingPrices[Row:" + row + "]");
+                        continue;
+                    }
+                }
+
+                if (cpList.Any())
+                {
+                    var symbol = symbols.FirstOrDefault(i => i.InsCode == cpList.First().InsCode);
+
+                    if (symbol is not null)
+                    {
+                        var closingPricesInfos = ConvertToClosingPriceType(symbol, cpList.ToList(), shareInfos, types);
+                        await tsetmcUnitOfWork.AppendClosingPriceInfoAsync(closingPricesInfos.Where(i => i.ZTotTran != 0).ToList(), cancellationToken);
+                    }
+                }
+            }
+        }
+
+
+        private List<ClosingPriceInfo> ConvertToClosingPriceType(Symbol symbol, List<ClosingPriceInfo> cpList, List<TseShareInfo> tseShares, ClosingPriceTypes types)
         {
             List<ClosingPriceInfo> list = new List<ClosingPriceInfo>();
+            var cp = cpList.ToList();
+
+            if (types == ClosingPriceTypes.NoPriceAdjustment)
+                return cp;
+
+
             decimal num2 = 1m;
             list.Add(cp[cp.Count - 1]);
             double num3 = 0.0;
@@ -219,7 +228,10 @@ namespace Bource.Services.Crawlers.Tsetmc
                 }
             }
 
-            return cp;
+            foreach (var c in cp)
+                c.Type = types;
+
+            return cp.ToList();
         }
     }
 }

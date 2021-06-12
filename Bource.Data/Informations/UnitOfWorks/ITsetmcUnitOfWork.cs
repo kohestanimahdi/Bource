@@ -23,6 +23,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         Task AddTopSupplyAndDemandRangeAsync(List<TopSupplyAndDemand> values, CancellationToken cancellationToken = default);
         Task AddValuesOfMarketsIfNotExistsRangeAsync(List<ValueOfMarket> values, CancellationToken cancellationToken = default);
         Task AppendClosingPriceInfoAsync(List<ClosingPriceInfo> infos, CancellationToken cancellationToken = default);
+        Task<List<ClosingPriceInfo>> GetClosingPriceInfosAsync(long insCode, ClosingPriceTypes? closingPriceTypes, CancellationToken cancellationToken = default);
         Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default);
         Task<List<Symbol>> GetSymbolsByTypeAsync(IEnumerable<SymbolExistInType> existInTypes, CancellationToken cancellationToken = default);
         Task UpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default);

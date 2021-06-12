@@ -11,7 +11,7 @@ namespace Bource.Models.Data.Tsetmc
         {
 
         }
-        public ClosingPriceInfo(string row)
+        public ClosingPriceInfo(string row, ClosingPriceTypes types)
         {
             string[] array9 = row.Split(',');
             InsCode = Convert.ToInt64(array9[0].ToString());
@@ -25,6 +25,7 @@ namespace Bource.Models.Data.Tsetmc
             PriceMax = Convert.ToDecimal(array9[8].ToString());
             PriceYesterday = Convert.ToDecimal(array9[9].ToString());
             PriceFirst = Convert.ToDecimal(array9[10].ToString());
+            Type = types;
         }
 
         [BsonIgnore]

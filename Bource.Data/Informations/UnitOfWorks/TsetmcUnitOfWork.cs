@@ -212,5 +212,8 @@ namespace Bource.Data.Informations.UnitOfWorks
 
         public Task AddAdtiveSymbolShareHoldersAsync(List<ActiveSymbolShareHolder> items, CancellationToken cancellationToken = default(CancellationToken))
         => activeSymbolShareHolderRepository.AddRangeAsync(items, cancellationToken);
+
+        public Task<List<ClosingPriceInfo>> GetClosingPriceInfosAsync(long insCode, ClosingPriceTypes? closingPriceTypes, CancellationToken cancellationToken = default(CancellationToken))
+            => closingPriceInfoRepository.Table.Find(i => i.InsCode == insCode && (closingPriceTypes == null || i.Type == closingPriceTypes)).ToListAsync(cancellationToken);
     }
 }

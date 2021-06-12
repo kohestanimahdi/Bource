@@ -10,7 +10,6 @@ namespace Bource.Services.Crawlers.Tsetmc
 {
     public interface ITseClientService
     {
-        List<ClosingPriceInfo> ConvertToClosingPriceType(Symbol symbol, List<ClosingPriceInfo> cp, List<TseShareInfo> tseShares, ClosingPriceTypes types);
         Task GetInsturmentsClosingPriceAsync(CancellationToken cancellationToken = default);
         Task<(List<Symbol>, List<TseShareInfo>)> GetSymbolAndSharingAsync();
     }
