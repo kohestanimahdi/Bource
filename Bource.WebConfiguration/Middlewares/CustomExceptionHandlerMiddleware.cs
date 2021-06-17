@@ -1,17 +1,17 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Bource.Common.Exceptions;
+using Bource.Common.Models;
+using Bource.WebConfiguration.Api;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Net;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Hosting;
-using Bource.Common.Models;
-using Bource.Common.Exceptions;
-using Bource.WebConfiguration.Api;
+using System.Threading.Tasks;
 
 namespace Bource.WebConfiguration.Middlewares
 {

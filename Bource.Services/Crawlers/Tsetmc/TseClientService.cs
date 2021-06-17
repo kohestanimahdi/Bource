@@ -66,11 +66,11 @@ namespace Bource.Services.Crawlers.Tsetmc
                     TseShareInfo tseShareInfo = new(array2[j]);
                     responseShareInfos.Add(tseShareInfo);
                 }
-
             }
 
             return (responseSymbols, responseShareInfos);
         }
+
         public async Task GetInsturmentsClosingPriceAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var (symbols, shareInfos) = await GetSymbolAndSharingAsync();
@@ -86,7 +86,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             }
 
             await Task.WhenAll(tasks);
-
         }
 
         private async Task GetInsturmentsClosingPricesAsync(List<Symbol> symbols, List<TseShareInfo> shareInfos, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
@@ -129,7 +128,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                         return;
                 }
             }
-
         }
 
         private async Task SaveClosingPriceInfo(List<Symbol> symbols, List<TseShareInfo> shareInfos, string insturmentClosingPrice, ClosingPriceTypes types, CancellationToken cancellationToken)
@@ -170,7 +168,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             }
         }
 
-
         private List<ClosingPriceInfo> ConvertToClosingPriceType(Symbol symbol, List<ClosingPriceInfo> cpList, List<TseShareInfo> tseShares, ClosingPriceTypes types)
         {
             List<ClosingPriceInfo> list = new List<ClosingPriceInfo>();
@@ -178,7 +175,6 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             if (types == ClosingPriceTypes.NoPriceAdjustment)
                 return cp;
-
 
             decimal num2 = 1m;
             list.Add(cp[cp.Count - 1]);

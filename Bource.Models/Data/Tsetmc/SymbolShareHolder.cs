@@ -9,8 +9,8 @@ namespace Bource.Models.Data.Tsetmc
     {
         public SymbolShareHolder()
         {
-
         }
+
         public SymbolShareHolder(long insCode, HtmlNode row)
         {
             var tds = row.SelectNodes("td");
@@ -26,6 +26,7 @@ namespace Bource.Models.Data.Tsetmc
             if (match.Success)
                 ShareId = match.Value.Replace("\'", "").Split(',')[0];
         }
+
         public long InsCode
         {
             get
@@ -37,6 +38,7 @@ namespace Bource.Models.Data.Tsetmc
                 InsCodeValue = value.ToString();
             }
         }
+
         public string InsCodeValue { get; set; }
         public string Name { get; set; }
         public string ShareId { get; set; }

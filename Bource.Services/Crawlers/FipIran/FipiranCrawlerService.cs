@@ -33,7 +33,6 @@ namespace Bource.Services.Crawlers.FipIran
             this.setting = settings.Value.GetCrawlerSetting(nameof(FipiranCrawlerService)) ?? throw new ArgumentNullException(nameof(settings));
         }
 
-
         public async Task GetNews(FipIranNewsTypes type, CancellationToken cancellationToken = default(CancellationToken))
         {
             switch (type)

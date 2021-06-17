@@ -11,10 +11,8 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,8 +21,6 @@ namespace Bource.Services.Crawlers.Tsetmc
 {
     public class TsetmcCrawlerService : ITsetmcCrawlerService, IScopedDependency
     {
-
-
         #region Properties
 
         private bool isMarketOpen = true;
@@ -47,9 +43,10 @@ namespace Bource.Services.Crawlers.Tsetmc
         public Dictionary<long, FillSymbolData> OneTimeSymbolData => oneTimeSymbolData;
         public bool IsMarketOpen => isMarketOpen;
 
-        #endregion
+        #endregion Properties
 
         #region Constructors
+
         public TsetmcCrawlerService(
             IOptionsSnapshot<ApplicationSetting> settings,
             IHttpClientFactory httpClientFactory,
@@ -68,13 +65,12 @@ namespace Bource.Services.Crawlers.Tsetmc
             lastSymbolData = new();
         }
 
-        #endregion
+        #endregion Constructors
 
-
-        Task DoFunctionsOFListWithMultiTask<T>(List<T> symbols, Func<T, HttpClient, CancellationToken, int, Task> func, CancellationToken cancellationToken, int numberOfThreads = 5, int? timeout = null)
+        private Task DoFunctionsOFListWithMultiTask<T>(List<T> symbols, Func<T, HttpClient, CancellationToken, int, Task> func, CancellationToken cancellationToken, int numberOfThreads = 5, int? timeout = null)
             => ApplicationHelpers.DoFunctionsOFListWithMultiTask(symbols, httpClientFactory, className, func, cancellationToken, numberOfThreads, timeout);
 
-        Task DoFuncEverySecond(Func<HttpClient, CancellationToken, Task> func, CancellationToken cancellationToken = default(CancellationToken))
+        private Task DoFuncEverySecond(Func<HttpClient, CancellationToken, Task> func, CancellationToken cancellationToken = default(CancellationToken))
             => ApplicationHelpers.DoFuncEverySecond(httpClientFactory, className, func, cancellationToken);
 
         #region نمادها
@@ -115,8 +111,8 @@ namespace Bource.Services.Crawlers.Tsetmc
                         throw;
                 }
             }
-
         }
+
         public async Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = new List<Symbol>();
@@ -186,6 +182,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 }
             }
         }
+
         private async Task GetSymbolInstructionAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
@@ -232,7 +229,8 @@ namespace Bource.Services.Crawlers.Tsetmc
                 }
             }
         }
-        #endregion
+
+        #endregion نمادها
 
         #region حقیقی و حقوقی
 
@@ -243,7 +241,6 @@ namespace Bource.Services.Crawlers.Tsetmc
         /// <returns></returns>
         public async Task GetAllNaturalAndLegalEntityAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
             await DoFunctionsOFListWithMultiTask(symbols, GetNaturalAndLegalEntityAsync, cancellationToken);
@@ -292,7 +289,8 @@ namespace Bource.Services.Crawlers.Tsetmc
                 }
             }
         }
-        #endregion
+
+        #endregion حقیقی و حقوقی
 
         #region صنعت
 
@@ -333,9 +331,11 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             await tsetmcUnitOfWork.AddOrUpdateSymbolGroups(groups, cancellationToken);
         }
-        #endregion
 
-        #region  در یک نگاه نماد
+        #endregion صنعت
+
+        #region در یک نگاه نماد
+
         public Task ScheduleLatestSymbolDataEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
         => DoFuncEverySecond(ScheduleLatestSymbolData, cancellationToken);
 
@@ -355,7 +355,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             {
                 logger.LogError(ex, "");
             }
-
         }
 
         /// <summary>
@@ -404,7 +403,6 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             logger.LogInformation($"Get Datas From Tse:{(DateTime.Now - startTime).TotalSeconds}");
 
-
             startTime = DateTime.Now;
             // افزودن به لیست دیتاهای امروز و صف برای ذخیره سازی
 
@@ -430,7 +428,6 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             //TseSymbolDataProvider.AddSymbolDataToQueue(symbolsToSave);
             await AddSymbolDataToDataBase(symbolsToSave);
-
         }
 
         private async Task AddSymbolDataToDataBase(List<SymbolData> data)
@@ -438,7 +435,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             var startTime = DateTime.Now;
             await tsetmcUnitOfWork.AddSymbolData(data);
             logger.LogInformation($"Add to database:{(DateTime.Now - startTime).TotalSeconds}");
-
         }
 
         private async Task<Dictionary<long, string>> GetSymbolStatus(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
@@ -461,7 +457,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                 var status = matches[i + 3].Value.Replace("<td>", "").Replace("</td>", "");
                 statuses[insCode] = status;
             }
-
 
             return statuses;
         }
@@ -522,8 +517,8 @@ namespace Bource.Services.Crawlers.Tsetmc
                         throw;
                 }
             }
-
         }
+
         private async Task GetLatestClientSymbolDataAsync(List<SymbolData> symbols, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             var response = await httpClient.GetAsync("tsev2/data/ClientTypeAll.aspx", cancellationToken);
@@ -545,6 +540,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 symbol.FillClientValues(columns);
             }
         }
+
         private async Task<HttpResponseMessage> GetLatestSymbolsResponseAsync(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             var response = await httpClient.GetAsync("tsev2/data/MarketWatchPlus.aspx", cancellationToken);
@@ -557,11 +553,13 @@ namespace Bource.Services.Crawlers.Tsetmc
             return response;
         }
 
-        #endregion
+        #endregion در یک نگاه نماد
 
         #region بازار نقدی در یک نگاه
+
         public Task GetMarketAtGlanceScheduleEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
         => DoFuncEverySecond(GetMarketAtGlanceScheduleAsync, cancellationToken);
+
         public async Task GetMarketAtGlanceScheduleAsync(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (IsMarketOpen)
@@ -663,7 +661,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             return stockCashMarketAtGlance;
         }
 
-        #endregion
+        #endregion بازار نقدی در یک نگاه
 
         #region پیغام‌های ناظر
 
@@ -719,7 +717,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             return messages;
         }
 
-        #endregion
+        #endregion پیغام‌های ناظر
 
         #region ارزش بازار
 
@@ -773,7 +771,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             return values;
         }
 
-        #endregion
+        #endregion ارزش بازار
 
         #region عرضه و تقاضا
 
@@ -859,7 +857,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             return values;
         }
 
-        #endregion
+        #endregion عرضه و تقاضا
 
         #region افزایش سرمایه
 
@@ -925,13 +923,13 @@ namespace Bource.Services.Crawlers.Tsetmc
                 }
             }
         }
-        #endregion
+
+        #endregion افزایش سرمایه
 
         #region شاخص‌ها
 
         public Task GetSelectedIndicatorEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
         => DoFuncEverySecond(GetSelectedIndicatorAsync, cancellationToken);
-
 
         /// <summary>
         /// دریافت لحظه ای شاخص های منتخب
@@ -971,7 +969,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             await tsetmcUnitOfWork.AddSelectedIndicatorsAsync(entities, cancellationToken);
         }
 
-        #endregion
+        #endregion شاخص‌ها
 
         #region سهامداران
 
@@ -979,7 +977,6 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
             await DoFunctionsOFListWithMultiTask(symbols, GetSymbolShareHoldersAsync, cancellationToken);
-
         }
 
         private async Task GetSymbolShareHoldersAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
@@ -1104,6 +1101,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             if (items.Any())
                 await tsetmcUnitOfWork.AddAdtiveSymbolShareHoldersAsync(items, cancellationToken);
         }
-        #endregion
+
+        #endregion سهامداران
     }
 }

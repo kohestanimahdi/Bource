@@ -17,36 +17,35 @@ namespace Bource.Services.Crawlers.AsanBource
         private readonly ILogger<AsanBourceCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
         private readonly IHttpClientFactory httpClientFactory;
-        private string baseUrl => setting.Url;
         private string className => nameof(AsanBourceCrawlerService);
-        private readonly CrawlerSetting setting;
 
-        public AsanBourceCrawlerService(IOptionsSnapshot<ApplicationSetting> settings, IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork fipiranUnitOfWork)
+
+        public AsanBourceCrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork fipiranUnitOfWork)
         {
             logger = loggerFactory?.CreateLogger<AsanBourceCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
             this.tsetmcUnitOfWork = fipiranUnitOfWork ?? throw new ArgumentNullException(nameof(fipiranUnitOfWork));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-            this.setting = settings.Value.GetCrawlerSetting(className) ?? throw new ArgumentNullException(nameof(settings));
         }
-
 
         public async Task DownloadSymbolsImageAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             FileExtensions.CreateIfNotExists("Contents/SymbolLogos");
 
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
-            await ApplicationHelpers.DoFunctionsOFListWithMultiTask(symbols, httpClientFactory, className, DownloadSymbolImageAsync, cancellationToken);
+            await ApplicationHelpers.DoFunctionsWithProgressBar(symbols, DownloadSymbolImageAsync, cancellationToken);
         }
 
-        private async Task DownloadSymbolImageAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task DownloadSymbolImageAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             if (string.IsNullOrWhiteSpace(symbol.Code12))
                 return;
 
+            using var httpClient = httpClientFactory.CreateClient(className);
+
             var response = await httpClient.GetAsync($"content/SymbolsLogo/{symbol.Code12}.png", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogError("Error in Get Symbol Images");
+                logger.LogWarning("Error in Get Symbol Images");
                 return;
             }
             var fileBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);

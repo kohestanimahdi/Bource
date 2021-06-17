@@ -16,6 +16,7 @@ namespace Bource.Models.Data.Tsetmc
                 InsCodeValue = value.ToString();
             }
         }
+
         public string InsCodeValue { get; set; }
         public string SymbolName { get; set; }
         public DateTime Time { get; set; }

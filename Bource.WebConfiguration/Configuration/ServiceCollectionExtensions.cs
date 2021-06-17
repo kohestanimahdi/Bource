@@ -8,7 +8,6 @@ using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json.Serialization;
-using Microsoft.Net.Http;
 
 namespace Bource.WebConfiguration.Configuration
 {
@@ -31,7 +30,6 @@ namespace Bource.WebConfiguration.Configuration
         {
             foreach (var crawler in applicationSetting.CrawlerSettings)
             {
-
                 services.AddHttpClient(crawler.Key)
                             .ConfigureHttpClient(client =>
                             {
@@ -42,8 +40,8 @@ namespace Bource.WebConfiguration.Configuration
                                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
                             });
             }
-
         }
+
         public static void AddAllowAllOriginsCors(this IServiceCollection services)
         {
             services.AddCors(o => o.AddPolicy("AllowAllOrigins", b =>
@@ -54,11 +52,9 @@ namespace Bource.WebConfiguration.Configuration
             }));
         }
 
-
         public static void AddCustomServices(this IServiceCollection services, ApplicationSetting applicationSettings, IConfiguration configuration, string applicationTitle, params Assembly[] assemblies)
         {
             services.Configure<ApplicationSetting>(configuration.GetSection(nameof(ApplicationSetting)));
-
 
             //if (applicationSettings.ImportSetting.UseContext)
             //    services.AddDbContext(configuration);
@@ -75,7 +71,6 @@ namespace Bource.WebConfiguration.Configuration
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 });
 
-
             //services.AddJwtAuthentication(applicationSettings.JwtSettings);
 
             services.AddCustomApiVersioning();
@@ -85,7 +80,6 @@ namespace Bource.WebConfiguration.Configuration
             services.AddOptions();
 
             services.AddLogging();
-
         }
     }
 }

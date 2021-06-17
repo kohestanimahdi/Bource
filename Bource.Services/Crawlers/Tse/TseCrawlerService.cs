@@ -1,27 +1,16 @@
 ﻿using Bource.Common.Models;
-using Bource.Common.Utilities;
 using Bource.Data.Informations.UnitOfWorks;
-using Bource.Models.Data.Common;
-using Bource.Models.Data.Enums;
-using Bource.Models.Data.Tsetmc;
-using Bource.Services.Crawlers.Tsetmc.Models;
-using HtmlAgilityPack;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Bource.Services.Crawlers.Tse
 {
     public class TseCrawlerService : IScopedDependency
     {
         #region Properties
+
         private readonly int numberOfTries = 5;
         private readonly TimeSpan delayBetweenTimeouts = TimeSpan.FromSeconds(1);
         private readonly bool throwExceptions = false;
@@ -29,10 +18,10 @@ namespace Bource.Services.Crawlers.Tse
         private readonly ILogger<TseCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
 
-
-        #endregion
+        #endregion Properties
 
         #region Constructors
+
         public TseCrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork, IDistributedCache distributedCache)
         {
             logger = loggerFactory?.CreateLogger<TseCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
@@ -40,7 +29,7 @@ namespace Bource.Services.Crawlers.Tse
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
         }
 
-        #endregion
+        #endregion Constructors
 
         //public async Task Update
     }

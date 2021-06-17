@@ -42,7 +42,6 @@ namespace Bource.Models.Data.Tsetmc
             LastPriceChange = NumberOfTransaction == 0 ? 0 : LastPrice - YesterdayPrice;
             ValueOfMarket = Count * FinishPrice;
 
-
             PercentFinishPriceChange = YesterdayPrice != 0 ? Math.Round(100 * FinishPriceChange / YesterdayPrice, 2) : 0;
             PercentLastPriceChange = NumberOfTransaction == 0 || YesterdayPrice == 0 ? 0 : Math.Round(100 * LastPriceChange / YesterdayPrice, 2);
             PE = EPS.HasValue && EPS.Value != 0 ? Math.Round(FinishPrice / EPS.Value, 2) : null;
@@ -64,13 +63,13 @@ namespace Bource.Models.Data.Tsetmc
                 InsCodeValue = value.ToString();
             }
         }
+
         public string InsCodeValue { get; set; }
         public string Name { get; set; }
 
         public string Symbol { get; set; }
 
         public string SymbolGroup { get; set; }
-
 
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime LastUpdate { get; set; }
@@ -342,6 +341,5 @@ namespace Bource.Models.Data.Tsetmc
         {
             return ToString().GetHashCode();
         }
-
     }
 }

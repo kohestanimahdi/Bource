@@ -18,7 +18,6 @@ namespace Bource.Console
     {
         private static void Main(string[] args)
         {
-
             var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false)
@@ -51,6 +50,7 @@ namespace Bource.Console
 
             serviceProvider.AddCrawlerHttpClient(applicationSetting);
 
+            serviceProvider.Configure<ApplicationSetting>(configuration.GetSection("ApplicationSettings"));
             serviceProvider.AddSingleton<ApplicationSetting>(applicationSetting);
 
             var serviceProviderFactory = serviceProvider.BuildServiceProvider();
@@ -67,7 +67,6 @@ namespace Bource.Console
             int n = -1;
             string input;
 
-
             PrintTableOfContent();
             while (n != 0)
             {
@@ -82,54 +81,68 @@ namespace Bource.Console
 
                 try
                 {
-
                     switch (n)
                     {
                         case 1:
                             TseSymbolDataProvider.AddOrUpdateSymbols().GetAwaiter().GetResult();
                             break;
+
                         case 2:
                             tse.UpdateSymbolsAsync().GetAwaiter().GetResult();
                             break;
+
                         case 3:
                             tse.GetOrUpdateSymbolGroupsAsync().GetAwaiter().GetResult();
                             break;
+
                         case 4:
                             tse.GetValueOfMarketAsync().GetAwaiter().GetResult();
                             break;
+
                         case 5:
                             tse.GetMarketAtGlanceScheduleEverySecondAsync().GetAwaiter().GetResult();
                             break;
+
                         case 6:
                             tse.GetSelectedIndicatorEverySecondAsync().GetAwaiter().GetResult();
                             break;
+
                         case 7:
                             tse.GetMarketWatcherMessage().GetAwaiter().GetResult();
                             break;
+
                         case 8:
                             tse.GetTopSupplyAndDemandAsync().GetAwaiter().GetResult();
                             break;
+
                         case 9:
                             tse.GetAllNaturalAndLegalEntityAsync().GetAwaiter().GetResult();
                             break;
+
                         case 10:
                             tse.GetAllCapitalIncreaseAsync().GetAwaiter().GetResult();
                             break;
+
                         case 11:
                             tseClient.GetInsturmentsClosingPriceAsync().GetAwaiter().GetResult();
                             break;
+
                         case 12:
                             fipIran.GetAssociations().GetAwaiter().GetResult();
                             break;
+
                         case 13:
                             fipIran.GetNews(Models.Data.Enums.FipIranNewsTypes.WorldOfEconomy).GetAwaiter().GetResult();
                             break;
+
                         case 14:
                             fipIran.GetNews(Models.Data.Enums.FipIranNewsTypes.AssembliesAndCompanies).GetAwaiter().GetResult();
                             break;
+
                         case 15:
                             tse.FillOneTimeDataAsync().GetAwaiter().GetResult();
                             break;
+
                         case 16:
 
                             Task.Run(() =>
@@ -157,18 +170,23 @@ namespace Bource.Console
                             //});
 
                             break;
+
                         case 17:
                             tse.GetSymbolsShareHoldersAsync().GetAwaiter().GetResult();
                             break;
+
                         case 18:
                             tse.GetChangeOfSharesOfActiveShareHoldersAsync().GetAwaiter().GetResult();
                             break;
+
                         case 19:
                             asanBourceCrawlerService.DownloadSymbolsImageAsync().GetAwaiter().GetResult();
                             break;
+
                         case 20:
                             codal360CrawlerService.UpdateSymbolsCodalURLAsync().GetAwaiter().GetResult();
                             break;
+
                         default:
                             break;
                     }
@@ -179,12 +197,10 @@ namespace Bource.Console
                 }
 
                 logger.LogInformation($"Time:{(DateTime.Now - startDate).TotalSeconds} Second");
-
             }
-
         }
 
-        static void PrintTableOfContent()
+        private static void PrintTableOfContent()
         {
             Common.Utilities.ConsoleHelper.PrintTable(3,
                 "Number", "Operation", "PersianOperation",
@@ -210,6 +226,5 @@ namespace Bource.Console
                 "20", "Codal 360 url", "لینک کدال"
                 );
         }
-
     }
 }

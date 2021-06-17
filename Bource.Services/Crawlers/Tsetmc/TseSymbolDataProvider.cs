@@ -21,6 +21,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         private readonly ITseClientService TseClientService;
         private readonly IDistributedCache distributedCache;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
+
         //private static readonly List<SymbolData> SymbolData = new();
         //private static readonly ConcurrentBag<SymbolData> SymbolDataBag = new();
         private static readonly ConcurrentQueue<List<SymbolData>> SymbolDataQueue = new();
@@ -58,7 +59,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             }
         }
 
-
         //private static object addToMemoryObject = new();
         //private void AddSymbolDataToMemory(List<SymbolData> data)
         //{
@@ -87,10 +87,10 @@ namespace Bource.Services.Crawlers.Tsetmc
             var startTime = DateTime.Now;
             await tsetmcUnitOfWork.AddSymbolData(data);
             logger.LogInformation($"Add to database:{(DateTime.Now - startTime).TotalSeconds}");
-
         }
 
         #region OldCodeForSaveData
+
         //public static void AddSymbolDataRange(List<SymbolData> data)
         //{
         //    var startTime = DateTime.Now;
@@ -140,8 +140,8 @@ namespace Bource.Services.Crawlers.Tsetmc
         //            await Task.Delay(TimeSpan.FromSeconds(5));
         //    }
         //}
-        #endregion
 
+        #endregion OldCodeForSaveData
 
         public async Task AddOrUpdateSymbols(CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -152,7 +152,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             tseClientSymbols = tseClientSymbols.Where(p => !regex.IsMatch(p.Sign)).ToList();
 
             var existsSymbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
-
 
             foreach (var symbol in existsSymbols)
             {
@@ -180,9 +179,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 }
 
                 await tsetmcUnitOfWork.UpdateSymbolAsync(symbol);
-
             }
-
 
             var symbolsToAdd = new List<Symbol>();
             if (tseSymbols.Any() && tseClientSymbols.Any())
@@ -205,9 +202,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                 symbolsToAdd.AddRange(tseClientSymbols);
 
             await tsetmcUnitOfWork.AddSymbolsRangeAsync(symbolsToAdd, cancellationToken);
-
-
         }
-
     }
 }

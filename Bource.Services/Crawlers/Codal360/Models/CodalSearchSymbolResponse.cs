@@ -25,7 +25,6 @@ namespace Bource.Services.Crawlers.Codal360.Models
         [Newtonsoft.Json.JsonProperty("company_id")]
         public string CompanyId { get; set; }
 
-
         public void UpdateSymbol(Symbol symbol, string baseUrl)
         {
             symbol.CodalClassification = Classification;

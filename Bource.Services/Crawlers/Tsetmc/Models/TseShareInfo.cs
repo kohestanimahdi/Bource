@@ -6,8 +6,8 @@ namespace Bource.Services.Crawlers.Tsetmc.Models
     {
         public TseShareInfo()
         {
-
         }
+
         public TseShareInfo(string row)
         {
             string[] items = row.Split(',');
@@ -17,6 +17,7 @@ namespace Bource.Services.Crawlers.Tsetmc.Models
             NumberOfShareNew = Convert.ToDecimal(items[3].ToString());
             NumberOfShareOld = Convert.ToDecimal(items[4].ToString());
         }
+
         public long Idn { get; set; }
         public long InsCode { get; set; }
         public int DEven { get; set; }

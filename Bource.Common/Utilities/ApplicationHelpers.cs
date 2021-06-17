@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -68,7 +67,6 @@ namespace Bource.Common.Utilities
         {
             foreach (var symbol in symbols)
             {
-
                 await func(symbol, httpClient, cancellationToken, 0);
             }
         }
@@ -112,6 +110,5 @@ namespace Bource.Common.Utilities
                     await Task.Delay(TimeSpan.FromSeconds(1) - delay);
             }
         }
-
     }
 }

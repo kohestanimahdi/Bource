@@ -399,7 +399,6 @@ namespace Bource.Common.Utilities
         public static string PluralizingNameConvention(this string text)
             => pluralizer.Pluralize(text);
 
-
         public static string MergeInsideSpaces(this string text)
         {
             RegexOptions options = RegexOptions.None;

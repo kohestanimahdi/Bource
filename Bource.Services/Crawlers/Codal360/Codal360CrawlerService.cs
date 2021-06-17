@@ -1,17 +1,17 @@
 ﻿using Bource.Common.Models;
+using Bource.Common.Utilities;
 using Bource.Data.Informations.UnitOfWorks;
 using Bource.Models.Data.Common;
+using Bource.Services.Crawlers.Codal360.Models;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Bource.Common.Utilities;
-using System.Linq;
-using Bource.Services.Crawlers.Codal360.Models;
-using Microsoft.Extensions.Options;
 
 namespace Bource.Services.Crawlers.Codal360
 {
@@ -32,14 +32,13 @@ namespace Bource.Services.Crawlers.Codal360
             this.setting = settings.Value.GetCrawlerSetting(className) ?? throw new ArgumentNullException(nameof(settings));
         }
 
-
-
         public async Task UpdateSymbolsCodalURLAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = (await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken)).Where(i => string.IsNullOrWhiteSpace(i.CodalURL)).ToList();
 
             await ApplicationHelpers.DoFunctionsOFListWithMultiTask<Symbol>(symbols, httpClientFactory, className, UpdateSymbolCodalURLAsync, cancellationToken);
         }
+
         public async Task UpdateSymbolsCodalImageAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = (await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken)).Where(i => string.IsNullOrWhiteSpace(i.Logo) && !string.IsNullOrWhiteSpace(i.CodalURL)).ToList();
@@ -61,8 +60,6 @@ namespace Bource.Services.Crawlers.Codal360
                     {
                         logger.LogError($"Error in Get Codal Url {symbol.InsCode}");
                     }
-
-
                 }
 
                 var result = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -101,10 +98,8 @@ namespace Bource.Services.Crawlers.Codal360
             }
         }
 
-
         private async Task UpdateSymbolCodalImageAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
-
             var response = await httpClient.GetAsync(symbol.CodalURL, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {

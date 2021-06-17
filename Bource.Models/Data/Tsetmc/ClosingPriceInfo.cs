@@ -9,8 +9,8 @@ namespace Bource.Models.Data.Tsetmc
     {
         public ClosingPriceInfo()
         {
-
         }
+
         public ClosingPriceInfo(string row, ClosingPriceTypes types)
         {
             string[] array9 = row.Split(',');
@@ -48,6 +48,7 @@ namespace Bource.Models.Data.Tsetmc
                 InsCodeValue = value.ToString();
             }
         }
+
         public string InsCodeValue { get; set; }
         public int DEven { get; set; }
         public decimal PClosing { get; set; }
@@ -62,7 +63,6 @@ namespace Bource.Models.Data.Tsetmc
 
         public ClosingPriceTypes Type { get; set; }
 
-
         //public ClosingPriceInfo ConvertToType(ClosingPriceTypes types)
         //{
         //    return types switch
@@ -76,12 +76,10 @@ namespace Bource.Models.Data.Tsetmc
 
         //private ClosingPriceInfo ConvertToCapitalIncreaseAndProfitType()
         //{
-
         //}
 
         //private ClosingPriceInfo ConvertToCapitalIncreaseType()
         //{
-
         //}
     }
 }

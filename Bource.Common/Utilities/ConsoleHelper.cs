@@ -1,16 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Bource.Common.Utilities
 {
     public static class ConsoleHelper
     {
-        const char _block = '■';
-        const string _back = "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b";
-        const string _twirl = "-\\|/";
+        private const char _block = '■';
+        private const string _back = "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b";
+        private const string _twirl = "-\\|/";
+
         public static void WriteProgressBar(int percent, bool update = false)
         {
             if (update)
@@ -26,13 +25,13 @@ namespace Bource.Common.Utilities
             }
             Console.Write("] {0,3:##0}%", percent);
         }
+
         public static void WriteProgress(int progress, bool update = false)
         {
             if (update)
                 Console.Write("\b");
             Console.Write(_twirl[progress % _twirl.Length]);
         }
-
 
         private static int tableWidth = 118;
 
@@ -76,8 +75,6 @@ namespace Bource.Common.Utilities
                 PrintLine();
                 p += column;
             }
-
         }
     }
-
 }

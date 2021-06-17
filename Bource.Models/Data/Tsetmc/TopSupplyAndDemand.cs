@@ -7,6 +7,7 @@ namespace Bource.Models.Data.Tsetmc
     {
         public bool IsSupply { get; set; }
         public MarketType Market { get; set; }
+
         public long InsCode
         {
             get
@@ -18,6 +19,7 @@ namespace Bource.Models.Data.Tsetmc
                 InsCodeValue = value.ToString();
             }
         }
+
         public string InsCodeValue { get; set; }
         public string Symbol { get; set; }
         public long Price { get; set; }

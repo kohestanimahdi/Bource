@@ -4,21 +4,18 @@ using Bource.Data.Informations.Repositories.Tsetmc;
 using Bource.Models.Data.Common;
 using Bource.Models.Data.Enums;
 using Bource.Models.Data.Tsetmc;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace Bource.Data.Informations.UnitOfWorks
 {
     public class TsetmcUnitOfWork : ITsetmcUnitOfWork, IScopedDependency
     {
-
         private readonly SymbolGroupRepository symbolGroupRepository;
         private readonly SymbolDataRepository symbolDataRepository;
         private readonly SymbolRepository symbolRepository;
@@ -34,6 +31,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly SymbolShareHolderRepository symbolShareHolderRepository;
         private readonly ActiveSymbolShareHolderRepository activeSymbolShareHolderRepository;
         private readonly ILogger<TsetmcUnitOfWork> logger;
+
         public TsetmcUnitOfWork(ApplicationSetting setting, ILoggerFactory loggerFactory)
         {
             symbolGroupRepository = new(setting.mongoDbSetting);
@@ -53,7 +51,6 @@ namespace Bource.Data.Informations.UnitOfWorks
 
             logger = loggerFactory?.CreateLogger<TsetmcUnitOfWork>() ?? throw new ArgumentNullException(nameof(loggerFactory));
         }
-
 
         public async Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -109,7 +106,6 @@ namespace Bource.Data.Informations.UnitOfWorks
         public Task AddCashMarketAtGlance(CashMarketAtGlance stockCashMarketAtGlance, CashMarketAtGlance oTCCashMarketAtGlance, CancellationToken cancellationToken = default(CancellationToken))
         => cashMarketAtGlanceRepository.AddRangeAsync(new CashMarketAtGlance[] { stockCashMarketAtGlance, oTCCashMarketAtGlance }, cancellationToken);
 
-
         public async Task AddOrUpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (await symbolRepository.Table.Find(i => i.InsCode == symbol.InsCode).AnyAsync(cancellationToken))
@@ -150,7 +146,6 @@ namespace Bource.Data.Informations.UnitOfWorks
         //    }
         //    else
         //        itemsToSave = data;
-
 
         //    await symbolDataRepository.AddRangeAsync(itemsToSave, cancellationToken);
         //}

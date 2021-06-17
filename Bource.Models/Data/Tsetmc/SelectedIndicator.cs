@@ -9,7 +9,6 @@ namespace Bource.Models.Data.Tsetmc
     {
         public SelectedIndicator()
         {
-
         }
 
         public SelectedIndicator(long insCode, HtmlNodeCollection tds)
@@ -26,6 +25,7 @@ namespace Bource.Models.Data.Tsetmc
         }
 
         public string Title { get; set; }
+
         public long InsCode
         {
             get
@@ -37,10 +37,12 @@ namespace Bource.Models.Data.Tsetmc
                 InsCodeValue = value.ToString();
             }
         }
+
         public string InsCodeValue { get; set; }
 
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime PublishTime { get; set; }
+
         public decimal Last { get; set; }
         public decimal Change { get; set; }
         public double ChangePercent { get; set; }

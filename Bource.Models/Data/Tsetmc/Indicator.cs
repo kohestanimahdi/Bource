@@ -5,6 +5,7 @@ namespace Bource.Models.Data.Tsetmc
     public class Indicator : MongoDataEntity
     {
         public string Title { get; set; }
+
         public long InsCode
         {
             get
@@ -16,6 +17,7 @@ namespace Bource.Models.Data.Tsetmc
                 InsCodeValue = value.ToString();
             }
         }
+
         public string InsCodeValue { get; set; }
 
         public override bool Equals(object obj)

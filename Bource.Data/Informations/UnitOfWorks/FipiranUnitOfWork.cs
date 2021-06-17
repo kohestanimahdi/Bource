@@ -2,7 +2,6 @@
 using Bource.Data.Informations.Repositories.FipIran;
 using Bource.Models.Data.Enums;
 using Bource.Models.Data.FipIran;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;

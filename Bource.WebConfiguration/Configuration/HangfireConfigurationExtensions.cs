@@ -1,17 +1,13 @@
-﻿using Bource.Common.Utilities;
-using Bource.Services.Crawlers.AsanBource;
+﻿using Bource.Services.Crawlers.AsanBource;
 using Bource.Services.Crawlers.Codal360;
 using Bource.Services.Crawlers.FipIran;
 using Bource.Services.Crawlers.Tsetmc;
 using Hangfire;
-using Hangfire.Dashboard.BasicAuthorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 using System;
-using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Bource.WebConfiguration.Configuration
 {
@@ -56,16 +52,14 @@ namespace Bource.WebConfiguration.Configuration
                 AppPath = "https://kohestanimahdi.ir/"
             });
             // #if !DEBUG
-            //             
+            //
             // #endif
             StartTasks();
-
         }
 
         private static void StartTasks()
         {
             AddMarketTimeTasks();
-
 
             // دریافت لیست نمادها در شروع برنامه
             BackgroundJob.Schedule<TseSymbolDataProvider>(app => app.AddOrUpdateSymbols(CancellationToken.None), TimeSpan.FromMinutes(1));
@@ -114,8 +108,6 @@ namespace Bource.WebConfiguration.Configuration
 
             // دریافت اطلاعات لحظه ای هر نماد - روزانه در ابتدای تایم بازار
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.FillOneTimeDataAsync), app => app.FillOneTimeDataAsync(CancellationToken.None), "30 8 * * *", TimeZoneInfo.Local);
-
-
         }
 
         private static void AddMarketTimeTasks()
@@ -127,7 +119,6 @@ namespace Bource.WebConfiguration.Configuration
 
             // دریافت اطلاعات سهامداران فعال نمادها - در تایم بازار هر به یک دقیقه
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetChangeOfSharesOfActiveShareHoldersAsync), app => app.GetChangeOfSharesOfActiveShareHoldersAsync(CancellationToken.None), "* 9-13 * * 0,1,2,3,6", TimeZoneInfo.Local);
-
 
             // دریافت لحظه ای شاخص های منتخب
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>("GetSelectedIndicatorAsync", app => app.GetSelectedIndicatorEverySecondAsync(CancellationToken.None), " * 9-13 * * 0,1,2,3,6", TimeZoneInfo.Local);
@@ -143,7 +134,6 @@ namespace Bource.WebConfiguration.Configuration
 
             //// ذخیره اطلاعات در یک نگاه - هر به یک ثانیه
             //RecurringJob.AddOrUpdate<TseSymbolDataProvider>(nameof(TseSymbolDataProvider.SaveSymbolData), app => app.SaveSymbolDataEverySecond(CancellationToken.None), "* 9-14 * * *", TimeZoneInfo.Local);
-
         }
     }
 }

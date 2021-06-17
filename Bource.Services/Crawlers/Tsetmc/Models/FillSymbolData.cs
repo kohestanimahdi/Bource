@@ -33,8 +33,8 @@ namespace Bource.Services.Crawlers.Tsetmc.Models
                 GroupPE = result.Value.RegexConvertToDecimal();
             }
         }
-        public long InsCode { get; set; }
 
+        public long InsCode { get; set; }
 
         [Display(Name = "سهام شناور")]
         public decimal? FloatingStock { get; set; }

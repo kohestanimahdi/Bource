@@ -43,6 +43,7 @@ namespace Bource.Models.Data.Tsetmc
                 InsCodeValue = value.ToString();
             }
         }
+
         public string InsCodeValue { get; set; }
         public long BuyCountNatural { get; set; }
         public long BuyCountLegal { get; set; }

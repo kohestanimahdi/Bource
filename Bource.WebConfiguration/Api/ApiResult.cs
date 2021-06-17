@@ -8,7 +8,6 @@ namespace Bource.WebConfiguration.Api
 {
     public class ApiResult
     {
-
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string Message { get; set; }
 
@@ -21,6 +20,7 @@ namespace Bource.WebConfiguration.Api
         }
 
         #region Implicit Operators
+
         public static implicit operator ApiResult(OkResult result)
         {
             return new ApiResult(true, ApiResultStatusCode.Success);
@@ -51,7 +51,8 @@ namespace Bource.WebConfiguration.Api
         {
             return new ApiResult(false, ApiResultStatusCode.NotFound);
         }
-        #endregion
+
+        #endregion Implicit Operators
     }
 
     public class ApiResult<TData> : ApiResult
@@ -67,6 +68,7 @@ namespace Bource.WebConfiguration.Api
         }
 
         #region Implicit Operators
+
         public static implicit operator ApiResult<TData>(TData data)
         {
             return new ApiResult<TData>(true, ApiResultStatusCode.Success, data);
@@ -117,6 +119,7 @@ namespace Bource.WebConfiguration.Api
         {
             return new ApiResult<TData>(false, ApiResultStatusCode.NotFound, (TData)result.Value);
         }
-        #endregion
+
+        #endregion Implicit Operators
     }
 }

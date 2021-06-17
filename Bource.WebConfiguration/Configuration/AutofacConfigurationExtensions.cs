@@ -13,7 +13,6 @@ namespace Bource.WebConfiguration.Configuration
     {
         public static void AddServices(this ContainerBuilder containerBuilder, params Assembly[] assemblies)
         {
-
             var allAssemblies = new List<Assembly>
             {
                 typeof(ApplicationSetting).Assembly,

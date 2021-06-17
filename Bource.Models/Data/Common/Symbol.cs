@@ -9,12 +9,13 @@ namespace Bource.Models.Data.Common
     {
         public Symbol()
         {
-
         }
+
         public Symbol(string[] array)
         {
             UpdateFromTseClientSoap(array);
         }
+
         public string Logo { get; set; }
         public string CodalURL { get; set; }
         public string CodalCompanyId { get; set; }
@@ -27,7 +28,6 @@ namespace Bource.Models.Data.Common
         public string Name { get; set; }
         public string Sign { get; set; }
         public string LatinName { get; set; }
-
 
         public string Code12 { get; set; }
         public string Code5 { get; set; }
@@ -53,8 +53,8 @@ namespace Bource.Models.Data.Common
                 InsCodeValue = value.ToString();
             }
         }
-        public string InsCodeValue { get; set; }
 
+        public string InsCodeValue { get; set; }
 
         [BsonIgnore]
         public string InstrumentId
@@ -154,7 +154,6 @@ namespace Bource.Models.Data.Common
         public string YMarNSC { get; set; }
         public string YVal { get; set; }
 
-
         public SymbolIntroduction Introduction { get; set; }
 
         public void UpdateInforamtion(HtmlAgilityPack.HtmlNodeCollection nodes)
@@ -199,7 +198,6 @@ namespace Bource.Models.Data.Common
 
         public void UpdateFromTseClient(Symbol symbol)
         {
-
             InsCode = symbol.InsCode;
             InstrumentId = symbol.InstrumentId.FixPersianLetters();
             LatinSymbol = symbol.LatinSymbol.FixPersianLetters();

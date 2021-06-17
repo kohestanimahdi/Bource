@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Sentry.AspNetCore;
 
 namespace Bource.JobServer
@@ -26,8 +25,8 @@ namespace Bource.JobServer
             Configuration = builder.Build();
 
             applicationSettings = Configuration.GetSection("ApplicationSettings").Get<ApplicationSetting>();
-
         }
+
         private readonly ApplicationSetting applicationSettings;
         public IConfigurationRoot Configuration { get; }
         public ILifetimeScope AutofacContainer { get; private set; }
@@ -46,6 +45,7 @@ namespace Bource.JobServer
                 options.InstanceName = "RedisJobCache";
             });
         }
+
         public void ConfigureContainer(ContainerBuilder builder)
         {
             builder.AddServices();
@@ -61,7 +61,6 @@ namespace Bource.JobServer
             app.AddCustomResponseHeaders();
 
             app.UseCustomExceptionHandler();
-
 
             app.UseCors("AllowAllOrigins");
 
@@ -81,6 +80,7 @@ namespace Bource.JobServer
         }
     }
 }
+
 // private readonly IHub _sentryHub;
 
 //     public HomeController(IHub sentryHub) => _sentryHub = sentryHub;
