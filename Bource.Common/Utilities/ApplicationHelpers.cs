@@ -44,7 +44,7 @@ namespace Bource.Common.Utilities
             Common.Utilities.ConsoleHelper.WriteProgressBar(100, true);
         }
 
-        public static Task DoFunctionsOFListWithMultiTask<T>(List<T> symbols, Func<T, CancellationToken, int, Task> func, CancellationToken cancellationToken, int numberOfThreads = 5)
+        public static Task DoFunctionsOFListWithMultiTask<T>(List<T> symbols, IHttpClientFactory httpClientFactory, string httpClientName, Func<T, HttpClient, CancellationToken, int, Task> func, CancellationToken cancellationToken, int numberOfThreads = 5, int? timeout = null)
         {
             List<Task> tasks = new();
             int n = 0;
@@ -53,18 +53,24 @@ namespace Bource.Common.Utilities
             while (n < symbols.Count)
             {
                 var subSymbols = symbols.Skip(n).Take(count).ToList();
+                var httpClient = httpClientFactory.CreateClient(httpClientName);
+                if (timeout.HasValue)
+                    httpClient.Timeout = TimeSpan.FromSeconds(timeout.Value);
 
-                tasks.Add(Task.Run(() => DoFunctionsOFSubListWithMultiTask(subSymbols, func, cancellationToken)));
+                tasks.Add(Task.Run(() => DoFunctionsOFSubListWithMultiTask(subSymbols, httpClient, func, cancellationToken)));
                 n += count;
             }
 
             return Task.WhenAll(tasks);
         }
 
-        private static async Task DoFunctionsOFSubListWithMultiTask<T>(List<T> symbols, Func<T, CancellationToken, int, Task> func, CancellationToken cancellationToken = default(CancellationToken))
+        private static async Task DoFunctionsOFSubListWithMultiTask<T>(List<T> symbols, HttpClient httpClient, Func<T, HttpClient, CancellationToken, int, Task> func, CancellationToken cancellationToken = default(CancellationToken))
         {
             foreach (var symbol in symbols)
-                await func(symbol, cancellationToken, 0);
+            {
+
+                await func(symbol, httpClient, cancellationToken, 0);
+            }
         }
 
         public static string HangfirePasswordGenerator(string password)
@@ -93,5 +99,19 @@ namespace Bource.Common.Utilities
                     await Task.Delay(TimeSpan.FromSeconds(1) - delay);
             }
         }
+
+        public static async Task DoFuncEverySecond(IHttpClientFactory httpClientFactory, string httpClientName, Func<HttpClient, CancellationToken, Task> func, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var startTime = DateTime.Now;
+            while (DateTime.Now < startTime.AddMinutes(1))
+            {
+                var time = DateTime.Now;
+                await func(httpClientFactory.CreateClient(httpClientName), cancellationToken);
+                var delay = DateTime.Now - time;
+                if (delay < TimeSpan.FromSeconds(1))
+                    await Task.Delay(TimeSpan.FromSeconds(1) - delay);
+            }
+        }
+
     }
 }

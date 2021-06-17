@@ -98,10 +98,10 @@ namespace Bource.Console
                             tse.GetValueOfMarketAsync().GetAwaiter().GetResult();
                             break;
                         case 5:
-                            tse.GetMarketAtGlanceAsync().GetAwaiter().GetResult();
+                            tse.GetMarketAtGlanceScheduleEverySecondAsync().GetAwaiter().GetResult();
                             break;
                         case 6:
-                            tse.GetSelectedIndicatorAsync().GetAwaiter().GetResult();
+                            tse.GetSelectedIndicatorEverySecondAsync().GetAwaiter().GetResult();
                             break;
                         case 7:
                             tse.GetMarketWatcherMessage().GetAwaiter().GetResult();
@@ -139,7 +139,7 @@ namespace Bource.Console
                                     try
                                     {
                                         var time = DateTime.Now;
-                                        tse.GetLatestSymbolDataAsync().GetAwaiter().GetResult();
+                                        tse.ScheduleLatestSymbolDataEverySecondAsync().GetAwaiter().GetResult();
                                         var delay = (DateTime.Now - time).TotalSeconds;
                                         if (delay < 1 && delay > 0)
                                             Task.Delay(TimeSpan.FromSeconds(1 - delay)).GetAwaiter().GetResult();
@@ -168,9 +168,6 @@ namespace Bource.Console
                             break;
                         case 20:
                             codal360CrawlerService.UpdateSymbolsCodalURLAsync().GetAwaiter().GetResult();
-                            break;
-                        case 21:
-                            codal360CrawlerService.UpdateSymbolsCodalImageAsync().GetAwaiter().GetResult();
                             break;
                         default:
                             break;

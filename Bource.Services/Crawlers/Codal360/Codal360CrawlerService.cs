@@ -1,8 +1,6 @@
 ﻿using Bource.Common.Models;
 using Bource.Data.Informations.UnitOfWorks;
 using Bource.Models.Data.Common;
-using Bource.Models.Data.Enums;
-using Bource.Models.Data.FipIran;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using System;
@@ -13,21 +11,25 @@ using System.Threading.Tasks;
 using Bource.Common.Utilities;
 using System.Linq;
 using Bource.Services.Crawlers.Codal360.Models;
+using Microsoft.Extensions.Options;
 
 namespace Bource.Services.Crawlers.Codal360
 {
     public class Codal360CrawlerService : ICodal360CrawlerService, IScopedDependency
     {
-        private string baseUrl => httpClient.BaseAddress.ToString();
-        private readonly HttpClient httpClient;
+        private string baseUrl => setting.Url;
+        private string className => nameof(Codal360CrawlerService);
+        private readonly CrawlerSetting setting;
         private readonly ILogger<Codal360CrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
-        public Codal360CrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork)
+        private readonly IHttpClientFactory httpClientFactory;
+
+        public Codal360CrawlerService(IOptionsSnapshot<ApplicationSetting> settings, IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork)
         {
             logger = loggerFactory?.CreateLogger<Codal360CrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
-            httpClient = httpClientFactory?.CreateClient(nameof(Codal360CrawlerService)) ?? throw new ArgumentNullException(nameof(httpClientFactory));
-
+            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
+            this.setting = settings.Value.GetCrawlerSetting(className) ?? throw new ArgumentNullException(nameof(settings));
         }
 
 
@@ -36,16 +38,16 @@ namespace Bource.Services.Crawlers.Codal360
         {
             var symbols = (await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken)).Where(i => string.IsNullOrWhiteSpace(i.CodalURL)).ToList();
 
-            await ApplicationHelpers.DoFunctionsOFListWithMultiTask<Symbol>(symbols, UpdateSymbolCodalURLAsync, cancellationToken);
+            await ApplicationHelpers.DoFunctionsOFListWithMultiTask<Symbol>(symbols, httpClientFactory, className, UpdateSymbolCodalURLAsync, cancellationToken);
         }
         public async Task UpdateSymbolsCodalImageAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = (await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken)).Where(i => string.IsNullOrWhiteSpace(i.Logo) && !string.IsNullOrWhiteSpace(i.CodalURL)).ToList();
 
-            await ApplicationHelpers.DoFunctionsOFListWithMultiTask<Symbol>(symbols, UpdateSymbolCodalImageAsync, cancellationToken);
+            await ApplicationHelpers.DoFunctionsOFListWithMultiTask<Symbol>(symbols, httpClientFactory, className, UpdateSymbolCodalImageAsync, cancellationToken);
         }
 
-        private async Task UpdateSymbolCodalURLAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task UpdateSymbolCodalURLAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
@@ -92,7 +94,7 @@ namespace Bource.Services.Crawlers.Codal360
                 if (numberOfTries < 2)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(5));
-                    await UpdateSymbolCodalURLAsync(symbol, cancellationToken, numberOfTries + 1);
+                    await UpdateSymbolCodalURLAsync(symbol, httpClient, cancellationToken, numberOfTries + 1);
                 }
                 else
                     throw;
@@ -100,7 +102,7 @@ namespace Bource.Services.Crawlers.Codal360
         }
 
 
-        private async Task UpdateSymbolCodalImageAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task UpdateSymbolCodalImageAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
 
             var response = await httpClient.GetAsync(symbol.CodalURL, cancellationToken);

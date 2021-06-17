@@ -3,7 +3,6 @@
 FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
 WORKDIR /app
 EXPOSE 80
-EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
@@ -26,9 +25,16 @@ RUN dotnet build "Bource.JobServer.csproj" -c Release -o /app/build
 
 FROM build AS publish
 RUN dotnet publish "Bource.JobServer.csproj" -c Release -o /app/publish
-RUN rm -rf obj
+RUN rm -rf "obj"
+
 
 FROM base AS final
+# change timezone
+RUN apt-get update
+RUN apt-get install tzdata -y
+RUN ln -snf /usr/share/zoneinfo/Asia/Tehran /etc/localtime && echo Asia/Tehran > /etc/timezone
+RUN dpkg-reconfigure -f noninteractive tzdata
+
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Bource.JobServer.dll"]

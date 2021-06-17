@@ -4,6 +4,7 @@ using Bource.Models.Data.Enums;
 using Bource.Models.Data.FipIran;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -14,17 +15,22 @@ namespace Bource.Services.Crawlers.FipIran
 {
     public class FipiranCrawlerService : IFipiranCrawlerService, IScopedDependency
     {
-        private readonly HttpClient httpClient;
         private readonly ILogger<FipiranCrawlerService> logger;
         private readonly IFipiranUnitOfWork fipiranUnitOfWork;
+        private readonly CrawlerSetting setting;
+        private readonly IHttpClientFactory httpClientFactory;
+        private string className => nameof(FipiranCrawlerService);
 
-        public FipiranCrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, IFipiranUnitOfWork fipiranUnitOfWork)
+        public FipiranCrawlerService(
+            IOptionsSnapshot<ApplicationSetting> settings,
+            IHttpClientFactory httpClientFactory,
+            ILoggerFactory loggerFactory,
+            IFipiranUnitOfWork fipiranUnitOfWork)
         {
             logger = loggerFactory?.CreateLogger<FipiranCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
-            httpClient = httpClientFactory?.CreateClient(nameof(FipiranCrawlerService)) ?? throw new ArgumentNullException(nameof(httpClientFactory));
-
-
+            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
             this.fipiranUnitOfWork = fipiranUnitOfWork ?? throw new ArgumentNullException(nameof(fipiranUnitOfWork));
+            this.setting = settings.Value.GetCrawlerSetting(nameof(FipiranCrawlerService)) ?? throw new ArgumentNullException(nameof(settings));
         }
 
 
@@ -47,10 +53,13 @@ namespace Bource.Services.Crawlers.FipIran
 
         private async Task GetNews(string url, FipIranNewsTypes type, CancellationToken cancellationToken = default(CancellationToken))
         {
+            using var httpClient = httpClientFactory.CreateClient(className);
+
             var response = await httpClient.GetAsync(url, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError($"Error in Get News Of FipIran {url}");
+                return;
             }
 
             var html = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -71,10 +80,13 @@ namespace Bource.Services.Crawlers.FipIran
 
         public async Task GetAssociations(CancellationToken cancellationToken = default(CancellationToken))
         {
+            using var httpClient = httpClientFactory.CreateClient(className);
+
             var response = await httpClient.GetAsync("Codal/Invitation", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError($"Error in Get News Of FipIran Codal/Invitation");
+                return;
             }
 
             var html = await response.Content.ReadAsStringAsync(cancellationToken);

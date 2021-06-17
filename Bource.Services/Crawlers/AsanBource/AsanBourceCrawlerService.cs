@@ -3,6 +3,7 @@ using Bource.Common.Utilities;
 using Bource.Data.Informations.UnitOfWorks;
 using Bource.Models.Data.Common;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.IO;
 using System.Net.Http;
@@ -13,31 +14,31 @@ namespace Bource.Services.Crawlers.AsanBource
 {
     public class AsanBourceCrawlerService : IAsanBourceCrawlerService, IScopedDependency
     {
-        private string baseUrl => httpClient.BaseAddress.ToString();
-        private readonly HttpClient httpClient;
         private readonly ILogger<AsanBourceCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
+        private readonly IHttpClientFactory httpClientFactory;
+        private string baseUrl => setting.Url;
+        private string className => nameof(AsanBourceCrawlerService);
+        private readonly CrawlerSetting setting;
 
-        public AsanBourceCrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork fipiranUnitOfWork)
+        public AsanBourceCrawlerService(IOptionsSnapshot<ApplicationSetting> settings, IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork fipiranUnitOfWork)
         {
             logger = loggerFactory?.CreateLogger<AsanBourceCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
-            httpClient = httpClientFactory?.CreateClient(nameof(AsanBourceCrawlerService)) ?? throw new ArgumentNullException(nameof(httpClientFactory));
-
-            httpClient.BaseAddress = new Uri(baseUrl);
-
             this.tsetmcUnitOfWork = fipiranUnitOfWork ?? throw new ArgumentNullException(nameof(fipiranUnitOfWork));
+            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            this.setting = settings.Value.GetCrawlerSetting(className) ?? throw new ArgumentNullException(nameof(settings));
         }
 
 
         public async Task DownloadSymbolsImageAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            Common.Utilities.FileExtensions.CreateIfNotExists("Contents/SymbolLogos");
+            FileExtensions.CreateIfNotExists("Contents/SymbolLogos");
 
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
-            await Common.Utilities.ApplicationHelpers.DoFunctionsWithProgressBar(symbols, DownloadSymbolImageAsync, cancellationToken);
+            await ApplicationHelpers.DoFunctionsOFListWithMultiTask(symbols, httpClientFactory, className, DownloadSymbolImageAsync, cancellationToken);
         }
 
-        private async Task DownloadSymbolImageAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task DownloadSymbolImageAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             if (string.IsNullOrWhiteSpace(symbol.Code12))
                 return;

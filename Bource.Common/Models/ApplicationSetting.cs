@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 
 namespace Bource.Common.Models
 {
@@ -6,6 +9,10 @@ namespace Bource.Common.Models
     {
         public MongoDbSetting mongoDbSetting { get; set; }
         public List<CrawlerSetting> CrawlerSettings { get; set; }
+
+
+        public CrawlerSetting GetCrawlerSetting(string key)
+            => CrawlerSettings?.FirstOrDefault(i => i.Key == key);
     }
 
     public class MongoDbSetting
@@ -19,5 +26,6 @@ namespace Bource.Common.Models
         public string Key { get; set; }
         public string Url { get; set; }
         public int Timeout { get; set; }
+
     }
 }

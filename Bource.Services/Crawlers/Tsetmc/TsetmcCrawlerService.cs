@@ -9,6 +9,7 @@ using Bource.Services.Crawlers.Tsetmc.Models;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -32,15 +33,16 @@ namespace Bource.Services.Crawlers.Tsetmc
         private readonly int numberOfTries = 5;
         private static readonly List<SymbolData> SymbolData = new();
         private readonly TimeSpan delayBetweenTimeouts = TimeSpan.FromSeconds(1);
+
         private readonly bool throwExceptions = false;
-        private readonly HttpClient httpClient;
         private readonly ILogger<TsetmcCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
         private readonly IDistributedCache distributedCache;
         private readonly Dictionary<long, FillSymbolData> oneTimeSymbolData;
-
-
-        private string baseUrl => httpClient.BaseAddress.ToString();
+        private readonly CrawlerSetting setting;
+        private readonly IHttpClientFactory httpClientFactory;
+        private string baseUrl => setting.Url;
+        private string className => nameof(TsetmcCrawlerService);
 
         public Dictionary<long, FillSymbolData> OneTimeSymbolData => oneTimeSymbolData;
         public bool IsMarketOpen => isMarketOpen;
@@ -48,19 +50,32 @@ namespace Bource.Services.Crawlers.Tsetmc
         #endregion
 
         #region Constructors
-        public TsetmcCrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork tsetmcUnitOfWork, IDistributedCache distributedCache)
+        public TsetmcCrawlerService(
+            IOptionsSnapshot<ApplicationSetting> settings,
+            IHttpClientFactory httpClientFactory,
+            ILoggerFactory loggerFactory,
+            ITsetmcUnitOfWork tsetmcUnitOfWork,
+            IDistributedCache distributedCache)
         {
             logger = loggerFactory?.CreateLogger<TsetmcCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
-            httpClient = httpClientFactory?.CreateClient(nameof(TsetmcCrawlerService)) ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
             this.distributedCache = distributedCache ?? throw new ArgumentNullException(nameof(distributedCache));
 
+            this.setting = settings.Value.GetCrawlerSetting(className) ?? throw new ArgumentNullException(nameof(settings));
 
             oneTimeSymbolData = distributedCache.GetValue<Dictionary<long, FillSymbolData>>(nameof(OneTimeSymbolData)) ?? new();
             lastSymbolData = new();
         }
 
         #endregion
+
+
+        Task DoFunctionsOFListWithMultiTask<T>(List<T> symbols, Func<T, HttpClient, CancellationToken, int, Task> func, CancellationToken cancellationToken, int numberOfThreads = 5, int? timeout = null)
+            => ApplicationHelpers.DoFunctionsOFListWithMultiTask(symbols, httpClientFactory, className, func, cancellationToken, numberOfThreads, timeout);
+
+        Task DoFuncEverySecond(Func<HttpClient, CancellationToken, Task> func, CancellationToken cancellationToken = default(CancellationToken))
+            => ApplicationHelpers.DoFuncEverySecond(httpClientFactory, className, func, cancellationToken);
 
         #region نمادها
 
@@ -72,15 +87,15 @@ namespace Bource.Services.Crawlers.Tsetmc
         public async Task UpdateSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
-            await Common.Utilities.ApplicationHelpers.DoFunctionsOFListWithMultiTask<Symbol>(symbols, UpdateSymbolAsync, cancellationToken, 10);
+            await DoFunctionsOFListWithMultiTask(symbols, UpdateSymbolAsync, cancellationToken, 10);
         }
 
-        private async Task UpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task UpdateSymbolAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
-                await GetSymbolInstructionAsync(symbol, cancellationToken);
-                await GetSymbolInformationAsync(symbol, cancellationToken);
+                await GetSymbolInstructionAsync(symbol, httpClient, cancellationToken);
+                await GetSymbolInformationAsync(symbol, httpClient, cancellationToken);
                 await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
             }
             catch (Exception ex)
@@ -90,7 +105,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                     if (numberOfTries == this.numberOfTries - 1)
                         await Task.Delay(delayBetweenTimeouts);
 
-                    await UpdateSymbolAsync(symbol, cancellationToken, numberOfTries + 1);
+                    await UpdateSymbolAsync(symbol, httpClient, cancellationToken, numberOfTries + 1);
                 }
                 else
                 {
@@ -105,8 +120,9 @@ namespace Bource.Services.Crawlers.Tsetmc
         public async Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = new List<Symbol>();
+            using var httpClient = httpClientFactory.CreateClient(className);
 
-            var response = await GetLatestSymbolsResponseAsync(cancellationToken);
+            var response = await GetLatestSymbolsResponseAsync(httpClient, cancellationToken);
             if (response is null)
                 return symbols;
 
@@ -124,7 +140,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             return symbols;
         }
 
-        private async Task GetSymbolInformationAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task GetSymbolInformationAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
@@ -159,7 +175,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                     if (numberOfTries == this.numberOfTries - 1)
                         await Task.Delay(delayBetweenTimeouts);
 
-                    await GetSymbolInstructionAsync(symbol, cancellationToken, numberOfTries + 1);
+                    await GetSymbolInstructionAsync(symbol, httpClient, cancellationToken, numberOfTries + 1);
                 }
                 else
                 {
@@ -170,7 +186,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 }
             }
         }
-        private async Task GetSymbolInstructionAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task GetSymbolInstructionAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
@@ -205,7 +221,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                     if (numberOfTries == this.numberOfTries - 1)
                         await Task.Delay(delayBetweenTimeouts);
 
-                    await GetSymbolInstructionAsync(symbol, cancellationToken, numberOfTries + 1);
+                    await GetSymbolInstructionAsync(symbol, httpClient, cancellationToken, numberOfTries + 1);
                 }
                 else
                 {
@@ -230,10 +246,10 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
 
-            await Common.Utilities.ApplicationHelpers.DoFunctionsWithProgressBar<Symbol>(symbols, GetNaturalAndLegalEntityAsync, cancellationToken);
+            await DoFunctionsOFListWithMultiTask(symbols, GetNaturalAndLegalEntityAsync, cancellationToken);
         }
 
-        private async Task GetNaturalAndLegalEntityAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task GetNaturalAndLegalEntityAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
@@ -265,7 +281,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                     if (numberOfTries == this.numberOfTries - 1)
                         await Task.Delay(delayBetweenTimeouts);
 
-                    await GetNaturalAndLegalEntityAsync(symbol, cancellationToken, numberOfTries + 1);
+                    await GetNaturalAndLegalEntityAsync(symbol, httpClient, cancellationToken, numberOfTries + 1);
                 }
                 else
                 {
@@ -287,6 +303,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         /// <returns></returns>
         public async Task GetOrUpdateSymbolGroupsAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
+            using var httpClient = httpClientFactory.CreateClient(className);
             var response = await httpClient.GetAsync("Loader.aspx?ParTree=111C1213", cancellationToken);
 
             var html = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -320,9 +337,9 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         #region  در یک نگاه نماد
         public Task ScheduleLatestSymbolDataEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
-        => ApplicationHelpers.DoFuncEverySecond(ScheduleLatestSymbolData, cancellationToken);
+        => DoFuncEverySecond(ScheduleLatestSymbolData, cancellationToken);
 
-        public async Task ScheduleLatestSymbolData(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task ScheduleLatestSymbolData(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (DateTime.Now.Hour < 9)
                 throw new ServerException("قبل از ساعت 9 قادر به اجرای این عملیات نیستید");
@@ -332,11 +349,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             try
             {
-                var time = DateTime.Now;
-                await GetLatestSymbolDataAsync();
-                var delay = DateTime.Now - time;
-                if (delay < TimeSpan.FromSeconds(1))
-                    await Task.Delay(TimeSpan.FromSeconds(1) - delay);
+                await GetLatestSymbolDataAsync(httpClient);
             }
             catch (Exception ex)
             {
@@ -350,11 +363,11 @@ namespace Bource.Services.Crawlers.Tsetmc
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task GetLatestSymbolDataAsync(CancellationToken cancellationToken = default(CancellationToken))
+        private async Task GetLatestSymbolDataAsync(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             var startTime = DateTime.Now;
 
-            var response = await GetLatestSymbolsResponseAsync(cancellationToken);
+            var response = await GetLatestSymbolsResponseAsync(httpClient, cancellationToken);
             if (response is null)
                 return;
 
@@ -387,7 +400,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 data.Add(symbolData);
             }
 
-            await GetLatestClientSymbolDataAsync(data, cancellationToken);
+            await GetLatestClientSymbolDataAsync(data, httpClient, cancellationToken);
 
             logger.LogInformation($"Get Datas From Tse:{(DateTime.Now - startTime).TotalSeconds}");
 
@@ -428,7 +441,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         }
 
-        public async Task<Dictionary<long, string>> GetSymbolStatus(CancellationToken cancellationToken = default(CancellationToken))
+        private async Task<Dictionary<long, string>> GetSymbolStatus(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             Dictionary<long, string> statuses = new();
 
@@ -464,7 +477,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             var fillSymbolData = symbols.Select(i => new FillSymbolData(i.InsCode)).ToList();
 
-            await Common.Utilities.ApplicationHelpers.DoFunctionsOFListWithMultiTask(fillSymbolData, FillSymbolDataAsync, cancellationToken, 15);
+            await DoFunctionsOFListWithMultiTask(fillSymbolData, FillSymbolDataAsync, cancellationToken, 13, setting.Timeout * 2);
 
             foreach (var d in fillSymbolData)
                 oneTimeSymbolData[d.InsCode] = d;
@@ -472,7 +485,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             await distributedCache.SetValueAsync(nameof(OneTimeSymbolData), oneTimeSymbolData, 720);
         }
 
-        private async Task FillSymbolDataAsync(FillSymbolData symboldata, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task FillSymbolDataAsync(FillSymbolData symboldata, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
@@ -493,10 +506,13 @@ namespace Bource.Services.Crawlers.Tsetmc
             {
                 if (numberOfTries < this.numberOfTries)
                 {
+                    if (numberOfTries == this.numberOfTries - 2)
+                        await Task.Delay(delayBetweenTimeouts);
+
                     if (numberOfTries == this.numberOfTries - 1)
                         await Task.Delay(delayBetweenTimeouts);
 
-                    await FillSymbolDataAsync(symboldata, cancellationToken, numberOfTries + 1);
+                    await FillSymbolDataAsync(symboldata, httpClient, cancellationToken, numberOfTries + 1);
                 }
                 else
                 {
@@ -508,7 +524,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             }
 
         }
-        private async Task GetLatestClientSymbolDataAsync(List<SymbolData> symbols, CancellationToken cancellationToken = default(CancellationToken))
+        private async Task GetLatestClientSymbolDataAsync(List<SymbolData> symbols, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             var response = await httpClient.GetAsync("tsev2/data/ClientTypeAll.aspx", cancellationToken);
             if (!response.IsSuccessStatusCode)
@@ -529,7 +545,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 symbol.FillClientValues(columns);
             }
         }
-        private async Task<HttpResponseMessage> GetLatestSymbolsResponseAsync(CancellationToken cancellationToken = default(CancellationToken))
+        private async Task<HttpResponseMessage> GetLatestSymbolsResponseAsync(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             var response = await httpClient.GetAsync("tsev2/data/MarketWatchPlus.aspx", cancellationToken);
             if (!response.IsSuccessStatusCode)
@@ -545,14 +561,14 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         #region بازار نقدی در یک نگاه
         public Task GetMarketAtGlanceScheduleEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
-        => ApplicationHelpers.DoFuncEverySecond(GetMarketAtGlanceScheduleAsync, cancellationToken);
-        public async Task GetMarketAtGlanceScheduleAsync(CancellationToken cancellationToken = default(CancellationToken))
+        => DoFuncEverySecond(GetMarketAtGlanceScheduleAsync, cancellationToken);
+        public async Task GetMarketAtGlanceScheduleAsync(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (IsMarketOpen)
-                await GetMarketAtGlanceAsync(cancellationToken);
+                await GetMarketAtGlanceAsync(httpClient, cancellationToken);
         }
 
-        public async Task GetMarketAtGlanceAsync(CancellationToken cancellationToken = default(CancellationToken))
+        private async Task GetMarketAtGlanceAsync(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             var response = await httpClient.GetAsync("Loader.aspx?ParTree=15", cancellationToken);
             if (!response.IsSuccessStatusCode)
@@ -671,6 +687,8 @@ namespace Bource.Services.Crawlers.Tsetmc
         private async Task<List<MarketWatcherMessage>> GetMarketWatcherMessage(MarketType market, CancellationToken cancellationToken = default(CancellationToken))
         {
             List<MarketWatcherMessage> messages = new();
+            using var httpClient = httpClientFactory.CreateClient(className);
+
             var response = await httpClient.GetAsync($"Loader.aspx?Partree=151313&Flow={(byte)market}", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
@@ -725,6 +743,8 @@ namespace Bource.Services.Crawlers.Tsetmc
         private async Task<List<ValueOfMarket>> GetValueOfMarketAsync(MarketType market, CancellationToken cancellationToken = default(CancellationToken))
         {
             List<ValueOfMarket> values = new();
+            using var httpClient = httpClientFactory.CreateClient(className);
+
             var response = await httpClient.GetAsync($"Loader.aspx?Partree=15131N&Flow={(byte)market}", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
@@ -780,6 +800,8 @@ namespace Bource.Services.Crawlers.Tsetmc
         private async Task<List<TopSupplyAndDemand>> GetTopSupplyAndDemandAsync(MarketType market, CancellationToken cancellationToken = default(CancellationToken))
         {
             List<TopSupplyAndDemand> values = new();
+            using var httpClient = httpClientFactory.CreateClient(className);
+
             var response = await httpClient.GetAsync($"Loader.aspx?Partree=151318&Flow={(byte)market}", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
@@ -849,11 +871,10 @@ namespace Bource.Services.Crawlers.Tsetmc
         public async Task GetAllCapitalIncreaseAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
-
-            await Common.Utilities.ApplicationHelpers.DoFunctionsOFListWithMultiTask(symbols, GetCapitalIncreaseAsync, cancellationToken, 10);
+            await DoFunctionsOFListWithMultiTask(symbols, GetCapitalIncreaseAsync, cancellationToken, 10);
         }
 
-        private async Task GetCapitalIncreaseAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task GetCapitalIncreaseAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
@@ -893,7 +914,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                     if (numberOfTries == this.numberOfTries - 1)
                         await Task.Delay(delayBetweenTimeouts);
 
-                    await GetCapitalIncreaseAsync(symbol, cancellationToken, numberOfTries + 1);
+                    await GetCapitalIncreaseAsync(symbol, httpClient, cancellationToken, numberOfTries + 1);
                 }
                 else
                 {
@@ -909,7 +930,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         #region شاخص‌ها
 
         public Task GetSelectedIndicatorEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
-        => ApplicationHelpers.DoFuncEverySecond(GetSelectedIndicatorAsync, cancellationToken);
+        => DoFuncEverySecond(GetSelectedIndicatorAsync, cancellationToken);
 
 
         /// <summary>
@@ -917,7 +938,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task GetSelectedIndicatorAsync(CancellationToken cancellationToken = default(CancellationToken))
+        private async Task GetSelectedIndicatorAsync(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             var response = await httpClient.GetAsync($"Loader.aspx?Partree=151315&Flow=1", cancellationToken);
             if (!response.IsSuccessStatusCode)
@@ -957,11 +978,11 @@ namespace Bource.Services.Crawlers.Tsetmc
         public async Task GetSymbolsShareHoldersAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
-            await Common.Utilities.ApplicationHelpers.DoFunctionsOFListWithMultiTask(symbols, GetSymbolShareHoldersAsync, cancellationToken);
+            await DoFunctionsOFListWithMultiTask(symbols, GetSymbolShareHoldersAsync, cancellationToken);
 
         }
 
-        private async Task GetSymbolShareHoldersAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task GetSymbolShareHoldersAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
             try
             {
@@ -1004,7 +1025,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                     if (numberOfTries == this.numberOfTries - 1)
                         await Task.Delay(delayBetweenTimeouts);
 
-                    await GetSymbolShareHoldersAsync(symbol, cancellationToken, numberOfTries + 1);
+                    await GetSymbolShareHoldersAsync(symbol, httpClient, cancellationToken, numberOfTries + 1);
                 }
                 else
                 {
@@ -1018,6 +1039,8 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         public async Task GetChangeOfSharesOfActiveShareHoldersAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
+            using var httpClient = httpClientFactory.CreateClient(className);
+
             var response = await httpClient.GetAsync($"Loader.aspx?ParTree=15131I&t=0", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {

@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using Microsoft.Net.Http;
 
 namespace Bource.WebConfiguration.Configuration
 {
@@ -28,20 +29,20 @@ namespace Bource.WebConfiguration.Configuration
 
         public static void AddCrawlerHttpClient(this IServiceCollection services, ApplicationSetting applicationSetting)
         {
-            HttpClientHandler handler = new()
-            {
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
-            };
-
             foreach (var crawler in applicationSetting.CrawlerSettings)
             {
+
                 services.AddHttpClient(crawler.Key)
                             .ConfigureHttpClient(client =>
                             {
                                 client.BaseAddress = new Uri(crawler.Url);
                                 client.Timeout = TimeSpan.FromSeconds(crawler.Timeout);
-                            }).ConfigurePrimaryHttpMessageHandler(() => handler);
+                            }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
+                            {
+                                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+                            });
             }
+
         }
         public static void AddAllowAllOriginsCors(this IServiceCollection services)
         {

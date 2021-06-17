@@ -35,6 +35,7 @@ namespace Bource.JobServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<ApplicationSetting>(Configuration.GetSection("ApplicationSettings"));
             services.AddSingleton<ApplicationSetting>(applicationSettings);
             services.AddCustomHangfire(Configuration.GetConnectionString("RedisHangfire"));
             services.AddControllers();
@@ -61,7 +62,6 @@ namespace Bource.JobServer
 
             app.UseCustomExceptionHandler();
 
-            app.UseHttpsRedirection();
 
             app.UseCors("AllowAllOrigins");
 
