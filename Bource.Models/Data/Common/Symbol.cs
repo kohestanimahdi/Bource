@@ -16,6 +16,7 @@ namespace Bource.Models.Data.Common
             UpdateFromTseClientSoap(array);
         }
 
+        public string Subject { get; set; }
         public string Logo { get; set; }
         public string CodalURL { get; set; }
         public string CodalCompanyId { get; set; }

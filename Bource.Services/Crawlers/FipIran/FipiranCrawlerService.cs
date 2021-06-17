@@ -1,5 +1,7 @@
 ﻿using Bource.Common.Models;
+using Bource.Common.Utilities;
 using Bource.Data.Informations.UnitOfWorks;
+using Bource.Models.Data.Common;
 using Bource.Models.Data.Enums;
 using Bource.Models.Data.FipIran;
 using HtmlAgilityPack;
@@ -7,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,20 +20,20 @@ namespace Bource.Services.Crawlers.FipIran
     {
         private readonly ILogger<FipiranCrawlerService> logger;
         private readonly IFipiranUnitOfWork fipiranUnitOfWork;
-        private readonly CrawlerSetting setting;
+        private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
         private readonly IHttpClientFactory httpClientFactory;
         private string className => nameof(FipiranCrawlerService);
 
         public FipiranCrawlerService(
-            IOptionsSnapshot<ApplicationSetting> settings,
             IHttpClientFactory httpClientFactory,
             ILoggerFactory loggerFactory,
-            IFipiranUnitOfWork fipiranUnitOfWork)
+            IFipiranUnitOfWork fipiranUnitOfWork,
+            ITsetmcUnitOfWork tsetmcUnitOfWork)
         {
             logger = loggerFactory?.CreateLogger<FipiranCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
             this.fipiranUnitOfWork = fipiranUnitOfWork ?? throw new ArgumentNullException(nameof(fipiranUnitOfWork));
-            this.setting = settings.Value.GetCrawlerSetting(nameof(FipiranCrawlerService)) ?? throw new ArgumentNullException(nameof(settings));
+            this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
         }
 
         public async Task GetNews(FipIranNewsTypes type, CancellationToken cancellationToken = default(CancellationToken))
@@ -102,6 +105,39 @@ namespace Bource.Services.Crawlers.FipIran
                     items.Add(new FipIranAssociation(tr));
 
             await fipiranUnitOfWork.AddIfNotExistAssociationAsync(items, cancellationToken);
+        }
+
+        public async Task GetSubjectSymbols(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
+            await ApplicationHelpers.DoFunctionsOFListWithMultiTask(symbols, httpClientFactory, className, GetSubjectSymbol, cancellationToken);
+        }
+
+        private async Task GetSubjectSymbol(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 5)
+        {
+            var response = await httpClient.GetAsync($"Symbol/CompanyInfoIndex?symbolpara={symbol.Sign}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError($"Error in get subject of symbol in fip iran");
+                return;
+            }
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(html);
+
+            var i = htmlDoc.DocumentNode.SelectSingleNode("//i[@class='fa fa-file-text']");
+            if (i is null)
+                return;
+
+            var item = i.ParentNode.SelectSingleNode("div/p");
+            if (item is null)
+                return;
+
+            symbol.Subject = item.GetText();
+
+            await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
         }
     }
 }

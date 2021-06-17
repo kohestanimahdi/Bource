@@ -10,7 +10,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
+using System.Net.WebSockets;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using Websocket.Client;
 
 namespace Bource.Console
 {
@@ -18,6 +22,7 @@ namespace Bource.Console
     {
         private static void Main(string[] args)
         {
+
             var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false)
@@ -187,6 +192,10 @@ namespace Bource.Console
                             codal360CrawlerService.UpdateSymbolsCodalURLAsync().GetAwaiter().GetResult();
                             break;
 
+                        case 21:
+                            fipIran.GetSubjectSymbols().GetAwaiter().GetResult();
+                            break;
+
                         default:
                             break;
                     }
@@ -223,8 +232,135 @@ namespace Bource.Console
                 "17", "Symbols Share Holders", "اطلاعات سهامداران نماد",
                 "18", "Main Change Active ShareHolders", "سهامداران فعال نماد",
                 "19", "download symbol logo", "دریافت لوگوها",
-                "20", "Codal 360 url", "لینک کدال"
+                "20", "Codal 360 url", "لینک کدال",
+                "21", "FipIran Subject", "موضوع فعالیت از فیپ ایران"
                 );
+        }
+
+        private static async Task ConnectToWebSocket()
+        {
+            do
+            {
+                using (var socket = new ClientWebSocket())
+                    try
+                    {
+                        await socket.ConnectAsync(new Uri($"ws://api2.tablokhani.com/socket.io/?EIO=4&transport=websocket&sid=1yWSjSC_NpwNxxnMAjx2"), CancellationToken.None);
+
+                        await Send(socket, "boxIndex");
+                        await Receive(socket);
+
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+            } while (true);
+        }
+
+        static Task Send(ClientWebSocket socket, string data) =>
+             socket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, CancellationToken.None);
+
+        static async Task Receive(ClientWebSocket socket)
+        {
+            var buffer = new ArraySegment<byte>(new byte[2048]);
+            do
+            {
+                WebSocketReceiveResult result;
+                using (var ms = new MemoryStream())
+                {
+                    do
+                    {
+                        result = await socket.ReceiveAsync(buffer, CancellationToken.None);
+                        ms.Write(buffer.Array, buffer.Offset, result.Count);
+                    } while (!result.EndOfMessage);
+
+                    if (result.MessageType == WebSocketMessageType.Close)
+                        break;
+
+                    ms.Seek(0, SeekOrigin.Begin);
+                    using (var reader = new StreamReader(ms, Encoding.UTF8))
+                        System.Console.WriteLine(await reader.ReadToEndAsync());
+                }
+            } while (true);
+        }
+
+        static void Main2(string[] args)
+        {
+
+
+            var factory = new Func<ClientWebSocket>(() =>
+            {
+                var client = new ClientWebSocket
+                {
+                    Options =
+                    {
+                        KeepAliveInterval = TimeSpan.FromSeconds(5),
+                        // Proxy = ...
+                        // ClientCertificates = ...
+                    }
+                };
+                //client.Options.SetRequestHeader("Origin", "xxx");
+                return client;
+            });
+
+            var url = new Uri($"ws://api2.tablokhani.com/socket.io/?EIO=4&transport=websocket&sid={Guid.NewGuid()}");
+
+            using (IWebsocketClient client = new WebsocketClient(url, factory))
+            {
+                client.Name = "boxIndex";
+                client.ReconnectTimeout = TimeSpan.FromSeconds(30);
+                client.ErrorReconnectTimeout = TimeSpan.FromSeconds(30);
+                client.ReconnectionHappened.Subscribe(type =>
+                {
+                    System.Console.WriteLine($"Reconnection happened, type: {type}, url: {client.Url}");
+                });
+                client.DisconnectionHappened.Subscribe(info =>
+                     System.Console.WriteLine($"Disconnection happened, type: {info.Type}"));
+
+                client.MessageReceived.Subscribe(msg =>
+                {
+                    System.Console.WriteLine($"Message received: {msg}");
+                });
+
+
+                client.Start().Wait();
+
+
+                //var t = Task.Run(() => StartSendingPing(client));
+                //var t2 = Task.Run(() => SwitchUrl(client));
+
+                //Task.WhenAll(t, t2).GetAwaiter().GetResult();
+            }
+
+
+        }
+
+        private static async Task StartSendingPing(IWebsocketClient client)
+        {
+            while (true)
+            {
+                await Task.Delay(1000);
+
+                if (!client.IsRunning)
+                    continue;
+
+                client.Send("ping");
+            }
+        }
+
+        private static async Task SwitchUrl(IWebsocketClient client)
+        {
+            while (true)
+            {
+                await Task.Delay(20000);
+
+                var production = new Uri("wss://www.bitmex.com/realtime");
+                var testnet = new Uri("wss://testnet.bitmex.com/realtime");
+
+                var selected = client.Url == production ? testnet : production;
+                client.Url = selected;
+                await client.Reconnect();
+            }
         }
     }
 }

@@ -9,5 +9,6 @@ namespace Bource.Services.Crawlers.FipIran
         Task GetAssociations(CancellationToken cancellationToken = default);
 
         Task GetNews(FipIranNewsTypes type, CancellationToken cancellationToken = default);
+        Task GetSubjectSymbols(CancellationToken cancellationToken = default);
     }
 }

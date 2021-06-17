@@ -106,6 +106,9 @@ namespace Bource.WebConfiguration.Configuration
             // دریافت لینک کدال - هر شب یک بار
             RecurringJob.AddOrUpdate<Codal360CrawlerService>(nameof(Codal360CrawlerService.UpdateSymbolsCodalURLAsync), app => app.UpdateSymbolsCodalURLAsync(CancellationToken.None), "30 6 * * *", TimeZoneInfo.Local);
 
+            // دریافت موضوع هر نماد از فیپ ایران - هر شب یک بار
+            RecurringJob.AddOrUpdate<FipiranCrawlerService>(nameof(FipiranCrawlerService.GetSubjectSymbols), app => app.GetSubjectSymbols(CancellationToken.None), "30 5 * * *", TimeZoneInfo.Local);
+
             // دریافت اطلاعات لحظه ای هر نماد - روزانه در ابتدای تایم بازار
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.FillOneTimeDataAsync), app => app.FillOneTimeDataAsync(CancellationToken.None), "30 8 * * *", TimeZoneInfo.Local);
         }
