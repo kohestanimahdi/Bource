@@ -3,6 +3,7 @@ using Bource.Services.Crawlers.Codal360;
 using Bource.Services.Crawlers.FipIran;
 using Bource.Services.Crawlers.Tsetmc;
 using Hangfire;
+using Hangfire.Dashboard.BasicAuthorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
@@ -75,6 +76,9 @@ namespace Bource.WebConfiguration.Configuration
 
             // دریافت لیست صنایع در ساعت 10 شب
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetOrUpdateSymbolGroupsAsync), app => app.GetOrUpdateSymbolGroupsAsync(CancellationToken.None), "0 22 * * *", TimeZoneInfo.Local);
+
+            // دریافت لیست شاخص‌ها در ساعت 10 شب
+            RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetIndicators), app => app.GetIndicators(CancellationToken.None), "1 22 * * *", TimeZoneInfo.Local);
 
             // دریافت اطلاعات ارزش بازار روزانه یک بار
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetValueOfMarketAsync), app => app.GetValueOfMarketAsync(CancellationToken.None), "0 22,1,3 * * *", TimeZoneInfo.Local);

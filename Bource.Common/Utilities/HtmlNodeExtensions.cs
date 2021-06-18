@@ -118,6 +118,15 @@ namespace Bource.Common.Utilities
             return node.ConvertToDecimal();
         }
 
+        public static string GetCustomAttributeValue(this HtmlNode node, string attributeName)
+        {
+
+            if (node is not null && node.Attributes.Any(i => i.Name == attributeName))
+                return node.Attributes[attributeName].Value;
+
+            return string.Empty;
+        }
+
         public static string GetQueryString(this HtmlNode node, string key, string baseUrl = "")
         {
             var uri = new Uri(baseUrl + node.SelectSingleNode("a").Attributes["href"].Value);

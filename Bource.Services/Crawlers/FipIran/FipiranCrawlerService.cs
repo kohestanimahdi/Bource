@@ -4,6 +4,7 @@ using Bource.Data.Informations.UnitOfWorks;
 using Bource.Models.Data.Common;
 using Bource.Models.Data.Enums;
 using Bource.Models.Data.FipIran;
+using Bource.Models.Data.Tsetmc;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -18,6 +19,8 @@ namespace Bource.Services.Crawlers.FipIran
 {
     public class FipiranCrawlerService : IFipiranCrawlerService, IScopedDependency
     {
+
+
         private readonly ILogger<FipiranCrawlerService> logger;
         private readonly IFipiranUnitOfWork fipiranUnitOfWork;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
@@ -138,6 +141,56 @@ namespace Bource.Services.Crawlers.FipIran
             symbol.Subject = item.GetText();
 
             await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
+        }
+
+        public async Task GetIndicators(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using var httpClient = httpClientFactory.CreateClient(className);
+
+            var response = await httpClient.GetAsync($"AllIndex/IndicesRevenue", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError($"Error in Indicators");
+                return;
+            }
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(html);
+
+            var trs = htmlDoc.DocumentNode.SelectNodes("//table[@id='list']/tbody/tr");
+            var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
+
+            List<Indicator> Indicators = new();
+            if (trs is not null)
+                foreach (var tr in trs)
+                {
+                    var tds = tr.SelectNodes("td");
+                    var insCode = Convert.ToInt64(tds[0].GetQueryString("LVal30", httpClient.BaseAddress.ToString()));
+                    var indicatorSymbols = await GetIndicatorSymbols(insCode, httpClient, cancellationToken);
+                    Indicator indicator = new(tds, insCode, indicatorSymbols, symbols);
+                    Indicators.Add(indicator);
+                }
+
+            await tsetmcUnitOfWork.AddIndicatorsAsync(Indicators, cancellationToken);
+        }
+
+        private async Task<HtmlNodeCollection> GetIndicatorSymbols(long insCode, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var response = await httpClient.GetAsync($"IndexDetails/_IndexInstrument?Lval30={insCode}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError($"Error in Indicators");
+                return null;
+            }
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(html);
+
+            return htmlDoc.DocumentNode.SelectNodes("//table[@id='list1']/tbody/tr");
         }
     }
 }

@@ -7,7 +7,7 @@ namespace Bource.Services.Crawlers.FipIran
     public interface IFipiranCrawlerService
     {
         Task GetAssociations(CancellationToken cancellationToken = default);
-
+        Task GetIndicators(CancellationToken cancellationToken = default);
         Task GetNews(FipIranNewsTypes type, CancellationToken cancellationToken = default);
         Task GetSubjectSymbols(CancellationToken cancellationToken = default);
     }

@@ -13,8 +13,9 @@ namespace Bource.Models.Data.Tsetmc
 
         public SelectedIndicator(long insCode, HtmlNodeCollection tds)
         {
-            var title = tds[0].GetText().Split('-');
-            Title = title.Length > 1 ? title[1] : title[0];
+            //var title = tds[0].GetText().Split('-');
+            //Title = title.Length > 1 ? title[1] : title[0];
+            Title = tds[0].GetText();
             InsCode = insCode;
             PublishTime = DateTime.Parse(tds[1].GetText());
             Last = tds[2].ConvertToDecimal();

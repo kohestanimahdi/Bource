@@ -73,6 +73,7 @@ namespace Bource.Console
             string input;
             tse.SetMarketStatus(true).GetAwaiter().GetResult();
 
+
             PrintTableOfContent();
             while (n != 0)
             {
@@ -197,6 +198,10 @@ namespace Bource.Console
                             fipIran.GetSubjectSymbols().GetAwaiter().GetResult();
                             break;
 
+                        case 22:
+                            tse.GetIndicators().GetAwaiter().GetResult();
+                            break;
+
                         default:
                             break;
                     }
@@ -234,7 +239,8 @@ namespace Bource.Console
                 "18", "Main Change Active ShareHolders", "سهامداران فعال نماد",
                 "19", "download symbol logo", "دریافت لوگوها",
                 "20", "Codal 360 url", "لینک کدال",
-                "21", "FipIran Subject", "موضوع فعالیت از فیپ ایران"
+                "21", "FipIran Subject", "موضوع فعالیت از فیپ ایران",
+                "22", "Indicators", "لیست شاخص ها و نمادهای آن ها"
                 );
         }
 

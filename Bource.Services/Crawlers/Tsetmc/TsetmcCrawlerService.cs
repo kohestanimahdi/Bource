@@ -16,6 +16,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace Bource.Services.Crawlers.Tsetmc
 {
@@ -978,6 +979,79 @@ namespace Bource.Services.Crawlers.Tsetmc
             await tsetmcUnitOfWork.AddSelectedIndicatorsAsync(entities, cancellationToken);
         }
 
+        /// <summary>
+        /// دریافت لیست شاخص ها و نمادهای آنها
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task GetIndicators(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using var httpClient = httpClientFactory.CreateClient(className);
+
+            var response = await httpClient.GetAsync($"Loader.aspx?ParTree=111C1316", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError($"Error in Indicators");
+                return;
+            }
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(html);
+
+            var trs = htmlDoc.DocumentNode.SelectNodes("//table[@id='tblToGrid']/tr");
+            var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
+
+            List<Indicator> Indicators = new();
+            foreach (var tr in trs.Skip(1))
+            {
+                Indicator indicator = new()
+                {
+                    CreateDate = DateTime.Now,
+                    InsCode = Convert.ToInt64(tr.GetCustomAttributeValue("id")),
+                    Title = tr.GetText(),
+                    Symbols = new List<IndicatorSymbol>()
+                };
+
+                var indicatorSymbols = await GetIndicatorSymbols(indicator.InsCode, httpClient, cancellationToken);
+                if (indicatorSymbols is not null && indicatorSymbols.Count != 0)
+                {
+                    foreach (XmlNode s in indicatorSymbols)
+                    {
+                        var item1 = s.ChildNodes[0].InnerText.Split(',');
+                        var insCode = Convert.ToInt64(item1[0]);
+                        var symbol = symbols.FirstOrDefault(i => i.InsCode == insCode);
+                        if (symbol is not null)
+                            indicator.Symbols.Add(new IndicatorSymbol(symbol));
+                    }
+                }
+
+                Indicators.Add(indicator);
+            }
+
+            await tsetmcUnitOfWork.AddIndicatorsAsync(Indicators, cancellationToken);
+        }
+
+        private async Task<XmlNodeList> GetIndicatorSymbols(long insCode, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
+        {
+
+            var response = await httpClient.GetAsync($"tse/data/IndexA5InstData.aspx?inscode={insCode}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError($"Error in Indicators symbols");
+                return null;
+            }
+
+            var xml = await response.Content.ReadAsStringAsync(cancellationToken);
+
+
+            var xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xml);
+
+            return xmlDoc.SelectNodes("//row");
+
+        }
         #endregion شاخص‌ها
 
         #region سهامداران

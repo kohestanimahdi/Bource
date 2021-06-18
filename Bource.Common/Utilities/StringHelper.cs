@@ -357,7 +357,7 @@ namespace Bource.Common.Utilities
                 text = text.Replace(findString[i], replaceString[i]);
             }
 
-            return text.MergeInsideSpaces();
+            return text.MergeInsideSpaces().Trim();
         }
 
         /// <summary>
