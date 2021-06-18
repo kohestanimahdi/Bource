@@ -14,7 +14,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Websocket.Client;
+
 
 namespace Bource.Console
 {
@@ -285,83 +285,6 @@ namespace Bource.Console
             } while (true);
         }
 
-        static void Main2(string[] args)
-        {
 
-
-            var factory = new Func<ClientWebSocket>(() =>
-            {
-                var client = new ClientWebSocket
-                {
-                    Options =
-                    {
-                        KeepAliveInterval = TimeSpan.FromSeconds(5),
-                        // Proxy = ...
-                        // ClientCertificates = ...
-                    }
-                };
-                //client.Options.SetRequestHeader("Origin", "xxx");
-                return client;
-            });
-
-            var url = new Uri($"ws://api2.tablokhani.com/socket.io/?EIO=4&transport=websocket&sid={Guid.NewGuid()}");
-
-            using (IWebsocketClient client = new WebsocketClient(url, factory))
-            {
-                client.Name = "boxIndex";
-                client.ReconnectTimeout = TimeSpan.FromSeconds(30);
-                client.ErrorReconnectTimeout = TimeSpan.FromSeconds(30);
-                client.ReconnectionHappened.Subscribe(type =>
-                {
-                    System.Console.WriteLine($"Reconnection happened, type: {type}, url: {client.Url}");
-                });
-                client.DisconnectionHappened.Subscribe(info =>
-                     System.Console.WriteLine($"Disconnection happened, type: {info.Type}"));
-
-                client.MessageReceived.Subscribe(msg =>
-                {
-                    System.Console.WriteLine($"Message received: {msg}");
-                });
-
-
-                client.Start().Wait();
-
-
-                //var t = Task.Run(() => StartSendingPing(client));
-                //var t2 = Task.Run(() => SwitchUrl(client));
-
-                //Task.WhenAll(t, t2).GetAwaiter().GetResult();
-            }
-
-
-        }
-
-        private static async Task StartSendingPing(IWebsocketClient client)
-        {
-            while (true)
-            {
-                await Task.Delay(1000);
-
-                if (!client.IsRunning)
-                    continue;
-
-                client.Send("ping");
-            }
-        }
-
-        private static async Task SwitchUrl(IWebsocketClient client)
-        {
-            while (true)
-            {
-                await Task.Delay(20000);
-
-                var production = new Uri("wss://www.bitmex.com/realtime");
-                var testnet = new Uri("wss://testnet.bitmex.com/realtime");
-
-                var selected = client.Url == production ? testnet : production;
-                client.Url = selected;
-                await client.Reconnect();
-            }
-        }
     }
 }
