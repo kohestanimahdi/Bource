@@ -115,6 +115,11 @@ namespace Bource.WebConfiguration.Configuration
 
         private static void AddMarketTimeTasks()
         {
+            //باز کردن وضعیت بازار
+            RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.SetMarketStatus), app => app.SetMarketStatus(true), "55 8 * * 0,1,2,3,6", TimeZoneInfo.Local);
+            RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.SetMarketStatus) + "9", app => app.SetMarketStatus(true), "59 8 * * 0,1,2,3,6", TimeZoneInfo.Local);
+
+            // دریافت اطلاعات مجامع فیپ ایران - 
             RecurringJob.AddOrUpdate<FipiranCrawlerService>(nameof(FipiranCrawlerService.GetAssociations) + "AssembliesAndCompanies", app => app.GetNews(Models.Data.Enums.FipIranNewsTypes.AssembliesAndCompanies, CancellationToken.None), "* 9-13 * * 0,1,2,3,6", TimeZoneInfo.Local);
 
             // دریافت اطلاعات پیغام‌های ناظر بازار- در ساعت بازار - هر به یک دقیقه

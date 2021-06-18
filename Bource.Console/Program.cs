@@ -71,6 +71,7 @@ namespace Bource.Console
 
             int n = -1;
             string input;
+            tse.SetMarketStatus(true).GetAwaiter().GetResult();
 
             PrintTableOfContent();
             while (n != 0)

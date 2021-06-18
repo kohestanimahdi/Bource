@@ -58,7 +58,8 @@ namespace Bource.Services.Crawlers.Codal360
                     response = await httpClient.GetAsync($"fa/search_symbol/?q={companyName}", cancellationToken);
                     if (!response.IsSuccessStatusCode)
                     {
-                        logger.LogError($"Error in Get Codal Url {symbol.InsCode}");
+                        if (response.StatusCode != System.Net.HttpStatusCode.NotFound)
+                            logger.LogError($"Error in Get Codal Url {symbol.InsCode}");
                     }
                 }
 
@@ -70,7 +71,8 @@ namespace Bource.Services.Crawlers.Codal360
                     response = await httpClient.GetAsync($"fa/search_symbol/?q={companyName}", cancellationToken);
                     if (!response.IsSuccessStatusCode)
                     {
-                        logger.LogError($"Error in Get Codal Url {symbol.InsCode}");
+                        if (response.StatusCode != System.Net.HttpStatusCode.NotFound)
+                            logger.LogError($"Error in Get Codal Url {symbol.InsCode}");
                         return;
                     }
                     result = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -86,15 +88,18 @@ namespace Bource.Services.Crawlers.Codal360
                 item.UpdateSymbol(symbol, baseUrl);
                 await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 if (numberOfTries < 2)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    if (numberOfTries == 1)
+                        await Task.Delay(TimeSpan.FromSeconds(5));
                     await UpdateSymbolCodalURLAsync(symbol, httpClient, cancellationToken, numberOfTries + 1);
                 }
                 else
-                    throw;
+                {
+                    logger.LogError(ex, "");
+                }
             }
         }
 

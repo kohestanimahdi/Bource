@@ -38,7 +38,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         Task GetValueOfMarketAsync(CancellationToken cancellationToken = default);
 
         Task ScheduleLatestSymbolDataEverySecondAsync(CancellationToken cancellationToken = default);
-
+        Task SetMarketStatus(bool status);
         Task UpdateSymbolsAsync(CancellationToken cancellationToken = default);
     }
 }

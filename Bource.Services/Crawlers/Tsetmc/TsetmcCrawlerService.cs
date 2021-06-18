@@ -23,7 +23,7 @@ namespace Bource.Services.Crawlers.Tsetmc
     {
         #region Properties
 
-        private bool isMarketOpen = true;
+        private bool isMarketOpen;
         private List<SymbolData> lastSymbolData;
 
         private readonly int numberOfTries = 5;
@@ -63,6 +63,8 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             oneTimeSymbolData = distributedCache.GetValue<Dictionary<long, FillSymbolData>>(nameof(OneTimeSymbolData)) ?? new();
             lastSymbolData = new();
+
+            isMarketOpen = distributedCache.GetValue<bool>(nameof(IsMarketOpen));
         }
 
         #endregion Constructors
@@ -72,6 +74,13 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         private Task DoFuncEverySecond(Func<HttpClient, CancellationToken, Task> func, CancellationToken cancellationToken = default(CancellationToken))
             => ApplicationHelpers.DoFuncEverySecond(httpClientFactory, className, func, cancellationToken);
+
+
+        public Task SetMarketStatus(bool status)
+        {
+            isMarketOpen = status;
+            return distributedCache.SetValueAsync(nameof(IsMarketOpen), IsMarketOpen, 300);
+        }
 
         #region نمادها
 
@@ -83,7 +92,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         public async Task UpdateSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
-            await DoFunctionsOFListWithMultiTask(symbols, UpdateSymbolAsync, cancellationToken, 10);
+            await DoFunctionsOFListWithMultiTask(symbols, UpdateSymbolAsync, cancellationToken, 10, setting.Timeout * 2);
         }
 
         private async Task UpdateSymbolAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)

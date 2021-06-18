@@ -32,10 +32,12 @@ namespace Bource.Services.Crawlers.AsanBource
             FileExtensions.CreateIfNotExists("Contents/SymbolLogos");
 
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
-            await ApplicationHelpers.DoFunctionsWithProgressBar(symbols, DownloadSymbolImageAsync, cancellationToken);
+            //await ApplicationHelpers.DoFunctionsOFListWithMultiTask(symbols, httpClientFactory, className, DownloadSymbolImageAsync, cancellationToken);
+            foreach (var symbol in symbols)
+                await DownloadSymbolImageAsync(symbol, cancellationToken);
         }
 
-        private async Task DownloadSymbolImageAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
+        private async Task DownloadSymbolImageAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(symbol.Code12))
                 return;
@@ -45,7 +47,9 @@ namespace Bource.Services.Crawlers.AsanBource
             var response = await httpClient.GetAsync($"content/SymbolsLogo/{symbol.Code12}.png", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogWarning("Error in Get Symbol Images");
+                if (response.StatusCode != System.Net.HttpStatusCode.NotFound)
+                    logger.LogWarning("Error in Get Symbol Images");
+
                 return;
             }
             var fileBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
