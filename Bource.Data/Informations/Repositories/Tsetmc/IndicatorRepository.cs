@@ -24,5 +24,15 @@ namespace Bource.Data.Informations.Repositories.Tsetmc
                     await UpdateAsync(indicator, cancellationToken);
             }
         }
+
+        public async Task AddIfNotExistsAsync(List<Indicator> indicators, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var oldIndicators = await GetAllAsync(cancellationToken);
+            foreach (var indicator in indicators)
+            {
+                if (!oldIndicators.Any(i => i.Equals(indicator)))
+                    await AddAsync(indicator, cancellationToken);
+            }
+        }
     }
 }

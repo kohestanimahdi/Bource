@@ -78,7 +78,7 @@ namespace Bource.WebConfiguration.Configuration
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetOrUpdateSymbolGroupsAsync), app => app.GetOrUpdateSymbolGroupsAsync(CancellationToken.None), "0 22 * * *", TimeZoneInfo.Local);
 
             // دریافت لیست شاخص‌ها در ساعت 10 شب
-            RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetIndicators), app => app.GetIndicators(CancellationToken.None), "1 22 * * *", TimeZoneInfo.Local);
+            RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetSymbolsOfIndicatorsAsync), app => app.GetSymbolsOfIndicatorsAsync(CancellationToken.None), "1 22 * * *", TimeZoneInfo.Local);
 
             // دریافت اطلاعات ارزش بازار روزانه یک بار
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetValueOfMarketAsync), app => app.GetValueOfMarketAsync(CancellationToken.None), "0 22,1,3 * * *", TimeZoneInfo.Local);

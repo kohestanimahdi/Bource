@@ -199,7 +199,7 @@ namespace Bource.Console
                             break;
 
                         case 22:
-                            tse.GetIndicators().GetAwaiter().GetResult();
+                            tse.GetSymbolsOfIndicatorsAsync().GetAwaiter().GetResult();
                             break;
 
                         default:
@@ -240,7 +240,7 @@ namespace Bource.Console
                 "19", "download symbol logo", "دریافت لوگوها",
                 "20", "Codal 360 url", "لینک کدال",
                 "21", "FipIran Subject", "موضوع فعالیت از فیپ ایران",
-                "22", "Indicators", "لیست شاخص ها و نمادهای آن ها"
+                "22", "Symbols of Indicators", "لیست نمادهای شاخص ها "
                 );
         }
 

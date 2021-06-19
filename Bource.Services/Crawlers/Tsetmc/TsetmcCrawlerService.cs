@@ -948,7 +948,12 @@ namespace Bource.Services.Crawlers.Tsetmc
         /// <returns></returns>
         private async Task GetSelectedIndicatorAsync(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var response = await httpClient.GetAsync($"Loader.aspx?Partree=151315&Flow=1", cancellationToken);
+            await GetSelectedIndicatorAsync(MarketType.Stock, httpClient, cancellationToken);
+            await GetSelectedIndicatorAsync(MarketType.OTC, httpClient, cancellationToken);
+        }
+        private async Task GetSelectedIndicatorAsync(MarketType market, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var response = await httpClient.GetAsync($"Loader.aspx?Partree=151315&Flow={(byte)market}", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Error in Get Selected Indicator");
@@ -980,11 +985,66 @@ namespace Bource.Services.Crawlers.Tsetmc
         }
 
         /// <summary>
+        /// Get symbols of each indicator
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task GetSymbolsOfIndicatorsAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var indicators = await tsetmcUnitOfWork.GetIndicatorsAsync(cancellationToken);
+
+            foreach (var indicator in indicators)
+                await GetSymbolsOfIndicatorAsync(indicator, cancellationToken);
+
+            await tsetmcUnitOfWork.AddOrUpdateIndicatorsAsync(indicators, cancellationToken);
+        }
+
+        private async Task GetSymbolsOfIndicatorAsync(Indicator indicator, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using var httpClient = httpClientFactory.CreateClient(className);
+
+            var response = await httpClient.GetAsync($"Loader.aspx?ParTree=15131J&i={indicator.InsCode}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError("Error in Get symbols of Indicator");
+                return;
+            }
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (string.IsNullOrWhiteSpace(html))
+                return;
+
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(html);
+
+            var tables = htmlDoc.DocumentNode.SelectNodes("//table[@class='table1']");
+            if (tables is null || !tables.Any())
+                return;
+
+            var trs = tables[0].SelectNodes("tbody/tr");
+            if (trs is null)
+                return;
+
+            foreach (var tr in trs)
+            {
+                var tds = tr.SelectNodes("td");
+                var insCode = Convert.ToInt64(tds[0].GetQueryString("i", baseUrl));
+                var title = tds[0].GetText();
+                var name = tds[0].SelectSingleNode("a").GetCustomAttributeValue("title");
+
+                indicator.AddOrUpdateSymbol(new(title, name, insCode));
+            }
+
+
+        }
+
+        #region کد از سایت قدیمی - بلا استفاده
+        /// <summary>
         /// دریافت لیست شاخص ها و نمادهای آنها
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task GetIndicators(CancellationToken cancellationToken = default(CancellationToken))
+        private async Task GetIndicators(CancellationToken cancellationToken = default(CancellationToken))
         {
             using var httpClient = httpClientFactory.CreateClient(className);
 
@@ -1030,7 +1090,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 Indicators.Add(indicator);
             }
 
-            await tsetmcUnitOfWork.AddIndicatorsAsync(Indicators, cancellationToken);
+            await tsetmcUnitOfWork.AddOrUpdateIndicatorsAsync(Indicators, cancellationToken);
         }
 
         private async Task<XmlNodeList> GetIndicatorSymbols(long insCode, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
@@ -1052,6 +1112,8 @@ namespace Bource.Services.Crawlers.Tsetmc
             return xmlDoc.SelectNodes("//row");
 
         }
+        #endregion کد از سایت قدیمی - بلا استفاده
+
         #endregion شاخص‌ها
 
         #region سهامداران

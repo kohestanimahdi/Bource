@@ -52,10 +52,17 @@ namespace Bource.Data.Informations.UnitOfWorks
             logger = loggerFactory?.CreateLogger<TsetmcUnitOfWork>() ?? throw new ArgumentNullException(nameof(loggerFactory));
         }
 
-        public Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default(CancellationToken))
-        => selectedIndicatorRepository.AddRangeAsync(selectedIndicators, cancellationToken);
+        public async Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var indicators = selectedIndicators.Select(i => new Indicator(i.Title, i.InsCode)).ToList();
+            await indicatorRepository.AddIfNotExistsAsync(indicators, cancellationToken);
+            await selectedIndicatorRepository.AddRangeAsync(selectedIndicators, cancellationToken);
+        }
 
-        public Task AddIndicatorsAsync(List<Indicator> indicators, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<List<Indicator>> GetIndicatorsAsync(CancellationToken cancellationToken = default(CancellationToken))
+            => indicatorRepository.GetAllAsync(cancellationToken);
+
+        public Task AddOrUpdateIndicatorsAsync(List<Indicator> indicators, CancellationToken cancellationToken = default(CancellationToken))
             => indicatorRepository.AddOrUpdateAsync(indicators, cancellationToken);
 
         public async Task AddMarketWatcherMessageIfNotExistsRangeAsync(List<MarketWatcherMessage> messages, CancellationToken cancellationToken = default(CancellationToken))

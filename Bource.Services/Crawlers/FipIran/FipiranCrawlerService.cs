@@ -173,7 +173,7 @@ namespace Bource.Services.Crawlers.FipIran
                     Indicators.Add(indicator);
                 }
 
-            await tsetmcUnitOfWork.AddIndicatorsAsync(Indicators, cancellationToken);
+            await tsetmcUnitOfWork.AddOrUpdateIndicatorsAsync(Indicators, cancellationToken);
         }
 
         private async Task<HtmlNodeCollection> GetIndicatorSymbols(long insCode, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))

@@ -14,6 +14,12 @@ namespace Bource.Models.Data.Tsetmc
         {
 
         }
+        public Indicator(string title, long insCode)
+        {
+            Title = title;
+            InsCode = insCode;
+            Symbols = new();
+        }
         public Indicator(HtmlNodeCollection tds, long insCode, HtmlNodeCollection symbolsNodes, List<Symbol> symbols)
         {
             Title = tds[0].GetText();
@@ -57,16 +63,28 @@ namespace Bource.Models.Data.Tsetmc
         {
             return Id.GetHashCode();
         }
+
+        public void AddOrUpdateSymbol(IndicatorSymbol symbol)
+        {
+            if (Symbols is null)
+                Symbols = new();
+
+            if (!Symbols.Any(i => i.InsCode == symbol.InsCode))
+                Symbols.Add(symbol);
+        }
     }
 
     public class IndicatorSymbol
     {
-        public IndicatorSymbol(Symbol symbol)
+        public IndicatorSymbol(string sign, string name, long insCode)
         {
-            Sign = symbol.Sign;
-            Name = symbol.Name;
-            InsCode = symbol.InsCode;
-            InsCodeValue = symbol.InsCodeValue;
+            Sign = sign;
+            Name = name;
+            InsCode = insCode;
+        }
+        public IndicatorSymbol(Symbol symbol)
+            : this(symbol.Sign, symbol.Name, symbol.InsCode)
+        {
         }
 
         public string Sign { get; set; }

@@ -14,7 +14,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         Task AddCapitalIncreaseAsync(long insCode, List<CapitalIncrease> entities, CancellationToken cancellationToken = default);
 
         Task AddCashMarketAtGlance(CashMarketAtGlance stockCashMarketAtGlance, CashMarketAtGlance oTCCashMarketAtGlance, CancellationToken cancellationToken = default);
-        Task AddIndicatorsAsync(List<Indicator> indicators, CancellationToken cancellationToken = default);
+        Task AddOrUpdateIndicatorsAsync(List<Indicator> indicators, CancellationToken cancellationToken = default);
         Task AddMarketWatcherMessageIfNotExistsRangeAsync(List<MarketWatcherMessage> messages, CancellationToken cancellationToken = default);
 
         Task AddNewNaturalAndLegalEntity(long insCode, List<NaturalAndLegalEntity> entities, CancellationToken cancellationToken = default);
@@ -38,7 +38,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         Task AppendClosingPriceInfoAsync(List<ClosingPriceInfo> infos, CancellationToken cancellationToken = default);
 
         Task<List<ClosingPriceInfo>> GetClosingPriceInfosAsync(long insCode, ClosingPriceTypes? closingPriceTypes, CancellationToken cancellationToken = default);
-
+        Task<List<Indicator>> GetIndicatorsAsync(CancellationToken cancellationToken = default);
         Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default);
 
         Task<List<Symbol>> GetSymbolsByTypeAsync(IEnumerable<SymbolExistInType> existInTypes, CancellationToken cancellationToken = default);
