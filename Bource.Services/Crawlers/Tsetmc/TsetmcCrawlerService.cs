@@ -24,25 +24,23 @@ namespace Bource.Services.Crawlers.Tsetmc
     {
         #region Properties
 
-        private bool isMarketOpen;
-        private List<SymbolData> lastSymbolData;
+        private static List<SymbolData> lastSymbolData = new();
 
         private readonly int numberOfTries = 5;
-        private static readonly List<SymbolData> SymbolData = new();
+        //private static readonly List<SymbolData> SymbolData = new();
         private readonly TimeSpan delayBetweenTimeouts = TimeSpan.FromSeconds(1);
 
         private readonly bool throwExceptions = false;
         private readonly ILogger<TsetmcCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
         private readonly IDistributedCache distributedCache;
-        private readonly Dictionary<long, FillSymbolData> oneTimeSymbolData;
+        //private readonly Dictionary<long, FillSymbolData> oneTimeSymbolData;
         private readonly CrawlerSetting setting;
         private readonly IHttpClientFactory httpClientFactory;
         private string baseUrl => setting.Url;
         private string className => nameof(TsetmcCrawlerService);
 
-        public Dictionary<long, FillSymbolData> OneTimeSymbolData => oneTimeSymbolData;
-        public bool IsMarketOpen => isMarketOpen;
+        //public Dictionary<long, FillSymbolData> OneTimeSymbolData => oneTimeSymbolData;
 
         #endregion Properties
 
@@ -62,10 +60,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             this.setting = settings.Value.GetCrawlerSetting(className) ?? throw new ArgumentNullException(nameof(settings));
 
-            oneTimeSymbolData = distributedCache.GetValue<Dictionary<long, FillSymbolData>>(nameof(OneTimeSymbolData)) ?? new();
-            lastSymbolData = new();
 
-            isMarketOpen = distributedCache.GetValue<bool>(nameof(IsMarketOpen));
         }
 
         #endregion Constructors
@@ -77,10 +72,19 @@ namespace Bource.Services.Crawlers.Tsetmc
             => ApplicationHelpers.DoFuncEverySecond(httpClientFactory, className, func, cancellationToken);
 
 
-        public Task SetMarketStatus(bool status)
+        public async Task SetMarketStatus(bool? status, CancellationToken cancellationToken = default(CancellationToken))
         {
-            isMarketOpen = status;
-            return distributedCache.SetValueAsync(nameof(IsMarketOpen), IsMarketOpen, 300);
+            var marketStatus = false;
+            if (status.HasValue)
+                marketStatus = status.Value;
+            else
+            {
+                var httpClient = httpClientFactory.CreateClient(className);
+                var (stockCashMarketAtGlance, OTCCashMarketAtGlance) = await GetMarketAtGlanceObjextsAsync(httpClient, cancellationToken);
+                marketStatus = stockCashMarketAtGlance.IsOpen && OTCCashMarketAtGlance.IsOpen;
+            }
+
+            await distributedCache.SetValueAsync("MarketStatus", marketStatus, 1);
         }
 
         #region نمادها
@@ -346,20 +350,23 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         #region در یک نگاه نماد
 
-        public Task ScheduleLatestSymbolDataEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
-        => DoFuncEverySecond(ScheduleLatestSymbolData, cancellationToken);
+        public async Task ScheduleLatestSymbolDataEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var marketStatus = await distributedCache.GetValueAsync<bool>("MarketStatus");
+            if (marketStatus)
+                await DoFuncEverySecond(ScheduleLatestSymbolData, cancellationToken);
+        }
 
         public async Task ScheduleLatestSymbolData(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (DateTime.Now.Hour < 9)
                 throw new ServerException("قبل از ساعت 9 قادر به اجرای این عملیات نیستید");
 
-            if (!IsMarketOpen)
-                return;
+            var oneTimeSymbolData = (await distributedCache.GetValueAsync<Dictionary<long, FillSymbolData>>("OneTimeSymbolData")) ?? new();
 
             try
             {
-                await GetLatestSymbolDataAsync(httpClient);
+                await GetLatestSymbolDataAsync(httpClient, oneTimeSymbolData, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -372,7 +379,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        private async Task GetLatestSymbolDataAsync(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
+        private async Task GetLatestSymbolDataAsync(HttpClient httpClient, Dictionary<long, FillSymbolData> oneTimeSymbolData, CancellationToken cancellationToken = default(CancellationToken))
         {
             var startTime = DateTime.Now;
 
@@ -423,21 +430,26 @@ namespace Bource.Services.Crawlers.Tsetmc
                 var last = lastSymbolData.Where(i => i.InsCode == d.InsCode).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
                 if (last is null || !last.Equals(d))
                 {
-                    if (OneTimeSymbolData.ContainsKey(d.InsCode))
+                    if (oneTimeSymbolData.ContainsKey(d.InsCode))
                     {
-                        var oneTime = OneTimeSymbolData[d.InsCode];
+                        var oneTime = oneTimeSymbolData[d.InsCode];
                         d.FillData(oneTime.MonthAverageValue, oneTime.FloatingStock, oneTime.GroupPE);
                     }
                     symbolsToSave.Add(d);
                 }
             }
+
             lastSymbolData = data;
 
-            SymbolData.AddRange(symbolsToSave);
+            var todaySymbolData = (await distributedCache.GetValueAsync<List<SymbolData>>("SymbolData")) ?? new();
+
+            todaySymbolData.AddRange(symbolsToSave);
             logger.LogInformation($"Save To List:{(DateTime.Now - startTime).TotalSeconds}");
 
             //TseSymbolDataProvider.AddSymbolDataToQueue(symbolsToSave);
             await AddSymbolDataToDataBase(symbolsToSave);
+
+            await distributedCache.SetValueAsync("SymbolData", todaySymbolData, ApplicationHelpers.DifferenceToNextMarketStart());
         }
 
         private async Task AddSymbolDataToDataBase(List<SymbolData> data)
@@ -484,10 +496,12 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             await DoFunctionsOFListWithMultiTask(fillSymbolData, FillSymbolDataAsync, cancellationToken, 13, setting.Timeout * 2);
 
+            var oneTimeSymbolData = (await distributedCache.GetValueAsync<Dictionary<long, FillSymbolData>>("OneTimeSymbolData")) ?? new();
+
             foreach (var d in fillSymbolData)
                 oneTimeSymbolData[d.InsCode] = d;
 
-            await distributedCache.SetValueAsync(nameof(OneTimeSymbolData), oneTimeSymbolData, 720);
+            await distributedCache.SetValueAsync("OneTimeSymbolData", oneTimeSymbolData, 720);
         }
 
         private async Task FillSymbolDataAsync(FillSymbolData symboldata, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
@@ -567,22 +581,29 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         #region بازار نقدی در یک نگاه
 
-        public Task GetMarketAtGlanceScheduleEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
-        => DoFuncEverySecond(GetMarketAtGlanceScheduleAsync, cancellationToken);
-
-        public async Task GetMarketAtGlanceScheduleAsync(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task GetMarketAtGlanceScheduleEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (IsMarketOpen)
-                await GetMarketAtGlanceAsync(httpClient, cancellationToken);
+            var marketStatus = await distributedCache.GetValueAsync<bool>("MarketStatus");
+            if (marketStatus)
+                await DoFuncEverySecond(GetMarketAtGlanceAsync, cancellationToken);
         }
 
         private async Task GetMarketAtGlanceAsync(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var (stockCashMarketAtGlance, OTCCashMarketAtGlance) = await GetMarketAtGlanceObjextsAsync(httpClient, cancellationToken);
+
+            await tsetmcUnitOfWork.AddCashMarketAtGlance(stockCashMarketAtGlance, OTCCashMarketAtGlance, cancellationToken);
+
+            await SetMarketStatus(stockCashMarketAtGlance.IsOpen && OTCCashMarketAtGlance.IsOpen, cancellationToken);
+        }
+
+        private async Task<(CashMarketAtGlance, CashMarketAtGlance)> GetMarketAtGlanceObjextsAsync(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             var response = await httpClient.GetAsync("Loader.aspx?ParTree=15", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Error in Get Market At Glance");
-                return;
+                return (null, null);
             }
 
             var html = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -593,11 +614,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             var stockCashMarketAtGlance = GetStockCashMarketAtGlance(htmlDoc);
             var OTCCashMarketAtGlance = GetOTCCashMarketAtGlance(htmlDoc);
 
-            isMarketOpen = stockCashMarketAtGlance.IsOpen && OTCCashMarketAtGlance.IsOpen;
-
-            await distributedCache.SetValueAsync(nameof(IsMarketOpen), IsMarketOpen, 1);
-
-            await tsetmcUnitOfWork.AddCashMarketAtGlance(stockCashMarketAtGlance, OTCCashMarketAtGlance, cancellationToken);
+            return (stockCashMarketAtGlance, OTCCashMarketAtGlance);
         }
 
         private CashMarketAtGlance GetStockCashMarketAtGlance(HtmlDocument htmlDoc)
@@ -682,6 +699,10 @@ namespace Bource.Services.Crawlers.Tsetmc
         /// <returns></returns>
         public async Task GetMarketWatcherMessage(CancellationToken cancellationToken = default(CancellationToken))
         {
+            var marketStatus = await distributedCache.GetValueAsync<bool>("MarketStatus");
+            if (!marketStatus)
+                return;
+
             var stockMessages = await GetMarketWatcherMessage(MarketType.Stock, cancellationToken);
             var otcMessages = await GetMarketWatcherMessage(MarketType.OTC, cancellationToken);
 
@@ -785,8 +806,12 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         #region عرضه و تقاضا
 
-        public Task GetTopSupplyAndDemandEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
-        => ApplicationHelpers.DoFuncEverySecond(GetTopSupplyAndDemandAsync, cancellationToken);
+        public async Task GetTopSupplyAndDemandEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var marketStatus = await distributedCache.GetValueAsync<bool>("MarketStatus");
+            if (marketStatus)
+                await ApplicationHelpers.DoFuncEverySecond(GetTopSupplyAndDemandAsync, cancellationToken);
+        }
 
         /// <summary>
         /// دریافت اطلاعات بیشترین عرضه و تقاضای بورس و فرابورس
@@ -938,8 +963,12 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         #region شاخص‌ها
 
-        public Task GetSelectedIndicatorEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
-        => DoFuncEverySecond(GetSelectedIndicatorAsync, cancellationToken);
+        public async Task GetSelectedIndicatorEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var marketStatus = await distributedCache.GetValueAsync<bool>("MarketStatus");
+            if (marketStatus)
+                await DoFuncEverySecond(GetSelectedIndicatorAsync, cancellationToken);
+        }
 
         /// <summary>
         /// دریافت لحظه ای شاخص های منتخب
@@ -1181,6 +1210,10 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         public async Task GetChangeOfSharesOfActiveShareHoldersAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
+            var marketStatus = await distributedCache.GetValueAsync<bool>("MarketStatus");
+            if (!marketStatus)
+                return;
+
             using var httpClient = httpClientFactory.CreateClient(className);
 
             var response = await httpClient.GetAsync($"Loader.aspx?ParTree=15131I&t=0", cancellationToken);

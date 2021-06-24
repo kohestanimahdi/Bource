@@ -73,7 +73,6 @@ namespace Bource.Console
             string input;
             tse.SetMarketStatus(true).GetAwaiter().GetResult();
 
-
             PrintTableOfContent();
             while (n != 0)
             {

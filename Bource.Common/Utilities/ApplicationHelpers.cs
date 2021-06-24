@@ -110,5 +110,14 @@ namespace Bource.Common.Utilities
                     await Task.Delay(TimeSpan.FromSeconds(1) - delay);
             }
         }
+
+        public static double DifferenceToNextMarketStart()
+        {
+            var tommorow = DateTime.Today.AddDays(1);
+
+            tommorow = new DateTime(tommorow.Year, tommorow.Month, tommorow.Day, 8, 0, 0);
+
+            return tommorow.Subtract(DateTime.Now).TotalSeconds;
+        }
     }
 }

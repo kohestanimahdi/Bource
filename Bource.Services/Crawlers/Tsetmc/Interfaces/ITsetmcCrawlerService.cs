@@ -8,8 +8,6 @@ namespace Bource.Services.Crawlers.Tsetmc
 {
     public interface ITsetmcCrawlerService
     {
-        bool IsMarketOpen { get; }
-        Dictionary<long, FillSymbolData> OneTimeSymbolData { get; }
 
         Task FillOneTimeDataAsync(CancellationToken cancellationToken = default);
 
@@ -38,7 +36,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         Task GetValueOfMarketAsync(CancellationToken cancellationToken = default);
 
         Task ScheduleLatestSymbolDataEverySecondAsync(CancellationToken cancellationToken = default);
-        Task SetMarketStatus(bool status);
+        Task SetMarketStatus(bool? status, CancellationToken cancellationToken = default);
         Task UpdateSymbolsAsync(CancellationToken cancellationToken = default);
     }
 }
