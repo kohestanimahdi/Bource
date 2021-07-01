@@ -5,17 +5,23 @@ services:
     restart: always
   mongo-db:
     image: "mongo"
-    restart: always
+    restart: on-failure
     ports:
       - "27018:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=bourcemongoadmin
+      - MONGO_INITDB_ROOT_PASSWORD=fKdvWNXPNHAm4JBs
+    volumes:
+      - ./mongodb:/data/db
   project-app:
     build:
       context: ../
       dockerfile: Bource.JobServer/Dockerfile
     restart: always
     ports:
-      - "8186:443"
       - "8187:80"
     depends_on:
       - mongo-db
       - redis-server
+    volumes:
+      - ./Contents:/Contents
