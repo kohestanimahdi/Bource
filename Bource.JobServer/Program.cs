@@ -1,4 +1,5 @@
 using Autofac.Extensions.DependencyInjection;
+using Bource.Common.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
@@ -8,6 +9,8 @@ namespace Bource.JobServer
     {
         public static void Main(string[] args)
         {
+            FileExtensions.CreateIfNotExists("Contents/SymbolLogos");
+
             CreateHostBuilder(args).Build().Run();
         }
 

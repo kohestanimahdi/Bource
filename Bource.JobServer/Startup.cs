@@ -6,6 +6,7 @@ using Bource.WebConfiguration.Middlewares;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Sentry.AspNetCore;
@@ -34,6 +35,12 @@ namespace Bource.JobServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<KestrelServerOptions>(options =>
+            {
+                options.AllowSynchronousIO = true;
+                options.AddServerHeader = true;
+            });
+
             services.Configure<ApplicationSetting>(Configuration.GetSection("ApplicationSettings"));
             services.AddSingleton<ApplicationSetting>(applicationSettings);
             services.AddCustomHangfire(Configuration.GetConnectionString("RedisHangfire"));

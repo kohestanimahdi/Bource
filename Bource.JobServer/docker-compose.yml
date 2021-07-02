@@ -7,12 +7,12 @@ services:
     image: "mongo"
     restart: on-failure
     ports:
-      - "27018:27017"
+      - "27017:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=bourcemongoadmin
-      - MONGO_INITDB_ROOT_PASSWORD=fKdvWNXPNHAm4JBs
+      - MONGO_INITDB_ROOT_USERNAME=bourceMongoDbAdmin
+      - MONGO_INITDB_ROOT_PASSWORD=ZEXdBgew9DoRKUM3rauUbyJRV
     volumes:
-      - ./mongodb:/data/db
+      - /mongodb:/data/db
   project-app:
     build:
       context: ../
@@ -24,4 +24,4 @@ services:
       - mongo-db
       - redis-server
     volumes:
-      - ./Contents:/Contents
+      - ./Contents:/Contents/*
