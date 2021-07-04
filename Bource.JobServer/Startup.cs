@@ -9,7 +9,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Sentry.AspNetCore;
+using System.IO;
 
 namespace Bource.JobServer
 {
@@ -72,6 +74,20 @@ namespace Bource.JobServer
             app.UseCors("AllowAllOrigins");
 
             app.UseCustomHangfire();
+
+            app.UseFileServer(new FileServerOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                Path.Combine(Directory.GetCurrentDirectory(), "contetns")),
+                RequestPath = "/contetns"
+            });
+
+            //app.UseDirectoryBrowser(new DirectoryBrowserOptions()
+            //{
+            //    FileProvider = new PhysicalFileProvider(
+            //    Path.Combine(Directory.GetCurrentDirectory(), "files")),
+            //    RequestPath = new PathString("/files")
+            //});
 
             app.UseRouting();
 
