@@ -124,8 +124,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
                     if (throwExceptions)
                         throw;
-                    else
-                        return;
+
                 }
             }
         }

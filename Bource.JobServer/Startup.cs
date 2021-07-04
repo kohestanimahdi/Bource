@@ -45,7 +45,7 @@ namespace Bource.JobServer
 
             services.Configure<ApplicationSetting>(Configuration.GetSection("ApplicationSettings"));
             services.AddSingleton<ApplicationSetting>(applicationSettings);
-            services.AddCustomHangfire(Configuration.GetConnectionString("RedisHangfire"));
+            services.AddCustomHangfire(Configuration.GetConnectionString("HangfireMongoDB"));
             services.AddControllers();
             services.AddCrawlerHttpClient(applicationSettings);
             services.AddStackExchangeRedisCache(options =>
@@ -78,8 +78,8 @@ namespace Bource.JobServer
             app.UseFileServer(new FileServerOptions
             {
                 FileProvider = new PhysicalFileProvider(
-                Path.Combine(Directory.GetCurrentDirectory(), "contetns")),
-                RequestPath = "/contetns"
+                Path.Combine(Directory.GetCurrentDirectory(), "Contents")),
+                RequestPath = "/contents"
             });
 
             //app.UseDirectoryBrowser(new DirectoryBrowserOptions()

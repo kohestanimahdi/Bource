@@ -4,25 +4,43 @@ using Bource.Services.Crawlers.FipIran;
 using Bource.Services.Crawlers.Tsetmc;
 using Hangfire;
 using Hangfire.Dashboard.BasicAuthorization;
+using Hangfire.Mongo;
+using Hangfire.Mongo.Migration.Strategies;
+using Hangfire.Mongo.Migration.Strategies.Backup;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
 using StackExchange.Redis;
 using System;
+using System.Reflection;
 using System.Threading;
 
 namespace Bource.WebConfiguration.Configuration
 {
     public static class HangfireConfigurationExtensions
     {
-        private static ConnectionMultiplexer redis;
-
         public static void AddCustomHangfire(this IServiceCollection services, string connectionString)
         {
-            redis = ConnectionMultiplexer.Connect(connectionString);
-            services.AddHangfire(configuration =>
-            {
-                configuration.UseRedisStorage(redis);
-            });
+            var mongoUrlBuilder = new MongoUrlBuilder(connectionString);
+            var mongoClient = new MongoClient(mongoUrlBuilder.ToMongoUrl());
+            var profix = Assembly.GetCallingAssembly().GetName().Name;
+            // Add Hangfire services. Hangfire.AspNetCore nuget required
+            services.AddHangfire(configuration => configuration
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UseMongoStorage(mongoClient, "Hangfire", new MongoStorageOptions
+                {
+                    MigrationOptions = new MongoMigrationOptions
+                    {
+                        MigrationStrategy = new MigrateMongoMigrationStrategy(),
+                        BackupStrategy = new CollectionMongoBackupStrategy()
+                    },
+                    Prefix = profix,
+                    CheckConnection = true,
+
+                })
+            );
 
             services.AddHangfireServer();
         }
@@ -52,11 +70,10 @@ namespace Bource.WebConfiguration.Configuration
                 DisplayStorageConnectionString = false,
                 AppPath = "https://kohestanimahdi.ir/"
             });
-            // #if !DEBUG
-            //
-            // #endif
+
             StartTasks();
         }
+
 
         private static void StartTasks()
         {

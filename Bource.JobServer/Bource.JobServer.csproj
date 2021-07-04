@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Contents\**" />
+    <Content Remove="Contents\**" />
+    <EmbeddedResource Remove="Contents\**" />
+    <None Remove="Contents\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.14" />
     <PackageReference Include="Sentry.AspNetCore" Version="3.5.0" />
 
