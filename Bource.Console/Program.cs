@@ -3,6 +3,7 @@ using Bource.Data.Informations.UnitOfWorks;
 using Bource.Services.Crawlers.AsanBource;
 using Bource.Services.Crawlers.Codal360;
 using Bource.Services.Crawlers.FipIran;
+using Bource.Services.Crawlers.Tse;
 using Bource.Services.Crawlers.Tsetmc;
 using Bource.WebConfiguration.Configuration;
 using Microsoft.Extensions.Configuration;
@@ -44,6 +45,7 @@ namespace Bource.Console
              .AddScoped<ITseSymbolDataProvider, TseSymbolDataProvider>()
              .AddScoped<ICodal360CrawlerService, Codal360CrawlerService>()
              .AddScoped<IAsanBourceCrawlerService, AsanBourceCrawlerService>()
+             .AddScoped<ITseCrawlerService, TseCrawlerService>()
              .AddScoped<ITsetmcUnitOfWork, TsetmcUnitOfWork>()
              .AddScoped<IFipiranUnitOfWork, FipiranUnitOfWork>();
 
@@ -66,12 +68,15 @@ namespace Bource.Console
             var TseSymbolDataProvider = serviceProviderFactory.GetService<ITseSymbolDataProvider>();
             var codal360CrawlerService = serviceProviderFactory.GetService<ICodal360CrawlerService>();
             var asanBourceCrawlerService = serviceProviderFactory.GetService<IAsanBourceCrawlerService>();
+            var tseCrawlerService = serviceProviderFactory.GetService<ITseCrawlerService>();
 
             var logger = serviceProviderFactory.GetService<ILoggerFactory>().CreateLogger(nameof(Program));
 
             int n = -1;
             string input;
             tse.SetMarketStatus(true).GetAwaiter().GetResult();
+
+            tseCrawlerService.GetPapersAsync().GetAwaiter().GetResult();
 
             PrintTableOfContent();
             while (n != 0)

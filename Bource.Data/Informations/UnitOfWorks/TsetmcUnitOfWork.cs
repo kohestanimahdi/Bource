@@ -30,7 +30,6 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly ClosingPriceInfoRepository closingPriceInfoRepository;
         private readonly SymbolShareHolderRepository symbolShareHolderRepository;
         private readonly ActiveSymbolShareHolderRepository activeSymbolShareHolderRepository;
-        private readonly PapersRepository papersRepository;
 
         public TsetmcUnitOfWork(ApplicationSetting setting)
         {
@@ -48,7 +47,6 @@ namespace Bource.Data.Informations.UnitOfWorks
             closingPriceInfoRepository = new(setting.mongoDbSetting);
             symbolShareHolderRepository = new(setting.mongoDbSetting);
             activeSymbolShareHolderRepository = new(setting.mongoDbSetting);
-            papersRepository = new(setting.mongoDbSetting);
         }
 
         public async Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default(CancellationToken))
@@ -216,15 +214,5 @@ namespace Bource.Data.Informations.UnitOfWorks
             => closingPriceInfoRepository.Table.Find(i => i.InsCode == insCode && (closingPriceTypes == null || i.Type == closingPriceTypes)).ToListAsync(cancellationToken);
 
 
-        public Task<Papers> GetPaperByTypeAsync(PapersTypes papersTypes, CancellationToken cancellationToken = default(CancellationToken))
-        => papersRepository.GetByTypeAsync(papersTypes, cancellationToken);
-        public async Task AddOrUpdatePapersAsync(Papers papers, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            var existsPapers = await papersRepository.GetByTypeAsync(papers.Type, cancellationToken);
-            if (existsPapers is null)
-                await papersRepository.AddAsync(papers, cancellationToken);
-            else
-                await papersRepository.UpdateAsync(papers);
-        }
     }
 }

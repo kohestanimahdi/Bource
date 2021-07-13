@@ -5,27 +5,27 @@ namespace Bource.Models.Data.Enums
     public enum PapersTypes
     {
         [Display(Name = "بازار نقد")]
-        Cash = 0,
+        Cash = 1,
 
         [Display(Name = "آتی")]
-        Future = 1,
+        Future = 2,
 
         [Display(Name = "تبعی")]
-        Option = 2,
+        Option = 3,
 
         [Display(Name = "بدهی")]
-        Debt = 3,
+        Debt = 4,
 
         [Display(Name = "ETF")]
-        ETF = 4,
+        ETF = 5,
 
         [Display(Name = "اختیار")]
-        TradeOption = 5,
+        TradeOption = 7,
 
         [Display(Name = "فرابورس")]
-        OTC = 6,
+        OTC = 8,
 
         [Display(Name = "تسهیلات مسکن")]
-        HousingFacilities = 7
+        HousingFacilities = 9
     }
 }

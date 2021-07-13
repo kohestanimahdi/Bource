@@ -44,7 +44,5 @@ namespace Bource.Data.Informations.UnitOfWorks
         Task<List<Symbol>> GetSymbolsByTypeAsync(IEnumerable<SymbolExistInType> existInTypes, CancellationToken cancellationToken = default);
 
         Task UpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default);
-        Task<Papers> GetPaperByTypeAsync(PapersTypes papersTypes, CancellationToken cancellationToken = default);
-        Task AddOrUpdatePapersAsync(Papers papers, CancellationToken cancellationToken = default);
     }
 }

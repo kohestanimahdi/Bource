@@ -155,6 +155,10 @@ namespace Bource.Models.Data.Common
         public string YMarNSC { get; set; }
         public string YVal { get; set; }
 
+        public string Status { get; set; }
+        public string PaperTitle { get; set; }
+        public PapersTypes? PaperType { get; set; }
+
         public SymbolIntroduction Introduction { get; set; }
 
         public void UpdateInforamtion(HtmlAgilityPack.HtmlNodeCollection nodes)

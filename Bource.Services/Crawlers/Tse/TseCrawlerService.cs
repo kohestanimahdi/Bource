@@ -1,23 +1,24 @@
 ﻿using Bource.Common.Models;
+using Bource.Common.Utilities;
 using Bource.Data.Informations.UnitOfWorks;
+using Bource.Models.Data.Common;
 using Bource.Models.Data.Enums;
-using HtmlAgilityPack;
-using Microsoft.Extensions.Caching.Distributed;
+using Bource.Services.Crawlers.Tse.Models;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Bource.Services.Crawlers.Tse
 {
-    public class TseCrawlerService : IScopedDependency
+    public class TseCrawlerService : IScopedDependency, ITseCrawlerService
     {
         #region Properties
 
-        private readonly int numberOfTries = 5;
-        private readonly TimeSpan delayBetweenTimeouts = TimeSpan.FromSeconds(1);
-        private readonly bool throwExceptions = false;
         private readonly ILogger<TseCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
         private readonly IHttpClientFactory httpClientFactory;
@@ -38,10 +39,16 @@ namespace Bource.Services.Crawlers.Tse
 
         public async Task GetPapersAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-
+            var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
+            await GetPapersAsync(PapersTypes.Cash, symbols, cancellationToken);
+            await GetPapersAsync(PapersTypes.Future, symbols, cancellationToken);
+            await GetPapersAsync(PapersTypes.Option, symbols, cancellationToken);
+            await GetPapersAsync(PapersTypes.Debt, symbols, cancellationToken);
+            await GetPapersAsync(PapersTypes.ETF, symbols, cancellationToken);
+            await GetPapersAsync(PapersTypes.TradeOption, symbols, cancellationToken);
         }
 
-        private async Task GetPapersAsync(PapersTypes papersTypes, CancellationToken cancellationToken = default(CancellationToken))
+        private async Task GetPapersAsync(PapersTypes papersTypes, List<Symbol> symbols, CancellationToken cancellationToken = default(CancellationToken))
         {
             using var httpClient = httpClientFactory.CreateClient(className);
 
@@ -51,32 +58,28 @@ namespace Bource.Services.Crawlers.Tse
                 logger.LogError($"Error in GetPapers {Enum.GetName<PapersTypes>(papersTypes)}");
                 return;
             }
+            var result = await response.Content.ReadAsStringAsync(cancellationToken);
+            var companies = JsonConvert.DeserializeObject<GetPapersResponse>(result);
 
-            var papers = (await tsetmcUnitOfWork.GetPaperByTypeAsync(papersTypes, cancellationToken)) ?? new Models.Data.Tsetmc.Papers();
+            var allCompanies = companies.Companies.SelectMany(i => i.Companies).ToList();
 
-            papers.Title = Enum.GetName<PapersTypes>(papersTypes);
-            papers.Type = papersTypes;
-
-            var html = await response.Content.ReadAsStringAsync(cancellationToken);
-
-            var htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(html);
-
-            var trs = htmlDoc.DocumentNode.SelectNodes("//table[@id='list']/tbody/tr");
-            var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
-
-            List<Indicator> Indicators = new();
-            if (trs is not null)
-                foreach (var tr in trs)
+            foreach (var company in allCompanies)
+            {
+                var companySymbols = symbols.Where(i => i.Code12 == company.CompanyCode).ToList();
+                if (companySymbols is null || !companySymbols.Any())
+                    logger.LogWarning($"Symbol not found in get symbol paper | {company.CompanyCode} | {company.Sign}");
+                else
                 {
-                    var tds = tr.SelectNodes("td");
-                    var insCode = Convert.ToInt64(tds[0].GetQueryString("LVal30", httpClient.BaseAddress.ToString()));
-                    var indicatorSymbols = await GetIndicatorSymbols(insCode, httpClient, cancellationToken);
-                    Indicator indicator = new(tds, insCode, indicatorSymbols, symbols);
-                    Indicators.Add(indicator);
-                }
+                    companySymbols.ForEach(symbol =>
+                    {
+                        symbol.PaperTitle = papersTypes.ToDisplay();
+                        symbol.PaperType = papersTypes;
+                        symbol.Status = company.Status;
+                        tsetmcUnitOfWork.UpdateSymbolAsync(symbol).GetAwaiter().GetResult();
+                    });
 
-            await tsetmcUnitOfWork.AddOrUpdateIndicatorsAsync(Indicators, cancellationToken);
+                }
+            }
         }
     }
 }
