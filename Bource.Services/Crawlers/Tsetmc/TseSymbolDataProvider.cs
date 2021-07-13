@@ -1,9 +1,7 @@
 ﻿using Bource.Common.Models;
-using Bource.Common.Utilities;
 using Bource.Data.Informations.UnitOfWorks;
 using Bource.Models.Data.Common;
 using Bource.Models.Data.Tsetmc;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -19,7 +17,6 @@ namespace Bource.Services.Crawlers.Tsetmc
         private readonly ILogger<TsetmcCrawlerService> logger;
         private readonly ITsetmcCrawlerService tsetmcCrawlerService;
         private readonly ITseClientService TseClientService;
-        private readonly IDistributedCache distributedCache;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
 
         //private static readonly List<SymbolData> SymbolData = new();
@@ -30,22 +27,14 @@ namespace Bource.Services.Crawlers.Tsetmc
             ILoggerFactory loggerFactory,
             ITsetmcUnitOfWork tsetmcUnitOfWork,
             ITsetmcCrawlerService tsetmcCrawlerService,
-            ITseClientService TseClientService,
-            IDistributedCache distributedCache
+            ITseClientService TseClientService
             )
         {
             logger = loggerFactory?.CreateLogger<TsetmcCrawlerService>() ?? throw new ArgumentNullException(nameof(loggerFactory));
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
             this.tsetmcCrawlerService = tsetmcCrawlerService ?? throw new ArgumentNullException(nameof(tsetmcCrawlerService));
             this.TseClientService = TseClientService ?? throw new ArgumentNullException(nameof(TseClientService));
-            this.distributedCache = distributedCache ?? throw new ArgumentNullException(nameof(distributedCache));
         }
-
-        public static void AddSymbolDataToQueue(List<SymbolData> data)
-            => SymbolDataQueue.Enqueue(data);
-
-        public Task SaveSymbolDataEverySecond(CancellationToken cancellationToken = default(CancellationToken))
-            => ApplicationHelpers.DoFuncEverySecond(SaveSymbolData, cancellationToken);
 
         public async Task SaveSymbolData(CancellationToken cancellationToken = default(CancellationToken))
         {

@@ -14,6 +14,7 @@ namespace Bource.Services.Crawlers.AsanBource
 {
     public class AsanBourceCrawlerService : IAsanBourceCrawlerService, IScopedDependency
     {
+        private readonly TimeSpan delayBetweenRequests = TimeSpan.FromSeconds(1);
         private readonly ILogger<AsanBourceCrawlerService> logger;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
         private readonly IHttpClientFactory httpClientFactory;
@@ -32,7 +33,6 @@ namespace Bource.Services.Crawlers.AsanBource
             FileExtensions.CreateIfNotExists("Contents/SymbolLogos");
 
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
-            //await ApplicationHelpers.DoFunctionsOFListWithMultiTask(symbols, httpClientFactory, className, DownloadSymbolImageAsync, cancellationToken);
             foreach (var symbol in symbols)
                 await DownloadSymbolImageAsync(symbol, cancellationToken);
         }
@@ -59,6 +59,8 @@ namespace Bource.Services.Crawlers.AsanBource
 
             symbol.Logo = $"Contents/SymbolLogos/{symbol.Code12}.png";
             await tsetmcUnitOfWork.UpdateSymbolAsync(symbol);
+
+            await Task.Delay(delayBetweenRequests);
         }
     }
 }
