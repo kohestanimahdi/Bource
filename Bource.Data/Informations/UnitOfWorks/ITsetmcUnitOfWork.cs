@@ -44,5 +44,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         Task<List<Symbol>> GetSymbolsByTypeAsync(IEnumerable<SymbolExistInType> existInTypes, CancellationToken cancellationToken = default);
 
         Task UpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default);
+        Task<List<SymbolGroup>> GetSymbolGroupsAsync(CancellationToken cancellationToken = default);
+        Task UpdateSymbolGroupAsync(SymbolGroup group, CancellationToken cancellationToken = default);
     }
 }

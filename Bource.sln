@@ -17,8 +17,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bource.JobServer", "Bource.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bource.WebConfiguration", "Bource.WebConfiguration\Bource.WebConfiguration.csproj", "{B5803AE6-026D-4B93-BEC6-7A43F83F6B50}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bource.WindowsForm", "Bource.WindowsForm\Bource.WindowsForm.csproj", "{CD5E556D-8379-47D7-A2C6-97C6D27BE8F0}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,10 +51,6 @@ Global
 		{B5803AE6-026D-4B93-BEC6-7A43F83F6B50}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5803AE6-026D-4B93-BEC6-7A43F83F6B50}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B5803AE6-026D-4B93-BEC6-7A43F83F6B50}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CD5E556D-8379-47D7-A2C6-97C6D27BE8F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CD5E556D-8379-47D7-A2C6-97C6D27BE8F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CD5E556D-8379-47D7-A2C6-97C6D27BE8F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CD5E556D-8379-47D7-A2C6-97C6D27BE8F0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

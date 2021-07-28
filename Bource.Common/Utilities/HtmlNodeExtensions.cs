@@ -127,9 +127,14 @@ namespace Bource.Common.Utilities
             return string.Empty;
         }
 
-        public static string GetQueryString(this HtmlNode node, string key, string baseUrl = "")
+        public static string GetQueryString(this HtmlNode node, string key, string baseUrl = "https://google.com/")
         {
-            var uri = new Uri(baseUrl + node.SelectSingleNode("a").Attributes["href"].Value);
+            Uri uri;
+            if (node.Name != "a")
+                uri = new Uri(baseUrl + node.SelectSingleNode("a").Attributes["href"].Value);
+            else
+                uri = new Uri(baseUrl + node.Attributes["href"].Value);
+
             var queryDictionary = System.Web.HttpUtility.ParseQueryString(uri.Query);
 
             return queryDictionary[key];

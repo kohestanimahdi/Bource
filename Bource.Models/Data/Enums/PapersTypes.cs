@@ -26,6 +26,9 @@ namespace Bource.Models.Data.Enums
         OTC = 8,
 
         [Display(Name = "تسهیلات مسکن")]
-        HousingFacilities = 9
+        HousingFacilities = 9,
+
+        [Display(Name = "بورس کالا")]
+        CommodityExchange = 20
     }
 }

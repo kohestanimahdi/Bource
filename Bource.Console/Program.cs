@@ -25,6 +25,8 @@ namespace Bource.Console
         private static void Main(string[] args)
         {
 
+
+
             var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false)
@@ -72,6 +74,7 @@ namespace Bource.Console
             var asanBourceCrawlerService = serviceProviderFactory.GetService<IAsanBourceCrawlerService>();
             var tseCrawlerService = serviceProviderFactory.GetService<ITseCrawlerService>();
             var ifbCrawlerService = serviceProviderFactory.GetService<IIfbCrawlerService>();
+            var tseUnitOfWork = serviceProviderFactory.GetService<ITsetmcUnitOfWork>();
 
             var logger = serviceProviderFactory.GetService<ILoggerFactory>().CreateLogger(nameof(Program));
 
@@ -79,7 +82,7 @@ namespace Bource.Console
             string input;
             tse.SetMarketStatus(true).GetAwaiter().GetResult();
 
-            ifbCrawlerService.GetPapersAsync().GetAwaiter().GetResult();
+            //ifbCrawlerService.GetPapersAsync().GetAwaiter().GetResult();
 
             PrintTableOfContent();
             while (n != 0)
@@ -209,6 +212,11 @@ namespace Bource.Console
                             tse.GetSymbolsOfIndicatorsAsync().GetAwaiter().GetResult();
                             break;
 
+                        case 23:
+                            var selenium = new Selenium.SeleniumManager(tseUnitOfWork);
+                            selenium.GetSymbols();
+                            break;
+
                         default:
                             break;
                     }
@@ -247,7 +255,8 @@ namespace Bource.Console
                 "19", "download symbol logo", "دریافت لوگوها",
                 "20", "Codal 360 url", "لینک کدال",
                 "21", "FipIran Subject", "موضوع فعالیت از فیپ ایران",
-                "22", "Symbols of Indicators", "لیست نمادهای شاخص ها "
+                "22", "Symbols of Indicators", "لیست نمادهای شاخص ها ",
+                "23", "Get papers", "باز کردن مرورگر ودریافت نوع اوراق "
                 );
         }
 

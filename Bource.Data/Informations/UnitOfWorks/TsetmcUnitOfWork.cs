@@ -122,6 +122,9 @@ namespace Bource.Data.Informations.UnitOfWorks
         public Task UpdateSymbolAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
             => symbolRepository.UpdateAsync(symbol, cancellationToken);
 
+        public Task UpdateSymbolGroupAsync(SymbolGroup group, CancellationToken cancellationToken = default(CancellationToken))
+            => symbolGroupRepository.UpdateAsync(group, cancellationToken);
+
         //public async Task AddSymbolData(List<SymbolData> data, CancellationToken cancellationToken = default(CancellationToken))
         //{
         //    var startDate = DateTime.Now;
@@ -157,6 +160,9 @@ namespace Bource.Data.Informations.UnitOfWorks
 
         public Task<List<Symbol>> GetSymbolsAsync(CancellationToken cancellationToken = default(CancellationToken))
             => symbolRepository.GetAllAsync(cancellationToken);
+
+        public Task<List<SymbolGroup>> GetSymbolGroupsAsync(CancellationToken cancellationToken = default(CancellationToken))
+            => symbolGroupRepository.GetAllAsync(cancellationToken);
 
         public Task<List<Symbol>> GetSymbolsByTypeAsync(IEnumerable<SymbolExistInType> existInTypes, CancellationToken cancellationToken = default(CancellationToken))
             => symbolRepository.Table.Find(i => existInTypes.Contains(i.ExistInType)).ToListAsync(cancellationToken);
