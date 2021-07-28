@@ -82,40 +82,38 @@ namespace Bource.WebConfiguration.Configuration
             // دریافت لیست نمادها در شروع برنامه
             BackgroundJob.Schedule<TseSymbolDataProvider>(app => app.AddOrUpdateSymbols(CancellationToken.None), TimeSpan.FromMinutes(1));
 
-            // دریافت اطلاعات تکمیلی نمادها در شروع برنامه
-            //BackgroundJob.Schedule<TsetmcCrawlerService>(app => app.UpdateSymbolsAsync(CancellationToken.None), TimeSpan.FromMinutes(2));
 
             // دریافت لیست نمادها در ساعت 8 صبح
             RecurringJob.AddOrUpdate<TseSymbolDataProvider>(nameof(TseSymbolDataProvider.AddOrUpdateSymbols),
-                app => app.AddOrUpdateSymbols(CancellationToken.None), "0 8 * * *", TimeZoneInfo.Local);
+                app => app.AddOrUpdateSymbols(CancellationToken.None), "0 8 * * 6", TimeZoneInfo.Local);
 
             // دریافت اطلاعات تکمیلی نمادها در ساعت 8/5 صبح
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.UpdateSymbolsAsync),
-                app => app.UpdateSymbolsAsync(CancellationToken.None), "5 8 * * *", TimeZoneInfo.Local);
+                app => app.UpdateSymbolsAsync(CancellationToken.None), "5 8 * * 6", TimeZoneInfo.Local);
 
             // دریافت لیست صنایع در ساعت 10 شب
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetOrUpdateSymbolGroupsAsync),
-                app => app.GetOrUpdateSymbolGroupsAsync(CancellationToken.None), "0 22 * * *", TimeZoneInfo.Local);
+                app => app.GetOrUpdateSymbolGroupsAsync(CancellationToken.None), "0 9 * * 5", TimeZoneInfo.Local);
 
             // دریافت لیست شاخص‌ها در ساعت 10 شب
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetSymbolsOfIndicatorsAsync),
-                app => app.GetSymbolsOfIndicatorsAsync(CancellationToken.None), "1 22 * * *", TimeZoneInfo.Local);
+                app => app.GetSymbolsOfIndicatorsAsync(CancellationToken.None), "1 9 * * 5", TimeZoneInfo.Local);
 
             // دریافت اطلاعات ارزش بازار روزانه یک بار
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetValueOfMarketAsync), app =>
-            app.GetValueOfMarketAsync(CancellationToken.None), "0 22,1,3 * * *", TimeZoneInfo.Local);
+            app.GetValueOfMarketAsync(CancellationToken.None), "0 0 * * *", TimeZoneInfo.Local);
 
             // دریافت اطلاعات حقیقی و حقوقی - روزانه یک مرتبه
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetAllNaturalAndLegalEntityAsync),
-                app => app.GetAllNaturalAndLegalEntityAsync(CancellationToken.None), "0 23,0,2 * * *", TimeZoneInfo.Local);
+                app => app.GetAllNaturalAndLegalEntityAsync(CancellationToken.None), "0 1 * * *", TimeZoneInfo.Local);
 
             // دریافت اطلاعات افزایش سرمایه- روزانه یک مرتبه
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetAllCapitalIncreaseAsync),
-                app => app.GetAllCapitalIncreaseAsync(CancellationToken.None), "30 22,1,3 * * *", TimeZoneInfo.Local);
+                app => app.GetAllCapitalIncreaseAsync(CancellationToken.None), "0 2 * * *", TimeZoneInfo.Local);
 
             // دریافت اطلاعات برنامه کلاینت
             RecurringJob.AddOrUpdate<TseClientService>(nameof(TseClientService.GetInsturmentsClosingPriceAsync),
-                app => app.GetInsturmentsClosingPriceAsync(CancellationToken.None), "0 23,4 * * *", TimeZoneInfo.Local);
+                app => app.GetInsturmentsClosingPriceAsync(CancellationToken.None), "0 3 * * *", TimeZoneInfo.Local);
 
             // دریافت اطلاعات مجامع فیپ ایران - هر به یک ساعت
             RecurringJob.AddOrUpdate<FipiranCrawlerService>(nameof(FipiranCrawlerService.GetAssociations), app =>
@@ -131,23 +129,23 @@ namespace Bource.WebConfiguration.Configuration
 
             // دریافت اطلاعات سهامداران هر نماد - یک مرتبه در روز
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetSymbolsShareHoldersAsync),
-                app => app.GetSymbolsShareHoldersAsync(CancellationToken.None), "30 3 * * *", TimeZoneInfo.Local);
+                app => app.GetSymbolsShareHoldersAsync(CancellationToken.None), "0 4 * * *", TimeZoneInfo.Local);
 
             // دریافت تصاویر نمادها - هر هفته یک مرتبه
             RecurringJob.AddOrUpdate<AsanBourceCrawlerService>(nameof(AsanBourceCrawlerService.DownloadSymbolsImageAsync),
-                app => app.DownloadSymbolsImageAsync(CancellationToken.None), "0 6 * * 5", TimeZoneInfo.Local);
+                app => app.DownloadSymbolsImageAsync(CancellationToken.None), "0 10 * * 5", TimeZoneInfo.Local);
 
             // دریافت لینک کدال - هر شب یک بار
             RecurringJob.AddOrUpdate<Codal360CrawlerService>(nameof(Codal360CrawlerService.UpdateSymbolsCodalURLAsync),
-                app => app.UpdateSymbolsCodalURLAsync(CancellationToken.None), "30 6 * * *", TimeZoneInfo.Local);
+                app => app.UpdateSymbolsCodalURLAsync(CancellationToken.None), "0 11 * * 5", TimeZoneInfo.Local);
 
             // دریافت موضوع هر نماد از فیپ ایران - هر شب یک بار
             RecurringJob.AddOrUpdate<FipiranCrawlerService>(nameof(FipiranCrawlerService.GetSubjectSymbols), app =>
-            app.GetSubjectSymbols(CancellationToken.None), "30 5 * * *", TimeZoneInfo.Local);
+            app.GetSubjectSymbols(CancellationToken.None), "45 11 * * 5", TimeZoneInfo.Local);
 
             // دریافت اطلاعات لحظه ای هر نماد - روزانه در ابتدای تایم بازار
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.FillOneTimeDataAsync), app =>
-            app.FillOneTimeDataAsync(CancellationToken.None), "30 8 * * *", TimeZoneInfo.Local);
+            app.FillOneTimeDataAsync(CancellationToken.None), "15 8 * * *", TimeZoneInfo.Local);
         }
 
         private static void AddMarketTimeTasks()
