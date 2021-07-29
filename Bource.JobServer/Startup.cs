@@ -48,11 +48,9 @@ namespace Bource.JobServer
             services.AddCustomHangfire(Configuration.GetConnectionString("HangfireMongoDB"));
             services.AddControllers();
             services.AddCrawlerHttpClient(applicationSettings);
-            services.AddStackExchangeRedisCache(options =>
-            {
-                options.Configuration = Configuration.GetConnectionString("RedisJobCache");
-                options.InstanceName = "RedisJobCache";
-            });
+
+            services.AddRedisCache(Configuration.GetConnectionString("RedisJobCache"), "RedisJobCache");
+
         }
 
         public void ConfigureContainer(ContainerBuilder builder)

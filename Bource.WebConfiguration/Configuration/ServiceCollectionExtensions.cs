@@ -21,6 +21,14 @@ namespace Bource.WebConfiguration.Configuration
 {
     public static class ServiceCollectionExtensions
     {
+        public static void AddRedisCache(this IServiceCollection services, string connectionString, string instanceName)
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = connectionString;
+                options.InstanceName = instanceName;
+            });
+        }
 
         public static void AddJwtAuthentication(this IServiceCollection services, JwtSetting jwtSettings)
         {
@@ -115,11 +123,11 @@ namespace Bource.WebConfiguration.Configuration
 
             services.AddCustomIdentity<ApplicationDbContext, User, Role>(applicationSettings.IdentitySettings);
 
-            services.AddMvc()
-                .AddJsonOptions(options =>
-                {
-                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                });
+            //services.AddMvc()
+            //    .AddJsonOptions(options =>
+            //    {
+            //        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            //    });
 
             //services.AddCustomReteLimiterServices(Configuration);
             services.AddHttpContextAccessor();
@@ -133,6 +141,9 @@ namespace Bource.WebConfiguration.Configuration
             services.AddOptions();
 
             services.AddLogging();
+
+            services.AddRedisCache(configuration.GetConnectionString("RedisJobCache"), "RedisJobCache");
+
         }
     }
 }

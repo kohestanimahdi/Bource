@@ -72,6 +72,8 @@ namespace Bource.Portal
             services.Configure<ApplicationSetting>(Configuration.GetSection("ApplicationSettings"));
 
 
+            services.AddSignalR();
+
         }
 
         public void ConfigureContainer(ContainerBuilder builder)
@@ -120,6 +122,7 @@ namespace Bource.Portal
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                //endpoints.MapHub<ChatHub>("/chatHub");
             });
         }
     }
