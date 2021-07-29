@@ -1,11 +1,69 @@
 ﻿using Pluralize.NET.Core;
+using System;
 using System.Text.RegularExpressions;
 
 namespace Bource.Common.Utilities
 {
     public static class StringHelper
     {
-        private static Pluralizer pluralizer = new Pluralizer();
+        public static bool HasValue(this string value, bool ignoreWhiteSpace = true)
+        {
+            return ignoreWhiteSpace ? !string.IsNullOrWhiteSpace(value) : !string.IsNullOrEmpty(value);
+        }
+
+        public static int ToInt(this string value)
+        {
+            return Convert.ToInt32(value);
+        }
+
+        public static decimal ToDecimal(this string value)
+        {
+            return Convert.ToDecimal(value);
+        }
+
+        public static string ToNumeric(this int value)
+        {
+            return value.ToString("N0"); //"123,456"
+        }
+
+        public static string ToNumeric(this decimal value)
+        {
+            return value.ToString("N0");
+        }
+
+        public static string ToCurrency(this int value)
+        {
+            //fa-IR => current culture currency symbol => ریال
+            //123456 => "123,123ریال"
+            return value.ToString("C0");
+        }
+
+        public static string ToCurrency(this decimal value)
+        {
+            return value.ToString("C0");
+        }
+
+        /// <summary>
+        /// Singularizin name like Posts to Post or People to Person
+        /// </summary>
+        /// <param name="name"></param>
+        public static string SingularizingNameConvention(this string name)
+        {
+            Pluralizer pluralizer = new Pluralizer();
+            return pluralizer.Singularize(name);
+        }
+
+        /// <summary>
+        /// Pluralizing name like Post to Posts or Person to People
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static string PluralizingNameConvention(this string name)
+        {
+            Pluralizer pluralizer = new Pluralizer();
+            return pluralizer.Pluralize(name);
+        }
+
 
         /// <summary>
         /// Replace arabic numbers with english numbers
@@ -390,14 +448,6 @@ namespace Bource.Common.Utilities
 
             return text;
         }
-
-        /// <summary>
-        /// Pluralizing Name
-        /// </summary>
-        /// <param name="text"></param>
-        /// <returns></returns>
-        public static string PluralizingNameConvention(this string text)
-            => pluralizer.Pluralize(text);
 
         public static string MergeInsideSpaces(this string text)
         {

@@ -4,7 +4,7 @@ using System;
 
 namespace Bource.Models.Data
 {
-    public interface IMongoDataEntity
+    public interface IMongoDataEntity : IEntity
     {
     }
 

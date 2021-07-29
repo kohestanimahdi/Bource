@@ -1,14 +1,26 @@
+using Autofac;
+using Bource.Common.Models;
+using Bource.Data;
+using Bource.Models.Entities.Users;
+using Bource.WebConfiguration.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json.Converters;
+using Sentry.AspNetCore;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,37 +28,95 @@ namespace Bource.Portal
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IWebHostEnvironment env)
         {
-            Configuration = configuration;
+            var builder = new ConfigurationBuilder()
+                            .SetBasePath(env.ContentRootPath)
+                            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                            .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
+                            .AddEnvironmentVariables();
+
+            Configuration = builder.Build();
+
+            applicationSettings = Configuration.GetSection("ApplicationSettings").Get<ApplicationSetting>();
         }
 
-        public IConfiguration Configuration { get; }
+        private readonly ApplicationSetting applicationSettings;
+        public static string Domain { set; get; } = string.Empty;
+        public IConfigurationRoot Configuration { get; }
+        public ILifetimeScope AutofacContainer { get; private set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
-            services.AddControllers();
-            services.AddSwaggerGen(c =>
+            services.Configure<KestrelServerOptions>(options =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Bource.Portal", Version = "v1" });
+                options.AllowSynchronousIO = true;
             });
+
+            services.AddDbContext<ApplicationDbContext>(options =>
+            {
+                options.UseLazyLoadingProxies().UseNpgsql(Configuration.GetConnectionString("PostgresDataBase"));
+            });
+
+            //services.AddCustomReteLimiterServices(Configuration);
+
+            services.AddHttpContextAccessor();
+            services.AddCustomIdentity<ApplicationDbContext, User, Role>(applicationSettings.IdentitySettings);
+
+
+            services.AddControllers().AddNewtonsoftJson(options =>
+            {
+                options.SerializerSettings.Converters.Add(new StringEnumConverter());
+            });
+
+            services.AddCustomServices(applicationSettings, Configuration, "Api for Turn Reserve of Doctor Barekatain.");
+            services.AddSwaggerGenNewtonsoftSupport();
+            services.Configure<ApplicationSetting>(Configuration.GetSection("ApplicationSettings"));
+
+
+        }
+
+        public void ConfigureContainer(ContainerBuilder builder)
+        {
+            builder.AddServices();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.AddBuilders(env, AutofacContainer);
+
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Bource.Portal v1"));
+                app.UseHttpsRedirection();
             }
 
-            app.UseHttpsRedirection();
+            app.UseStaticFiles();
+
+            app.UseFileServer(new FileServerOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                Path.Combine(Directory.GetCurrentDirectory(), "files")),
+                RequestPath = "/files"
+            });
+
+            app.UseDirectoryBrowser(new DirectoryBrowserOptions()
+            {
+                FileProvider = new PhysicalFileProvider(
+                Path.Combine(Directory.GetCurrentDirectory(), "files")),
+                RequestPath = new PathString("/files")
+            });
 
             app.UseRouting();
+
+            // Enable automatic tracing integration.
+            // Make sure to put this middleware right after `UseRouting()`.
+            app.UseSentryTracing();
+
+            app.UseCors("AllowAllOrigins");
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 

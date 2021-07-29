@@ -1,11 +1,7 @@
+using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace Bource.Portal
 {
@@ -13,14 +9,19 @@ namespace Bource.Portal
     {
         public static void Main(string[] args)
         {
+            if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "files", "images")))
+                Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "files", "images"));
+
             CreateHostBuilder(args).Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
+           Host.CreateDefaultBuilder(args)
+           .UseServiceProviderFactory(new AutofacServiceProviderFactory())
+               .ConfigureWebHostDefaults(webBuilder =>
+               {
+                   webBuilder.UseStartup<Startup>();
+                   webBuilder.UseSentry();
+               });
     }
 }

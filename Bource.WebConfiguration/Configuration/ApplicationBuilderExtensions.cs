@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Bource.Common.Utilities;
+using Bource.WebConfiguration.Configuration.Swagger;
 using Bource.WebConfiguration.Middlewares;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -51,7 +52,7 @@ namespace Bource.WebConfiguration.Configuration
 
             app.UseCustomExceptionHandler();
 
-            //app.UseSwaggerAndUI();
+            app.UseSwaggerAndUI();
         }
     }
 }
