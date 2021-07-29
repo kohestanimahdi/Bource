@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Bource.Models;
 using Bource.Models.Data;
 using Bource.WebConfiguration.CustomMapping;
 

@@ -59,19 +59,16 @@ namespace Bource.Portal
                 options.UseLazyLoadingProxies().UseNpgsql(Configuration.GetConnectionString("PostgresDataBase"));
             });
 
-            //services.AddCustomReteLimiterServices(Configuration);
-
-            services.AddHttpContextAccessor();
-            services.AddCustomIdentity<ApplicationDbContext, User, Role>(applicationSettings.IdentitySettings);
-
 
             services.AddControllers().AddNewtonsoftJson(options =>
             {
                 options.SerializerSettings.Converters.Add(new StringEnumConverter());
             });
 
-            services.AddCustomServices(applicationSettings, Configuration, "Api for Turn Reserve of Doctor Barekatain.");
+            services.AddCustomServices(applicationSettings, Configuration, "Api for Bource.");
+
             services.AddSwaggerGenNewtonsoftSupport();
+
             services.Configure<ApplicationSetting>(Configuration.GetSection("ApplicationSettings"));
 
 

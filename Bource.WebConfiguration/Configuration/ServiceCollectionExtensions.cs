@@ -1,4 +1,7 @@
 ﻿using Bource.Common.Models;
+using Bource.Data;
+using Bource.Models.Entities.Users;
+using Bource.WebConfiguration.Configuration.Swagger;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.Extensions.Configuration;
@@ -56,14 +59,12 @@ namespace Bource.WebConfiguration.Configuration
         {
             services.Configure<ApplicationSetting>(configuration.GetSection(nameof(ApplicationSetting)));
 
-            //if (applicationSettings.ImportSetting.UseContext)
-            //    services.AddDbContext(configuration);
 
             //services.InitializeAutoMapper(assemblies);
 
             services.AddAllowAllOriginsCors();
 
-            //services.AddCustomIdentity(applicationSettings.IdentitySettings);
+            services.AddCustomIdentity<ApplicationDbContext, User, Role>(applicationSettings.IdentitySettings);
 
             services.AddMvc()
                 .AddJsonOptions(options =>
@@ -71,11 +72,14 @@ namespace Bource.WebConfiguration.Configuration
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 });
 
+            //services.AddCustomReteLimiterServices(Configuration);
+            services.AddHttpContextAccessor();
+
             //services.AddJwtAuthentication(applicationSettings.JwtSettings);
 
             services.AddCustomApiVersioning();
 
-            //services.AddSwagger(applicationTitle);
+            services.AddSwagger(applicationTitle);
 
             services.AddOptions();
 
