@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Bource.Models;
-using Bource.Models.Data;
 using Bource.WebConfiguration.CustomMapping;
 
 namespace Bource.WebConfiguration.Api
@@ -9,7 +8,6 @@ namespace Bource.WebConfiguration.Api
      where TDto : class, new()
      where TEntity : IEntity, new()
     {
-
         public TEntity ToEntity(IMapper mapper)
         {
             return mapper.Map<TEntity>(CastToDerivedClass(mapper, this));
@@ -36,7 +34,7 @@ namespace Bource.WebConfiguration.Api
 
             var dtoType = typeof(TDto);
             var entityType = typeof(TEntity);
-            //Ignore any property of source (like Post.Author) that dose not contains in destination 
+            //Ignore any property of source (like Post.Author) that dose not contains in destination
             foreach (var property in entityType.GetProperties())
             {
                 if (dtoType.GetProperty(property.Name) == null)
@@ -55,5 +53,4 @@ namespace Bource.WebConfiguration.Api
         {
         }
     }
-
 }

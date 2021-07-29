@@ -45,11 +45,13 @@ namespace Bource.WebConfiguration.Filters
                         var errorMessages = validationProblemDetails.Errors.SelectMany(p => p.Value).Distinct();
                         message = string.Join(" | ", errorMessages);
                         break;
+
                     case SerializableError errors:
                         response.AddRange(errors.Select(i => new KeyValuePair<string, string[]>(i.Key, (string[])i.Value)));
                         var errorMessages2 = errors.SelectMany(p => (string[])p.Value).Distinct();
                         message = string.Join(" | ", errorMessages2);
                         break;
+
                     case var value when value != null && !(value is ProblemDetails):
                         message = badRequestObjectResult.Value.ToString();
                         break;

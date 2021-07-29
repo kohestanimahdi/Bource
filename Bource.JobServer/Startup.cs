@@ -50,7 +50,6 @@ namespace Bource.JobServer
             services.AddCrawlerHttpClient(applicationSettings);
 
             services.AddRedisCache(Configuration.GetConnectionString("RedisJobCache"), "RedisJobCache");
-
         }
 
         public void ConfigureContainer(ContainerBuilder builder)

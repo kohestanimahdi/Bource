@@ -4,7 +4,6 @@ using Bource.Data.Informations.Repositories.Tsetmc;
 using Bource.Models.Data.Common;
 using Bource.Models.Data.Enums;
 using Bource.Models.Data.Tsetmc;
-using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
@@ -218,7 +217,5 @@ namespace Bource.Data.Informations.UnitOfWorks
 
         public Task<List<ClosingPriceInfo>> GetClosingPriceInfosAsync(long insCode, ClosingPriceTypes? closingPriceTypes, CancellationToken cancellationToken = default(CancellationToken))
             => closingPriceInfoRepository.Table.Find(i => i.InsCode == insCode && (closingPriceTypes == null || i.Type == closingPriceTypes)).ToListAsync(cancellationToken);
-
-
     }
 }

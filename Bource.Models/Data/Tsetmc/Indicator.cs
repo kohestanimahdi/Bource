@@ -1,7 +1,6 @@
 ﻿using Bource.Common.Utilities;
 using Bource.Models.Data.Common;
 using HtmlAgilityPack;
-using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,14 +11,15 @@ namespace Bource.Models.Data.Tsetmc
     {
         public Indicator()
         {
-
         }
+
         public Indicator(string title, long insCode)
         {
             Title = title;
             InsCode = insCode;
             Symbols = new();
         }
+
         public Indicator(HtmlNodeCollection tds, long insCode, HtmlNodeCollection symbolsNodes, List<Symbol> symbols)
         {
             Title = tds[0].GetText();
@@ -35,6 +35,7 @@ namespace Bource.Models.Data.Tsetmc
                         Symbols.Add(new IndicatorSymbol(symbol));
                 }
         }
+
         public string Title { get; set; }
 
         public long InsCode
@@ -82,6 +83,7 @@ namespace Bource.Models.Data.Tsetmc
             Name = name;
             InsCode = insCode;
         }
+
         public IndicatorSymbol(Symbol symbol)
             : this(symbol.Sign, symbol.Name, symbol.InsCode)
         {
@@ -89,6 +91,7 @@ namespace Bource.Models.Data.Tsetmc
 
         public string Sign { get; set; }
         public string Name { get; set; }
+
         public long InsCode
         {
             get

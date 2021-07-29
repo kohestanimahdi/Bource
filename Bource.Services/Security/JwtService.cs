@@ -23,7 +23,6 @@ namespace Bource.Services.Security
         public AccessToken GenerateAsync<TUser>(TUser user, IEnumerable<Claim> claims)
             where TUser : IdentityUser<int>
         {
-
             var secretKey = Encoding.UTF8.GetBytes(_ApplicationSettings.JwtSettings.SecretKey);
             var signingCredentials = new SigningCredentials(new SymmetricSecurityKey(secretKey), SecurityAlgorithms.HmacSha256Signature);
 

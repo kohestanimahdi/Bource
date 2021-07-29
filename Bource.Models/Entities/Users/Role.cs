@@ -6,7 +6,6 @@ namespace Bource.Models.Entities.Users
     {
         public Role(string name) : base(name)
         {
-
         }
     }
 }

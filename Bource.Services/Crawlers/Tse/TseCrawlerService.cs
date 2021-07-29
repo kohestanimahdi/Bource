@@ -77,7 +77,6 @@ namespace Bource.Services.Crawlers.Tse
                         symbol.Status = company.Status;
                         tsetmcUnitOfWork.UpdateSymbolAsync(symbol).GetAwaiter().GetResult();
                     });
-
                 }
             }
         }

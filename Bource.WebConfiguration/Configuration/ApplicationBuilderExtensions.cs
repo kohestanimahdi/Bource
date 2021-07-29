@@ -30,7 +30,6 @@ namespace Bource.WebConfiguration.Configuration
             var dataInitializers = scope.ServiceProvider.GetServices<IDataInitializer>();
             foreach (var dataInitializer in dataInitializers)
                 dataInitializer.InitializeData();
-
         }
 
         public static void AddCustomResponseHeaders(this IApplicationBuilder app)

@@ -3,7 +3,6 @@ using Bource.Common.Utilities;
 using Bource.Data.Informations.UnitOfWorks;
 using Bource.Models.Data.Common;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.IO;
 using System.Net.Http;
@@ -19,7 +18,6 @@ namespace Bource.Services.Crawlers.AsanBource
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
         private readonly IHttpClientFactory httpClientFactory;
         private string className => nameof(AsanBourceCrawlerService);
-
 
         public AsanBourceCrawlerService(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory, ITsetmcUnitOfWork fipiranUnitOfWork)
         {

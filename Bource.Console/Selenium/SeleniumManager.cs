@@ -22,7 +22,6 @@ namespace Bource.Console.Selenium
             this.tsetmcUnitOfWork = tsetmcUnitOfWork;
         }
 
-
         internal void GetSymbols()
         {
             IWebDriver driver = new ChromeDriver(@"ChromeWebDriver");
@@ -60,7 +59,6 @@ namespace Bource.Console.Selenium
                 Task.Delay(1000).GetAwaiter().GetResult();
             }
 
-
             foreach (var item in list.Skip(1))
             {
                 driver.FindElement(By.XPath($"//div[@aria-label='{item.Item2}']")).Click();
@@ -75,17 +73,14 @@ namespace Bource.Console.Selenium
                 driver.FindElement(By.XPath($"//div[@aria-label='{item.Item2}']")).Click();
             }
 
-
             driver.Close();
-
         }
+
         private void SaveSymbols(string html, PapersTypes papersType)
         {
             var htmlDoc = new HtmlDocument();
             htmlDoc.LoadHtml(html);
             var nodes = htmlDoc.DocumentNode.SelectNodes("/div");
-
-
 
             var groups = tsetmcUnitOfWork.GetSymbolGroupsAsync().GetAwaiter().GetResult();
             var symbols = tsetmcUnitOfWork.GetSymbolsAsync().GetAwaiter().GetResult();
@@ -111,7 +106,6 @@ namespace Bource.Console.Selenium
                     continue;
                 }
 
-
                 var htmlDoc2 = new HtmlDocument();
                 htmlDoc2.LoadHtml(node.InnerHtml);
                 var atags = htmlDoc2.DocumentNode.SelectNodes("//a");
@@ -134,20 +128,18 @@ namespace Bource.Console.Selenium
                         ExistInType = SymbolExistInType.Tsetmc,
                         GroupId = symbolGroup.Code,
                         CreateDate = DateTime.Now,
-
                     };
-
                 }
 
                 tsetmcUnitOfWork.AddOrUpdateSymbolAsync(symbol).GetAwaiter().GetResult();
                 if (!symbolGroup.Symbols.Any(i => i.InsCode == insCode))
                     symbolGroup.Symbols.Add(new Models.Data.Tsetmc.IndicatorSymbol(sign, name, insCode));
-
             }
 
             if (symbolGroup is not null)
                 tsetmcUnitOfWork.UpdateSymbolGroupAsync(symbolGroup).GetAwaiter().GetResult();
         }
+
         private string GetTableOfSymbols(IWebDriver driver)
         {
             var main = driver.FindElement(By.Id("main"));

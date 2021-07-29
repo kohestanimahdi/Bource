@@ -1,28 +1,19 @@
 using Autofac;
 using Bource.Common.Models;
 using Bource.Data;
-using Bource.Models.Entities.Users;
 using Bource.WebConfiguration.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Converters;
 using Sentry.AspNetCore;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Bource.Portal
 {
@@ -59,7 +50,6 @@ namespace Bource.Portal
                 options.UseLazyLoadingProxies().UseNpgsql(Configuration.GetConnectionString("PostgresDataBase"));
             });
 
-
             services.AddControllers().AddNewtonsoftJson(options =>
             {
                 options.SerializerSettings.Converters.Add(new StringEnumConverter());
@@ -71,9 +61,7 @@ namespace Bource.Portal
 
             services.Configure<ApplicationSetting>(Configuration.GetSection("ApplicationSettings"));
 
-
             services.AddSignalR();
-
         }
 
         public void ConfigureContainer(ContainerBuilder builder)

@@ -29,17 +29,17 @@ namespace Bource.Services.Crawlers.Ifb
         }
 
         #endregion Constructors
+
         public async Task GetPapersAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-
         }
+
         //        public async Task GetPapersAsync(CancellationToken cancellationToken = default(CancellationToken))
         //        {
         //            var connectionSettings = await GetSignalRConnectionAsync(cancellationToken);
         //            //HubConnection connection = new HubConnectionBuilder()
         //            //    .WithUrl($"https://www.ifb.ir/signalr/hubs?connectionToken={connectionSettings.ConnectionToken}", options =>
         //            //     {
-
         //            //     }).Build();
         //            ////connect?transport=serverSentEvents&connectionToken={connectionSettings.ConnectionToken}&connectionData=%5B%7B%22name%22%3A%22myhub%22%7D%5D&tid=4
         //            //connection.On<string, string>("serverSentEvents", (user, message) =>
@@ -64,7 +64,6 @@ namespace Bource.Services.Crawlers.Ifb
         //                //hubConnection.Headers.Add("referer", "https://www.ifb.ir/StockQoute.aspx");
         //                IHubProxy stockTickerHubProxy = hubConnection.CreateHubProxy("myhub");
 
-
         //                stockTickerHubProxy.On<object>("letsStart", stock => Console.WriteLine(stock.ToString()));
         //                stockTickerHubProxy.On<object>("updateRow", stock => Console.WriteLine(stock.ToString()));
         //                stockTickerHubProxy.On<object>("updateFirstMarket", stock => Console.WriteLine(stock.ToString()));
@@ -86,7 +85,6 @@ namespace Bource.Services.Crawlers.Ifb
         //                // Context is a reference to SynchronizationContext.Current
         //                Console.WriteLine(stock.ToString())
         //);
-
 
         //                var a = stockTickerHubProxy.Subscribe("letsStart");
         //                a.Received += A_Received;
@@ -123,9 +121,7 @@ namespace Bource.Services.Crawlers.Ifb
         //            }
         //            catch (Exception ex)
         //            {
-
         //            }
-
 
         //            // Call server method "JoinGroup" from client
         //            //await stockTickerHubProxy.Invoke("JoinGroup", "SignalRChatRoom");
@@ -133,9 +129,6 @@ namespace Bource.Services.Crawlers.Ifb
 
         //        private void A_Received(IList<Newtonsoft.Json.Linq.JToken> obj)
         //        {
-
         //        }
-
-
     }
 }

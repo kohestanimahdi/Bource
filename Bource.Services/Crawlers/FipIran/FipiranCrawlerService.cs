@@ -7,10 +7,8 @@ using Bource.Models.Data.FipIran;
 using Bource.Models.Data.Tsetmc;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,8 +17,6 @@ namespace Bource.Services.Crawlers.FipIran
 {
     public class FipiranCrawlerService : IFipiranCrawlerService, IScopedDependency
     {
-
-
         private readonly ILogger<FipiranCrawlerService> logger;
         private readonly IFipiranUnitOfWork fipiranUnitOfWork;
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;

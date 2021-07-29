@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Pluralize.NET;
 using Pluralize.NET.Core;
 using System;
 using System.Collections.Generic;
@@ -78,7 +77,6 @@ namespace Bource.Common.Utilities
             foreach (IMutableForeignKey fk in cascadeFKs)
                 fk.DeleteBehavior = DeleteBehavior.Restrict;
         }
-
 
         /// <summary>
         /// Dynamicaly register all Entities that inherit from specific BaseType

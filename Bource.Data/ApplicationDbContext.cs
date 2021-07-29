@@ -3,11 +3,8 @@ using Bource.Models;
 using Bource.Models.Entities.Users;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,13 +15,11 @@ namespace Bource.Data
         public ApplicationDbContext(DbContextOptions options)
             : base(options)
         {
-
         }
 
         protected void CustomOnModelCreating(ModelBuilder modelBuilder, params Assembly[] assemblies)
         {
             base.OnModelCreating(modelBuilder);
-
 
             foreach (var assembly in assemblies)
                 modelBuilder.ApplyConfigurationsFromAssembly(assembly);

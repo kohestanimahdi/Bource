@@ -8,6 +8,7 @@ namespace Bource.Services.Security.Models
     {
         [JsonProperty("access_token")]
         public string Token { get; set; }
+
         //public string refresh_token { get; set; }
 
         [JsonProperty("token_type")]

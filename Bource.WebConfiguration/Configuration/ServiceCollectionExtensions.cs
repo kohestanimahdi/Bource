@@ -14,7 +14,6 @@ using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Bource.WebConfiguration.Configuration
@@ -41,7 +40,6 @@ namespace Bource.WebConfiguration.Configuration
                     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
                     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-
                 })
                 .AddJwtBearer(cfg =>
                 {
@@ -143,7 +141,6 @@ namespace Bource.WebConfiguration.Configuration
             services.AddLogging();
 
             services.AddRedisCache(configuration.GetConnectionString("RedisJobCache"), "RedisJobCache");
-
         }
     }
 }

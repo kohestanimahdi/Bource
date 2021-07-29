@@ -11,7 +11,6 @@ namespace Bource.WebConfiguration.Configuration.Swagger
     {
         public static void AddSwagger(this IServiceCollection services, string applicationTitle)
         {
-
             services.AddSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1", new OpenApiInfo
@@ -57,7 +56,6 @@ namespace Bource.WebConfiguration.Configuration.Swagger
                         new string[]{}
                     }
                 });
-
             });
 
             services.AddSwaggerGenNewtonsoftSupport();
@@ -92,7 +90,6 @@ namespace Bource.WebConfiguration.Configuration.Swagger
                 options.DisableSearch();
                 options.OnlyRequiredInSamples();
                 options.SortPropsAlphabetically();
-
             });
         }
     }

@@ -39,7 +39,6 @@ namespace Bource.Services.Crawlers.Tsetmc
         private string baseUrl => setting.Url;
         private string className => nameof(TsetmcCrawlerService);
 
-
         #endregion Properties
 
         #region Constructors
@@ -104,7 +103,6 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         private async Task UpdateSymbolAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
         {
-
             try
             {
                 await GetSymbolInstructionAsync(symbol, httpClient, cancellationToken);
@@ -975,7 +973,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                         throw;
                 }
             }
-
         }
 
         #endregion افزایش سرمایه
@@ -999,6 +996,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             await GetSelectedIndicatorAsync(MarketType.Stock, httpClient, cancellationToken);
             await GetSelectedIndicatorAsync(MarketType.OTC, httpClient, cancellationToken);
         }
+
         private async Task GetSelectedIndicatorAsync(MarketType market, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             var response = await httpClient.GetAsync($"Loader.aspx?Partree=151315&Flow={(byte)market}", cancellationToken);
@@ -1085,11 +1083,10 @@ namespace Bource.Services.Crawlers.Tsetmc
 
                 indicator.AddOrUpdateSymbol(new(title, name, insCode));
             }
-
-
         }
 
         #region کد از سایت قدیمی - بلا استفاده
+
         /// <summary>
         /// دریافت لیست شاخص ها و نمادهای آنها
         /// </summary>
@@ -1146,7 +1143,6 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         private async Task<XmlNodeList> GetIndicatorSymbols(long insCode, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
-
             var response = await httpClient.GetAsync($"tse/data/IndexA5InstData.aspx?inscode={insCode}", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
@@ -1156,13 +1152,12 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             var xml = await response.Content.ReadAsStringAsync(cancellationToken);
 
-
             var xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(xml);
 
             return xmlDoc.SelectNodes("//row");
-
         }
+
         #endregion کد از سایت قدیمی - بلا استفاده
 
         #endregion شاخص‌ها

@@ -11,10 +11,6 @@ namespace Bource.Common.Models
         public TokenSetting TokenSettings { get; set; }
         public IdentitySetting IdentitySettings { get; set; }
 
-
-
-
-
         public CrawlerSetting GetCrawlerSetting(string key)
             => CrawlerSettings?.FirstOrDefault(i => i.Key == key);
     }

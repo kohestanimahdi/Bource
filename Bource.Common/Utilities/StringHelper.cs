@@ -64,7 +64,6 @@ namespace Bource.Common.Utilities
             return pluralizer.Pluralize(name);
         }
 
-
         /// <summary>
         /// Replace arabic numbers with english numbers
         /// </summary>

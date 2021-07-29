@@ -120,7 +120,6 @@ namespace Bource.Common.Utilities
 
         public static string GetCustomAttributeValue(this HtmlNode node, string attributeName)
         {
-
             if (node is not null && node.Attributes.Any(i => i.Name == attributeName))
                 return node.Attributes[attributeName].Value;
 

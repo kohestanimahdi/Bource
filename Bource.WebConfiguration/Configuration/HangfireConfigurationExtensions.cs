@@ -3,14 +3,12 @@ using Bource.Services.Crawlers.Codal360;
 using Bource.Services.Crawlers.FipIran;
 using Bource.Services.Crawlers.Tsetmc;
 using Hangfire;
-using Hangfire.Dashboard.BasicAuthorization;
 using Hangfire.Mongo;
 using Hangfire.Mongo.Migration.Strategies;
 using Hangfire.Mongo.Migration.Strategies.Backup;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
-using StackExchange.Redis;
 using System;
 using System.Reflection;
 using System.Threading;
@@ -38,7 +36,6 @@ namespace Bource.WebConfiguration.Configuration
                     },
                     Prefix = profix,
                     CheckConnection = true,
-
                 })
             );
 
@@ -74,14 +71,12 @@ namespace Bource.WebConfiguration.Configuration
             StartTasks();
         }
 
-
         private static void StartTasks()
         {
             AddMarketTimeTasks();
 
             // دریافت لیست نمادها در شروع برنامه
             BackgroundJob.Schedule<TseSymbolDataProvider>(app => app.AddOrUpdateSymbols(CancellationToken.None), TimeSpan.FromMinutes(1));
-
 
             // دریافت لیست نمادها در ساعت 8 صبح
             RecurringJob.AddOrUpdate<TseSymbolDataProvider>(nameof(TseSymbolDataProvider.AddOrUpdateSymbols),
@@ -179,7 +174,6 @@ namespace Bource.WebConfiguration.Configuration
             // دریافت اطلاعات بازار نقدی در یک نگاه - ثانیه ای یک بار
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetMarketAtGlanceScheduleEverySecondAsync),
                 app => app.GetMarketAtGlanceScheduleEverySecondAsync(CancellationToken.None), "* 9-14 * * 0,1,2,3,6", TimeZoneInfo.Local);
-
         }
     }
 }

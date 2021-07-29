@@ -17,16 +17,12 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-
 namespace Bource.Console
 {
     internal static class Program
     {
         private static void Main(string[] args)
         {
-
-
-
             var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false)
@@ -271,19 +267,17 @@ namespace Bource.Console
 
                         await Send(socket, "boxIndex");
                         await Receive(socket);
-
                     }
                     catch (Exception ex)
                     {
-
                     }
             } while (true);
         }
 
-        static Task Send(ClientWebSocket socket, string data) =>
+        private static Task Send(ClientWebSocket socket, string data) =>
              socket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, CancellationToken.None);
 
-        static async Task Receive(ClientWebSocket socket)
+        private static async Task Receive(ClientWebSocket socket)
         {
             var buffer = new ArraySegment<byte>(new byte[2048]);
             do
@@ -306,7 +300,5 @@ namespace Bource.Console
                 }
             } while (true);
         }
-
-
     }
 }
