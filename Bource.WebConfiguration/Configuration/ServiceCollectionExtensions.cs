@@ -2,20 +2,70 @@
 using Bource.Data;
 using Bource.Models.Entities.Users;
 using Bource.WebConfiguration.Configuration.Swagger;
+using Bource.WebConfiguration.CustomMapping;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace Bource.WebConfiguration.Configuration
 {
     public static class ServiceCollectionExtensions
     {
+
+        public static void AddJwtAuthentication(this IServiceCollection services, JwtSetting jwtSettings)
+        {
+            byte[] ByteKey = Encoding.UTF8.GetBytes(jwtSettings.SecretKey);
+            byte[] EncryptKey = Encoding.UTF8.GetBytes(jwtSettings.Encryptkey);
+
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+
+                })
+                .AddJwtBearer(cfg =>
+                {
+                    cfg.RequireHttpsMetadata = jwtSettings.RequireHttpsMetadata;
+                    cfg.SaveToken = jwtSettings.SaveToken;
+                    cfg.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        RequireSignedTokens = jwtSettings.RequireSignedTokens,
+                        RequireExpirationTime = jwtSettings.RequireExpirationTime,
+                        ValidateLifetime = jwtSettings.ValidateLifetime,
+                        ValidateAudience = jwtSettings.ValidateAudience,
+                        ValidateIssuer = jwtSettings.ValidateIssuer,
+                        ValidIssuer = jwtSettings.Issuer,
+                        ValidAudience = jwtSettings.Audience,
+                        ValidateIssuerSigningKey = jwtSettings.ValidateIssuerSigningKey,
+                        IssuerSigningKey = new SymmetricSecurityKey(ByteKey),
+                        ClockSkew = TimeSpan.Zero,
+                        TokenDecryptionKey = new SymmetricSecurityKey(EncryptKey)
+                    };
+
+                    cfg.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = ctx =>
+                        {
+                            if (ctx.Request.Query.ContainsKey("access_token"))
+                                ctx.Token = ctx.Request.Query["access_token"];
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
+        }
+
         public static void AddCustomApiVersioning(this IServiceCollection services)
         {
             services.AddApiVersioning(options =>
@@ -59,8 +109,7 @@ namespace Bource.WebConfiguration.Configuration
         {
             services.Configure<ApplicationSetting>(configuration.GetSection(nameof(ApplicationSetting)));
 
-
-            //services.InitializeAutoMapper(assemblies);
+            services.InitializeAutoMapper(assemblies);
 
             services.AddAllowAllOriginsCors();
 
@@ -75,7 +124,7 @@ namespace Bource.WebConfiguration.Configuration
             //services.AddCustomReteLimiterServices(Configuration);
             services.AddHttpContextAccessor();
 
-            //services.AddJwtAuthentication(applicationSettings.JwtSettings);
+            services.AddJwtAuthentication(applicationSettings.JwtSettings);
 
             services.AddCustomApiVersioning();
 
