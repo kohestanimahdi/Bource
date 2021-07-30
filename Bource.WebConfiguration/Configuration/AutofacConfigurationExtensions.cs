@@ -23,7 +23,7 @@ namespace Bource.WebConfiguration.Configuration
                 Assembly.GetEntryAssembly()
             };
 
-            if (!(assemblies is null) && assemblies.Any())
+            if (assemblies is not null && assemblies.Any())
                 allAssemblies.AddRange(assemblies);
 
             containerBuilder.RegisterAssemblyTypes(allAssemblies.ToArray())

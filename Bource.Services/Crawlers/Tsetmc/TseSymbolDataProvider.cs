@@ -186,7 +186,6 @@ namespace Bource.Services.Crawlers.Tsetmc
                     symbolsToAdd.Add(tseSymbol);
                 }
             }
-
             if (tseClientSymbols.Any())
                 symbolsToAdd.AddRange(tseClientSymbols);
 

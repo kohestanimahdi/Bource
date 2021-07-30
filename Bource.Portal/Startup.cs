@@ -55,9 +55,11 @@ namespace Bource.Portal
                 options.SerializerSettings.Converters.Add(new StringEnumConverter());
             });
 
-            services.AddCustomServices(applicationSettings, Configuration, "Api for Bource.");
+            services.AddCustomServices(applicationSettings, Configuration, "Api for Bource.", typeof(Startup).Assembly);
 
             services.AddSwaggerGenNewtonsoftSupport();
+
+            services.AddSingleton<ApplicationSetting>(applicationSettings);
 
             services.Configure<ApplicationSetting>(Configuration.GetSection("ApplicationSettings"));
 
@@ -66,7 +68,7 @@ namespace Bource.Portal
 
         public void ConfigureContainer(ContainerBuilder builder)
         {
-            builder.AddServices();
+            builder.AddServices(typeof(Startup).Assembly);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

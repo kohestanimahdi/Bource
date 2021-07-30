@@ -1,4 +1,5 @@
-﻿using Bource.Models.Data.Common;
+﻿using Bource.Common.Models;
+using Bource.Models.Data.Common;
 using Bource.Models.Data.Enums;
 using Bource.Models.Data.Tsetmc;
 using System.Collections.Generic;

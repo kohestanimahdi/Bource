@@ -2,6 +2,8 @@
 using Bource.Data.Informations.UnitOfWorks;
 using Bource.Models.Data.Common;
 using Bource.Models.Data.Enums;
+using Bource.Services.Crawlers.Tse;
+using Bource.Services.Crawlers.Tsetmc;
 using HtmlAgilityPack;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -16,14 +18,19 @@ namespace Bource.Console.Selenium
     internal class SeleniumManager
     {
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
+        private readonly ITsetmcCrawlerService tsetmcCrawlerService;
 
-        public SeleniumManager(ITsetmcUnitOfWork tsetmcUnitOfWork)
+        public SeleniumManager(ITsetmcUnitOfWork tsetmcUnitOfWork, ITsetmcCrawlerService tsetmcCrawlerService)
         {
             this.tsetmcUnitOfWork = tsetmcUnitOfWork;
+            this.tsetmcCrawlerService = tsetmcCrawlerService;
         }
 
         internal void GetSymbols()
         {
+
+            tsetmcCrawlerService.GetOrUpdateSymbolGroupsAsync().GetAwaiter().GetResult();
+
             IWebDriver driver = new ChromeDriver(@"ChromeWebDriver");
 
             driver.Navigate().GoToUrl("http://www.tsetmc.com/Loader.aspx?ParTree=15131F");

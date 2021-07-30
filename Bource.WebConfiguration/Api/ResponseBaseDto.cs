@@ -10,7 +10,7 @@ namespace Bource.WebConfiguration.Api
         where TEntity : IEntity, new()
     {
         [Display(Name = "ردیف")]
-        public TKey Id { get; set; }
+        public virtual TKey Id { get; set; }
 
         public TEntity ToEntity(IMapper mapper)
         {

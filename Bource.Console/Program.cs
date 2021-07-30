@@ -209,8 +209,10 @@ namespace Bource.Console
                             break;
 
                         case 23:
-                            var selenium = new Selenium.SeleniumManager(tseUnitOfWork);
+                            var selenium = new Selenium.SeleniumManager(tseUnitOfWork, tse);
                             selenium.GetSymbols();
+                            System.Console.Clear();
+                            PrintTableOfContent();
                             break;
 
                         default:
