@@ -12,9 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
-using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Bource.Console
@@ -256,51 +253,6 @@ namespace Bource.Console
                 "22", "Symbols of Indicators", "لیست نمادهای شاخص ها ",
                 "23", "Get papers", "باز کردن مرورگر ودریافت نوع اوراق "
                 );
-        }
-
-        private static async Task ConnectToWebSocket()
-        {
-            do
-            {
-                using (var socket = new ClientWebSocket())
-                    try
-                    {
-                        await socket.ConnectAsync(new Uri($"ws://api2.tablokhani.com/socket.io/?EIO=4&transport=websocket&sid=1yWSjSC_NpwNxxnMAjx2"), CancellationToken.None);
-
-                        await Send(socket, "boxIndex");
-                        await Receive(socket);
-                    }
-                    catch (Exception ex)
-                    {
-                    }
-            } while (true);
-        }
-
-        private static Task Send(ClientWebSocket socket, string data) =>
-             socket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, CancellationToken.None);
-
-        private static async Task Receive(ClientWebSocket socket)
-        {
-            var buffer = new ArraySegment<byte>(new byte[2048]);
-            do
-            {
-                WebSocketReceiveResult result;
-                using (var ms = new MemoryStream())
-                {
-                    do
-                    {
-                        result = await socket.ReceiveAsync(buffer, CancellationToken.None);
-                        ms.Write(buffer.Array, buffer.Offset, result.Count);
-                    } while (!result.EndOfMessage);
-
-                    if (result.MessageType == WebSocketMessageType.Close)
-                        break;
-
-                    ms.Seek(0, SeekOrigin.Begin);
-                    using (var reader = new StreamReader(ms, Encoding.UTF8))
-                        System.Console.WriteLine(await reader.ReadToEndAsync());
-                }
-            } while (true);
         }
     }
 }
