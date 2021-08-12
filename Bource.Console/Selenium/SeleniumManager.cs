@@ -69,7 +69,7 @@ namespace Bource.Console.Selenium
             foreach (var item in list.Skip(1))
             {
                 driver.FindElement(By.XPath($"//div[@aria-label='{item.Item2}']")).Click();
-                Task.Delay(1000).GetAwaiter().GetResult();
+                Task.Delay(3000).GetAwaiter().GetResult();
 
                 // Do save
                 var innerHtml = GetTableOfSymbols(driver);
@@ -78,6 +78,7 @@ namespace Bource.Console.Selenium
                 System.Console.WriteLine(item);
 
                 driver.FindElement(By.XPath($"//div[@aria-label='{item.Item2}']")).Click();
+                Task.Delay(3000).GetAwaiter().GetResult();
             }
 
             driver.Close();
@@ -147,17 +148,32 @@ namespace Bource.Console.Selenium
                 tsetmcUnitOfWork.UpdateSymbolGroupAsync(symbolGroup).GetAwaiter().GetResult();
         }
 
-        private string GetTableOfSymbols(IWebDriver driver)
+        private string GetTableOfSymbols(IWebDriver driver, int numberOfTry = 0)
         {
-            var main = driver.FindElement(By.Id("main"));
+            if (numberOfTry == 3)
+                throw new ApplicationException();
+
             IJavaScriptExecutor js = driver as IJavaScriptExecutor;
             string innerHtml = string.Empty;
             if (js != null)
             {
-                innerHtml = (string)js.ExecuteScript("return arguments[0].innerHTML;", main);
+                innerHtml = (string)js.ExecuteScript("return document.getElementById(\"main\").innerHTML;");
             }
 
-            return innerHtml;
+            if (IsTrueNode(innerHtml))
+                return innerHtml;
+
+            Task.Delay(5000).GetAwaiter().GetResult();
+
+            return GetTableOfSymbols(driver, numberOfTry + 1);
+        }
+
+        private bool IsTrueNode(string html)
+        {
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(html);
+            var nodes = htmlDoc.DocumentNode.SelectNodes("/div");
+            return nodes.First().HasClass("secSep");
         }
     }
 }

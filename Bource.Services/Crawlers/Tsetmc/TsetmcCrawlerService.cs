@@ -95,10 +95,8 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             httpClient.Timeout = TimeSpan.FromSeconds(setting.Timeout * 2);
             foreach (var symbol in symbols)
-            {
                 await UpdateSymbolAsync(symbol, httpClient, cancellationToken);
-                await Task.Delay(delayBetweenRequests);
-            }
+
         }
 
         private async Task UpdateSymbolAsync(Symbol symbol, HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken), int numberOfTries = 0)
@@ -107,7 +105,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             {
                 await GetSymbolInstructionAsync(symbol, httpClient, cancellationToken);
 
-                await Task.Delay(delayBetweenRequests);
+                //await Task.Delay(delayBetweenRequests);
 
                 await GetSymbolInformationAsync(symbol, httpClient, cancellationToken);
 

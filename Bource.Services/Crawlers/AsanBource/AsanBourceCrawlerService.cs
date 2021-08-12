@@ -37,28 +37,35 @@ namespace Bource.Services.Crawlers.AsanBource
 
         private async Task DownloadSymbolImageAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (string.IsNullOrWhiteSpace(symbol.Code12))
-                return;
-
-            using var httpClient = httpClientFactory.CreateClient(className);
-
-            var response = await httpClient.GetAsync($"content/SymbolsLogo/{symbol.Code12}.png", cancellationToken);
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                if (response.StatusCode != System.Net.HttpStatusCode.NotFound)
-                    logger.LogWarning("Error in Get Symbol Images");
+                if (string.IsNullOrWhiteSpace(symbol.Code12))
+                    return;
 
-                return;
+                using var httpClient = httpClientFactory.CreateClient(className);
+
+                var response = await httpClient.GetAsync($"content/SymbolsLogo/{symbol.Code12}.png", cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                {
+                    if (response.StatusCode != System.Net.HttpStatusCode.NotFound)
+                        logger.LogWarning("Error in Get Symbol Images");
+
+                    return;
+                }
+                var fileBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+
+                FileExtensions.DeleteFileIfExists($"Contents/SymbolLogos/{symbol.Code12}.png");
+                await File.WriteAllBytesAsync(FileExtensions.GetDirectory($"Contents/SymbolLogos/{symbol.Code12}.png"), fileBytes);
+
+                symbol.Logo = $"Contents/SymbolLogos/{symbol.Code12}.png";
+                await tsetmcUnitOfWork.UpdateSymbolAsync(symbol);
+
+                await Task.Delay(delayBetweenRequests);
             }
-            var fileBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
-
-            FileExtensions.DeleteFileIfExists($"Contents/SymbolLogos/{symbol.Code12}.png");
-            await File.WriteAllBytesAsync(FileExtensions.GetDirectory($"Contents/SymbolLogos/{symbol.Code12}.png"), fileBytes);
-
-            symbol.Logo = $"Contents/SymbolLogos/{symbol.Code12}.png";
-            await tsetmcUnitOfWork.UpdateSymbolAsync(symbol);
-
-            await Task.Delay(delayBetweenRequests);
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in Get Symbol Images");
+            }
         }
     }
 }
