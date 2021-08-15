@@ -32,6 +32,13 @@ namespace Bource.Services.Crawlers.Tsetmc.Models
                 var result = regex.Match(html);
                 GroupPE = result.Value.RegexConvertToDecimal();
             }
+
+            regex = new System.Text.RegularExpressions.Regex(@"PSR\=\'([0-9]*|([0-9]*.[0-9]*))\'");
+            if (regex.IsMatch(html))
+            {
+                var result = regex.Match(html);
+                PSR = result.Value.RegexConvertToDecimal();
+            }
         }
 
         public long InsCode { get; set; }
@@ -44,5 +51,8 @@ namespace Bource.Services.Crawlers.Tsetmc.Models
 
         [Display(Name = "PE گروه")]
         public decimal? GroupPE { get; set; }
+
+        [Display(Name = "PSR")]
+        public decimal? PSR { get; set; }
     }
 }

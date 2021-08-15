@@ -131,6 +131,12 @@ namespace Bource.Models.Data.Tsetmc
         [Display(Name = "PE")]
         public decimal? PE { get; set; }
 
+        [Display(Name = "PS")]
+        public decimal? PS { get; set; }
+
+        [Display(Name = "PSR")]
+        public decimal? PSR { get; set; }
+
         [Display(Name = "PE گروه")]
         public decimal? GroupPE { get; set; }
 
@@ -272,37 +278,17 @@ namespace Bource.Models.Data.Tsetmc
             LegalEntitySellValue = Convert.ToDecimal(values[8]);
         }
 
-        public void FillDataFromPage(string html)
-        {
-            var regex = new System.Text.RegularExpressions.Regex(@"QTotTran5JAvg\=\'([0-9]*|([0-9]*.[0-9]*))\'");
-            if (regex.IsMatch(html))
-            {
-                var result = regex.Match(html);
-                MonthAverageValue = result.Value.RegexConvertToDecimal();
-            }
-
-            regex = new System.Text.RegularExpressions.Regex(@"KAjCapValCpsIdx\=\'([0-9]*|([0-9]*.[0-9]*))\'");
-            if (regex.IsMatch(html))
-            {
-                var result = regex.Match(html);
-                FloatingStock = result.Value.RegexConvertToDecimal();
-            }
-
-            regex = new System.Text.RegularExpressions.Regex(@"SectorPE\=\'([0-9]*|([0-9]*.[0-9]*))\'");
-            if (regex.IsMatch(html))
-            {
-                var result = regex.Match(html);
-                GroupPE = result.Value.RegexConvertToDecimal();
-            }
-        }
-
-        public void FillData(decimal? monthAverageValue, decimal? floatingStock, decimal? groupPE)
+        public void FillData(decimal? monthAverageValue, decimal? floatingStock, decimal? groupPE, decimal? pSR)
         {
             MonthAverageValue = monthAverageValue;
 
             FloatingStock = floatingStock;
 
             GroupPE = groupPE;
+
+            PSR = pSR;
+
+            PS = PSR.HasValue && PSR.Value != 0 ? Math.Round(FinishPrice / PSR.Value, 2) : null;
         }
 
         public Symbol GetSymbol()

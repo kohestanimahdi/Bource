@@ -78,7 +78,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 marketStatus = stockCashMarketAtGlance.IsOpen && OTCCashMarketAtGlance.IsOpen;
             }
 
-            await distributedCache.SetValueAsync("MarketStatus", marketStatus, 1);
+            await distributedCache.SetValueAsync("MarketStatus", marketStatus, 5);
         }
 
         #region نمادها
@@ -441,7 +441,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                     if (oneTimeSymbolData.ContainsKey(d.InsCode))
                     {
                         var oneTime = oneTimeSymbolData[d.InsCode];
-                        d.FillData(oneTime.MonthAverageValue, oneTime.FloatingStock, oneTime.GroupPE);
+                        d.FillData(oneTime.MonthAverageValue, oneTime.FloatingStock, oneTime.GroupPE, oneTime.PSR);
                     }
                     symbolsToSave.Add(d);
                 }
