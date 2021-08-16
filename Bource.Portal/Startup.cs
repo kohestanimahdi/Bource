@@ -1,6 +1,8 @@
 using Autofac;
 using Bource.Common.Models;
 using Bource.Data;
+using Bource.Portal.Controllers.SignalR.V1;
+using Bource.Portal.Services.BackgroundServices;
 using Bource.WebConfiguration.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -13,7 +15,10 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Converters;
 using Sentry.AspNetCore;
+using SignalRSwaggerGen;
+using SignalRSwaggerGen.Attributes;
 using System.IO;
+using System.Reflection;
 
 namespace Bource.Portal
 {
@@ -64,6 +69,7 @@ namespace Bource.Portal
             services.Configure<ApplicationSetting>(Configuration.GetSection("ApplicationSettings"));
 
             services.AddSignalR();
+            services.AddHostedService<SymbolDataBackgroundService>();
         }
 
         public void ConfigureContainer(ContainerBuilder builder)
@@ -112,7 +118,9 @@ namespace Bource.Portal
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-                //endpoints.MapHub<ChatHub>("/chatHub");
+
+                endpoints.MapHub<SymbolsHub>(typeof(SymbolsHub).GetCustomAttribute<SignalRHubAttribute>().Path.Replace(Constants.HubNamePlaceholder, typeof(SymbolsHub).Name));
+                //endpoints.MapHub<SymbolsHub>("/SymbolsHub");
             });
         }
     }

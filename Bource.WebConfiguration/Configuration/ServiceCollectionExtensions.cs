@@ -134,7 +134,7 @@ namespace Bource.WebConfiguration.Configuration
 
             services.AddCustomApiVersioning();
 
-            services.AddSwagger(applicationTitle);
+            services.AddSwagger(applicationTitle, assemblies);
 
             services.AddOptions();
 

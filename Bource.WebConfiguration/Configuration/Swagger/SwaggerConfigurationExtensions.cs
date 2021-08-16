@@ -3,13 +3,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 
 namespace Bource.WebConfiguration.Configuration.Swagger
 {
     public static class SwaggerConfigurationExtensions
     {
-        public static void AddSwagger(this IServiceCollection services, string applicationTitle)
+        public static void AddSwagger(this IServiceCollection services, string applicationTitle, params Assembly[] assemblies)
         {
             services.AddSwaggerGen(options =>
             {
@@ -56,6 +57,9 @@ namespace Bource.WebConfiguration.Configuration.Swagger
                         new string[]{}
                     }
                 });
+
+                options.DocumentFilter<SignalRSwaggerGen.SignalRSwaggerGen>(assemblies.ToList());
+
             });
 
             services.AddSwaggerGenNewtonsoftSupport();
