@@ -215,7 +215,24 @@ namespace Bource.Data.Informations.UnitOfWorks
         public Task AddAdtiveSymbolShareHoldersAsync(List<ActiveSymbolShareHolder> items, CancellationToken cancellationToken = default(CancellationToken))
         => activeSymbolShareHolderRepository.AddRangeAsync(items, cancellationToken);
 
-        public Task<List<ClosingPriceInfo>> GetClosingPriceInfosAsync(long insCode, ClosingPriceTypes? closingPriceTypes, CancellationToken cancellationToken = default(CancellationToken))
-            => closingPriceInfoRepository.Table.Find(i => i.InsCode == insCode && (closingPriceTypes == null || i.Type == closingPriceTypes)).ToListAsync(cancellationToken);
+        public Task<List<ClosingPriceInfo>> GetClosingPriceInfosAsync(long insCode, ClosingPriceTypes? closingPriceType, CancellationToken cancellationToken = default(CancellationToken))
+            => closingPriceInfoRepository.Table.Find(i => i.InsCode == insCode && (closingPriceType == null || i.Type == closingPriceType)).ToListAsync(cancellationToken);
+
+        public Task<SymbolData> GetLastSymbolDataAsync(long insCode, CancellationToken cancellationToken = default)
+            => symbolDataRepository.Table.Find(i => i.InsCode == insCode).SortByDescending(i => i.LastUpdate).FirstOrDefaultAsync(cancellationToken);
+
+        public async Task<List<ClosingPriceInfo>> GetSymbolDataHistoryAsync(long insCode, ClosingPriceTypes closingPriceType, CancellationToken cancellationToken = default)
+        {
+            var closingPriceInfos = await GetClosingPriceInfosAsync(insCode, closingPriceType, cancellationToken);
+            if (closingPriceType == ClosingPriceTypes.NoPriceAdjustment)
+            {
+                var lastPrice = await GetLastSymbolDataAsync(insCode);
+                if (lastPrice is not null)
+                    closingPriceInfos.Add(new ClosingPriceInfo(lastPrice, closingPriceType));
+
+            }
+
+            return closingPriceInfos.OrderBy(i => i.DEven).ToList();
+        }
     }
 }

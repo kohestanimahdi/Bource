@@ -3,6 +3,7 @@ using AutoMapper.QueryableExtensions;
 using Bource.Common.Utilities;
 using Bource.Data.Informations.UnitOfWorks;
 using Bource.Models.Data.Common;
+using Bource.Portal.Services.CalculateServices;
 using Bource.Portal.ViewModels.Dtos.SymbolDtos;
 using Bource.WebConfiguration.Api;
 using Microsoft.AspNetCore.Mvc;
@@ -18,11 +19,13 @@ namespace Bource.Portal.Controllers.Api.V1
     public class SymbolsController : BaseApiController
     {
         private readonly ITsetmcUnitOfWork tsetmcUnitOfWork;
+        private readonly ISymbolCalculator symbolCalculator;
 
-        public SymbolsController(IMapper mapper, IDistributedCache distributedCache, ITsetmcUnitOfWork tsetmcUnitOfWork)
+        public SymbolsController(IMapper mapper, IDistributedCache distributedCache, ITsetmcUnitOfWork tsetmcUnitOfWork, ISymbolCalculator symbolCalculator)
             : base(mapper, distributedCache)
         {
             this.tsetmcUnitOfWork = tsetmcUnitOfWork ?? throw new ArgumentNullException(nameof(tsetmcUnitOfWork));
+            this.symbolCalculator = symbolCalculator ?? throw new ArgumentNullException(nameof(symbolCalculator));
         }
 
         /// <summary>
