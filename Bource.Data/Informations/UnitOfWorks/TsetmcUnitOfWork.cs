@@ -232,7 +232,7 @@ namespace Bource.Data.Informations.UnitOfWorks
 
             }
 
-            return closingPriceInfos.OrderBy(i => i.DEven).ToList();
+            return closingPriceInfos.OrderByDescending(i => i.DEven).ToList();
         }
     }
 }

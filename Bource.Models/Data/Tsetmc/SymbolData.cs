@@ -10,6 +10,7 @@ namespace Bource.Models.Data.Tsetmc
 {
     public class SymbolData : MongoDataEntity
     {
+        #region Constructors
         public SymbolData()
         {
         }
@@ -49,7 +50,9 @@ namespace Bource.Models.Data.Tsetmc
             BuyTransactions = new List<SymbolTransaction>();
             SellTransactions = new List<SymbolTransaction>();
         }
+        #endregion
 
+        #region Properties
         public string SymbolCode { get; set; }
 
         public long InsCode
@@ -184,7 +187,9 @@ namespace Bource.Models.Data.Tsetmc
 
         public List<SymbolTransaction> BuyTransactions { get; set; }
         public List<SymbolTransaction> SellTransactions { get; set; }
+        #endregion
 
+        #region Functions
         public override bool Equals(object obj)
         {
             if (obj is SymbolData symbolData)
@@ -306,6 +311,50 @@ namespace Bource.Models.Data.Tsetmc
         {
             return Id.GetHashCode();
         }
+        #endregion
+
+        #region Calculates
+
+        [Display(Name = "سرانه خرید حقیقی")]
+        public decimal BuyPerNatural =>
+            NaturalBuyNumber == 0 ? 0 : Math.Round(BuyValueNatural / NaturalBuyNumber, 2);
+
+
+        [Display(Name = "سرانه فروش حقیقی")]
+        public decimal SellPerNatural =>
+            NaturalSellNumber == 0 ? 0 : Math.Round(SellValueNatural / NaturalSellNumber, 2);
+
+
+        [Display(Name = "سرانه خرید حقوقی")]
+        public decimal BuyPerLegal =>
+            LegalEntityBuyNumber == 0 ? 0 : Math.Round(BuyValueLegal / LegalEntityBuyNumber, 2);
+
+
+        [Display(Name = "سرانه فروش حقوقی")]
+        public decimal SellPerLegal =>
+            LegalEntitySellNumber == 0 ? 0 : Math.Round(SellValueLegal / LegalEntitySellNumber, 2);
+
+
+        [Display(Name = "ارزش خرید حقیقی")]
+        public decimal BuyValueNatural =>
+            NaturalBuyValue * FinishPrice;
+
+
+        [Display(Name = "ارزش فروش حقیقی")]
+        public decimal SellValueNatural =>
+            NaturalSellValue * FinishPrice;
+
+
+        [Display(Name = "ارزش خرید حقوقی")]
+        public decimal BuyValueLegal =>
+           LegalEntityBuyValue * FinishPrice;
+
+
+        [Display(Name = "ارزش فروش حقوقی")]
+        public decimal SellValueLegal =>
+            LegalEntitySellValue * FinishPrice;
+
+        #endregion 
     }
 
     public class SymbolTransaction
