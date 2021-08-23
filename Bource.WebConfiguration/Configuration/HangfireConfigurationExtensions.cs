@@ -151,7 +151,8 @@ namespace Bource.WebConfiguration.Configuration
         {
             //باز کردن وضعیت بازار
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.SetMarketStatus),
-                app => app.SetMarketStatus(null, CancellationToken.None), "0-10 9 * * 0,1,2,3,6", TimeZoneInfo.Local);
+                app => app.SetMarketStatus(null, CancellationToken.None), "*/4 9-15 * * 0,1,2,3,6", TimeZoneInfo.Local);
+
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.SetMarketStatus) + "9",
                 app => app.SetMarketStatus(null, CancellationToken.None), "59 8 * * 0,1,2,3,6", TimeZoneInfo.Local);
 

@@ -354,7 +354,15 @@ namespace Bource.Models.Data.Tsetmc
         public decimal SellValueLegal =>
             LegalEntitySellValue * FinishPrice;
 
-        #endregion 
+        [Display(Name = "قدرت خریدار حقیقی")]
+        public decimal PowerBuyNatural
+            => SellPerNatural == 0 ? 0 : Math.Round(BuyPerNatural / SellPerNatural, 2);
+
+        [Display(Name = "قدرت خریدار حقوقی")]
+        public decimal PowerBuyLegal
+            => SellPerLegal == 0 ? 0 : Math.Round(BuyPerLegal / SellPerLegal, 2);
+
+        #endregion
     }
 
     public class SymbolTransaction
