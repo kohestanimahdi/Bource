@@ -502,7 +502,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             var oneTimeSymbolData = (await distributedCache.GetValueAsync<Dictionary<long, FillSymbolData>>("OneTimeSymbolData")) ?? new();
             foreach (var oneTimeKey in oneTimeSymbolData.Keys)
             {
-                var symbolDatas = await tsetmcUnitOfWork.GetSymbolDataOfSymbolAsync(oneTimeKey, cancellationToken);
+                var symbolDatas = await tsetmcUnitOfWork.GetSymbolDataOfSymbolAsync(oneTimeKey, DateTime.Today, cancellationToken);
                 var oneTime = oneTimeSymbolData[oneTimeKey];
                 foreach (var data in symbolDatas)
                 {

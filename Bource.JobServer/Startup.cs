@@ -89,8 +89,6 @@ namespace Bource.JobServer
 
             app.UseAuthorization();
 
-            app.UseSentryTracing();
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

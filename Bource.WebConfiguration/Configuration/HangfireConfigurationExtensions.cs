@@ -153,7 +153,7 @@ namespace Bource.WebConfiguration.Configuration
 
             // پر کردن اطلاعات ناقص از بخشی که یکبار پر میشود
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.CompleteSymbolData), app =>
-            app.CompleteSymbolData(CancellationToken.None), "0 5 * * *", TimeZoneInfo.Local);
+            app.CompleteSymbolData(CancellationToken.None), "0 5 * * 0,1,2,3,6", TimeZoneInfo.Local);
         }
 
         private static void AddMarketTimeTasks()

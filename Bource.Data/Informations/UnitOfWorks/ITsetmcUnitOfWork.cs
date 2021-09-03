@@ -2,6 +2,7 @@
 using Bource.Models.Data.Common;
 using Bource.Models.Data.Enums;
 using Bource.Models.Data.Tsetmc;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,7 +56,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         Task UpdateSymbolGroupAsync(SymbolGroup group, CancellationToken cancellationToken = default);
         Task<List<ClosingPriceInfo>> GetSymbolDataHistoryAsync(long insCode, ClosingPriceTypes closingPriceType, CancellationToken cancellationToken = default);
         Task AddIfNotExistsSymbolPriorityAsync(List<SymbolPriority> items, CancellationToken cancellationToken = default);
-        Task<List<SymbolData>> GetSymbolDataOfSymbolAsync(long insCode, CancellationToken cancellationToken = default);
+        Task<List<SymbolData>> GetSymbolDataOfSymbolAsync(long insCode, DateTime date, CancellationToken cancellationToken = default);
         Task UpdateSymbolDataRangeAsync(List<SymbolData> symbolDatas, CancellationToken cancellationToken = default);
     }
 }

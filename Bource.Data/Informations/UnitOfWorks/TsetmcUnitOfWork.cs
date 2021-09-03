@@ -194,8 +194,8 @@ namespace Bource.Data.Informations.UnitOfWorks
         public Task<SymbolData> GetLastSymbolDataAsync(long insCode, CancellationToken cancellationToken = default)
             => symbolDataRepository.Table.Find(i => i.InsCode == insCode).SortByDescending(i => i.LastUpdate).FirstOrDefaultAsync(cancellationToken);
 
-        public Task<List<SymbolData>> GetSymbolDataOfSymbolAsync(long insCode, CancellationToken cancellationToken = default)
-            => symbolDataRepository.Table.Find(i => i.InsCode == insCode).ToListAsync(cancellationToken);
+        public Task<List<SymbolData>> GetSymbolDataOfSymbolAsync(long insCode, DateTime date, CancellationToken cancellationToken = default)
+            => symbolDataRepository.Table.Find(i => i.InsCode == insCode && i.CreateDate >= date && i.CreateDate < date.AddDays(1)).ToListAsync(cancellationToken);
 
         public Task UpdateSymbolDataRangeAsync(List<SymbolData> symbolDatas, CancellationToken cancellationToken = default)
             => symbolDataRepository.UpdateRangeAsync(symbolDatas, cancellationToken);
