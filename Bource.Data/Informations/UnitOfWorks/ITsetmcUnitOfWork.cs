@@ -54,5 +54,8 @@ namespace Bource.Data.Informations.UnitOfWorks
 
         Task UpdateSymbolGroupAsync(SymbolGroup group, CancellationToken cancellationToken = default);
         Task<List<ClosingPriceInfo>> GetSymbolDataHistoryAsync(long insCode, ClosingPriceTypes closingPriceType, CancellationToken cancellationToken = default);
+        Task AddIfNotExistsSymbolPriorityAsync(List<SymbolPriority> items, CancellationToken cancellationToken = default);
+        Task<List<SymbolData>> GetSymbolDataOfSymbolAsync(long insCode, CancellationToken cancellationToken = default);
+        Task UpdateSymbolDataRangeAsync(List<SymbolData> symbolDatas, CancellationToken cancellationToken = default);
     }
 }

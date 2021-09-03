@@ -3,7 +3,7 @@ using Bource.Data.Informations.UnitOfWorks;
 using Bource.Services.Crawlers.AsanBource;
 using Bource.Services.Crawlers.Codal360;
 using Bource.Services.Crawlers.FipIran;
-using Bource.Services.Crawlers.Ifb;
+using Bource.Services.Crawlers.Shakhesban;
 using Bource.Services.Crawlers.Tse;
 using Bource.Services.Crawlers.Tsetmc;
 using Bource.WebConfiguration.Configuration;
@@ -42,7 +42,7 @@ namespace Bource.Console
              .AddScoped<ICodal360CrawlerService, Codal360CrawlerService>()
              .AddScoped<IAsanBourceCrawlerService, AsanBourceCrawlerService>()
              .AddScoped<ITseCrawlerService, TseCrawlerService>()
-             .AddScoped<IIfbCrawlerService, IfbCrawlerService>()
+             .AddScoped<IShakhesbanCrawlerService, ShakhesbanCrawlerService>()
              .AddScoped<ITsetmcUnitOfWork, TsetmcUnitOfWork>()
              .AddScoped<IFipiranUnitOfWork, FipiranUnitOfWork>();
 
@@ -57,6 +57,8 @@ namespace Bource.Console
             serviceProvider.Configure<ApplicationSetting>(configuration.GetSection("ApplicationSettings"));
             serviceProvider.AddSingleton<ApplicationSetting>(applicationSetting);
 
+
+
             var serviceProviderFactory = serviceProvider.BuildServiceProvider();
 
             var tseClient = serviceProviderFactory.GetService<ITseClientService>();
@@ -66,10 +68,12 @@ namespace Bource.Console
             var codal360CrawlerService = serviceProviderFactory.GetService<ICodal360CrawlerService>();
             var asanBourceCrawlerService = serviceProviderFactory.GetService<IAsanBourceCrawlerService>();
             var tseCrawlerService = serviceProviderFactory.GetService<ITseCrawlerService>();
-            var ifbCrawlerService = serviceProviderFactory.GetService<IIfbCrawlerService>();
+            var shakhesbanCrawlerService = serviceProviderFactory.GetService<IShakhesbanCrawlerService>();
             var tseUnitOfWork = serviceProviderFactory.GetService<ITsetmcUnitOfWork>();
 
             var logger = serviceProviderFactory.GetService<ILoggerFactory>().CreateLogger(nameof(Program));
+
+            var applicationSettings = serviceProviderFactory.GetService<ApplicationSetting>();
 
             int n = -1;
             string input;
@@ -211,6 +215,23 @@ namespace Bource.Console
                             System.Console.Clear();
                             PrintTableOfContent();
                             break;
+                        case 24:
+                            var selenium2 = new Selenium.SeleniumManager(new TsetmcUnitOfWork(new ApplicationSetting()
+                            {
+                                mongoDbSetting = new MongoDbSetting
+                                {
+                                    DataBaseName = applicationSettings.mongoDbSetting.DataBaseName,
+                                    ConnectionString = applicationSettings.mongoDbSetting.ServerConnectionString
+                                }
+                            }), tse);
+
+                            selenium2.GetSymbols();
+                            System.Console.Clear();
+                            PrintTableOfContent();
+                            break;
+                        case 25:
+                            shakhesbanCrawlerService.GetSymbolPrioritiesAsync().GetAwaiter().GetResult();
+                            break;
 
                         default:
                             break;
@@ -251,7 +272,9 @@ namespace Bource.Console
                 "20", "Codal 360 url", "لینک کدال",
                 "21", "FipIran Subject", "موضوع فعالیت از فیپ ایران",
                 "22", "Symbols of Indicators", "لیست نمادهای شاخص ها ",
-                "23", "Get papers", "باز کردن مرورگر ودریافت نوع اوراق "
+                "23", "Get papers", "باز کردن مرورگر ودریافت نوع اوراق ",
+                "24", "Get papers and save to server", "باز کردن مرورگر ودریافت نوع اوراق Server",
+                "25", "Get priorities", "دریافت حق تقدم ها"
                 );
         }
     }

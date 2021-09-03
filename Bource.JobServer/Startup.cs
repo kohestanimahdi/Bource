@@ -60,7 +60,6 @@ namespace Bource.JobServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            //Sentry.SentrySdk.CaptureMessage("Hello Sentry");
 
             AutofacContainer = app.ApplicationServices.GetAutofacRoot();
 

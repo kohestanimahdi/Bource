@@ -17,6 +17,7 @@ namespace Bource.Common.Models
 
     public class MongoDbSetting
     {
+        public string ServerConnectionString { get; set; }
         public string ConnectionString { get; set; }
         public string DataBaseName { get; set; }
     }

@@ -7,6 +7,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 {
     public interface ITsetmcCrawlerService
     {
+        Task CompleteSymbolData(CancellationToken cancellationToken = default);
         Task FillOneTimeDataAsync(CancellationToken cancellationToken = default);
 
         Task GetAllCapitalIncreaseAsync(CancellationToken cancellationToken = default);

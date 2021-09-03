@@ -1,6 +1,7 @@
 ﻿using Bource.Services.Crawlers.AsanBource;
 using Bource.Services.Crawlers.Codal360;
 using Bource.Services.Crawlers.FipIran;
+using Bource.Services.Crawlers.Shakhesban;
 using Bource.Services.Crawlers.Tsetmc;
 using Hangfire;
 using Hangfire.Dashboard.BasicAuthorization;
@@ -138,6 +139,10 @@ namespace Bource.WebConfiguration.Configuration
             RecurringJob.AddOrUpdate<Codal360CrawlerService>(nameof(Codal360CrawlerService.UpdateSymbolsCodalURLAsync),
                 app => app.UpdateSymbolsCodalURLAsync(CancellationToken.None), "0 11 * * 5", TimeZoneInfo.Local);
 
+            // دریافت اطلاعات حق تقدم 
+            RecurringJob.AddOrUpdate<ShakhesbanCrawlerService>(nameof(ShakhesbanCrawlerService.GetSymbolPrioritiesAsync),
+                app => app.GetSymbolPrioritiesAsync(CancellationToken.None), "0 6 * * *", TimeZoneInfo.Local);
+
             // دریافت موضوع هر نماد از فیپ ایران - هر شب یک بار
             RecurringJob.AddOrUpdate<FipiranCrawlerService>(nameof(FipiranCrawlerService.GetSubjectSymbols), app =>
             app.GetSubjectSymbols(CancellationToken.None), "45 11 * * 5", TimeZoneInfo.Local);
@@ -145,6 +150,10 @@ namespace Bource.WebConfiguration.Configuration
             // دریافت اطلاعات لحظه ای هر نماد - روزانه در ابتدای تایم بازار
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.FillOneTimeDataAsync), app =>
             app.FillOneTimeDataAsync(CancellationToken.None), "15 8 * * *", TimeZoneInfo.Local);
+
+            // پر کردن اطلاعات ناقص از بخشی که یکبار پر میشود
+            RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.CompleteSymbolData), app =>
+            app.CompleteSymbolData(CancellationToken.None), "0 5 * * *", TimeZoneInfo.Local);
         }
 
         private static void AddMarketTimeTasks()

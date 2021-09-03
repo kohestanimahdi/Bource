@@ -29,6 +29,7 @@ namespace Bource.Data.Informations.UnitOfWorks
         private readonly ClosingPriceInfoRepository closingPriceInfoRepository;
         private readonly SymbolShareHolderRepository symbolShareHolderRepository;
         private readonly ActiveSymbolShareHolderRepository activeSymbolShareHolderRepository;
+        private readonly SymbolPriorityRepository symbolPriorityRepository;
 
         public TsetmcUnitOfWork(ApplicationSetting setting)
         {
@@ -46,6 +47,7 @@ namespace Bource.Data.Informations.UnitOfWorks
             closingPriceInfoRepository = new(setting.mongoDbSetting);
             symbolShareHolderRepository = new(setting.mongoDbSetting);
             activeSymbolShareHolderRepository = new(setting.mongoDbSetting);
+            symbolPriorityRepository = new(setting.mongoDbSetting);
         }
 
         public async Task AddSelectedIndicatorsAsync(List<SelectedIndicator> selectedIndicators, CancellationToken cancellationToken = default(CancellationToken))
@@ -124,35 +126,6 @@ namespace Bource.Data.Informations.UnitOfWorks
         public Task UpdateSymbolGroupAsync(SymbolGroup group, CancellationToken cancellationToken = default(CancellationToken))
             => symbolGroupRepository.UpdateAsync(group, cancellationToken);
 
-        //public async Task AddSymbolData(List<SymbolData> data, CancellationToken cancellationToken = default(CancellationToken))
-        //{
-        //    var startDate = DateTime.Now;
-
-        //    var todayItems = await symbolDataRepository.Table.Find(i => i.LastUpdate >= DateTime.Today).ToListAsync(cancellationToken);
-
-        //    logger.LogInformation($"get  Data from database: { (DateTime.Now - startDate).TotalSeconds}");
-
-        //    List<SymbolData> itemsToSave = new();
-
-        //    if (todayItems is not null && todayItems.Any())
-        //    {
-        //        startDate = DateTime.Now;
-        //        foreach (var item in data)
-        //        {
-        //            var symbolData = todayItems.Where(i => i.InsCode == item.InsCode).OrderByDescending(i => i.LastUpdate).FirstOrDefault();
-
-        //            if (symbolData is null || !symbolData.Equals(item))
-        //            {
-        //                itemsToSave.Add(item);
-        //            }
-        //        }
-
-        //    }
-        //    else
-        //        itemsToSave = data;
-
-        //    await symbolDataRepository.AddRangeAsync(itemsToSave, cancellationToken);
-        //}
 
         public Task AddSymbolData(List<SymbolData> data, CancellationToken cancellationToken = default(CancellationToken))
         => symbolDataRepository.AddRangeAsync(data, cancellationToken);
@@ -221,6 +194,12 @@ namespace Bource.Data.Informations.UnitOfWorks
         public Task<SymbolData> GetLastSymbolDataAsync(long insCode, CancellationToken cancellationToken = default)
             => symbolDataRepository.Table.Find(i => i.InsCode == insCode).SortByDescending(i => i.LastUpdate).FirstOrDefaultAsync(cancellationToken);
 
+        public Task<List<SymbolData>> GetSymbolDataOfSymbolAsync(long insCode, CancellationToken cancellationToken = default)
+            => symbolDataRepository.Table.Find(i => i.InsCode == insCode).ToListAsync(cancellationToken);
+
+        public Task UpdateSymbolDataRangeAsync(List<SymbolData> symbolDatas, CancellationToken cancellationToken = default)
+            => symbolDataRepository.UpdateRangeAsync(symbolDatas, cancellationToken);
+
         public async Task<List<ClosingPriceInfo>> GetSymbolDataHistoryAsync(long insCode, ClosingPriceTypes closingPriceType, CancellationToken cancellationToken = default)
         {
             var closingPriceInfos = await GetClosingPriceInfosAsync(insCode, closingPriceType, cancellationToken);
@@ -234,5 +213,8 @@ namespace Bource.Data.Informations.UnitOfWorks
 
             return closingPriceInfos.OrderByDescending(i => i.DEven).ToList();
         }
+
+        public Task AddIfNotExistsSymbolPriorityAsync(List<SymbolPriority> items, CancellationToken cancellationToken = default(CancellationToken))
+        => symbolPriorityRepository.AddIfNotExistsAsync(items, cancellationToken);
     }
 }

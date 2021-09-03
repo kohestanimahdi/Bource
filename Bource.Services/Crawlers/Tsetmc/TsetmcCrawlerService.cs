@@ -492,6 +492,28 @@ namespace Bource.Services.Crawlers.Tsetmc
         }
 
         /// <summary>
+        /// پر کردن اطلاعاتی که یک بار در روز پر می‌شوند
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task CompleteSymbolData(CancellationToken cancellationToken = default)
+        {
+            await FillOneTimeDataAsync(cancellationToken);
+            var oneTimeSymbolData = (await distributedCache.GetValueAsync<Dictionary<long, FillSymbolData>>("OneTimeSymbolData")) ?? new();
+            foreach (var oneTimeKey in oneTimeSymbolData.Keys)
+            {
+                var symbolDatas = await tsetmcUnitOfWork.GetSymbolDataOfSymbolAsync(oneTimeKey, cancellationToken);
+                var oneTime = oneTimeSymbolData[oneTimeKey];
+                foreach (var data in symbolDatas)
+                {
+                    data.FillData(oneTime.MonthAverageValue, oneTime.FloatingStock, oneTime.GroupPE, oneTime.PSR);
+                }
+
+                await tsetmcUnitOfWork.UpdateSymbolDataRangeAsync(symbolDatas, cancellationToken);
+            }
+        }
+
+        /// <summary>
         /// اطلاعاتی که روزانه یک بار از هر نماد آپدیت می‌شوند
         /// </summary>
         /// <param name="cancellationToken"></param>

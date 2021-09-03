@@ -51,7 +51,7 @@ namespace Bource.Portal.Controllers.Api.V1
                 symbols = symbols.Where(i => i.Sign.Contains(search) || (i.CompanyName?.Contains(search) ?? false) || i.Name.Contains(search) || i.InsCodeValue == search).ToList();
 
             // map to response type
-            var response = symbols.AsQueryable().ProjectTo<SymbolListResponse>(mapper.ConfigurationProvider);
+            var response = symbols.OrderBy(i => i.Sign.Length).AsQueryable().ProjectTo<SymbolListResponse>(mapper.ConfigurationProvider);
 
             return Ok(response);
         }
