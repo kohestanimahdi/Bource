@@ -359,14 +359,15 @@ namespace Bource.Services.Crawlers.Tsetmc
         #region در یک نگاه نماد
 
         public async Task ScheduleLatestSymbolDataEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
-        {
-            var marketStatus = await distributedCache.GetValueAsync<bool>("MarketStatus");
-            if (marketStatus)
-                await DoFuncEverySecond(ScheduleLatestSymbolData, cancellationToken);
-        }
+        => await DoFuncEverySecond(ScheduleLatestSymbolData, cancellationToken);
+
 
         public async Task ScheduleLatestSymbolData(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
+            var marketStatus = await distributedCache.GetValueAsync<bool>("MarketStatus");
+            if (!marketStatus)
+                return;
+
             if (DateTime.Now.Hour < 9)
                 throw new ServerException("قبل از ساعت 9 قادر به اجرای این عملیات نیستید");
 
@@ -389,8 +390,6 @@ namespace Bource.Services.Crawlers.Tsetmc
         /// <returns></returns>
         private async Task GetLatestSymbolDataAsync(HttpClient httpClient, Dictionary<long, FillSymbolData> oneTimeSymbolData, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var startTime = DateTime.Now;
-
             var response = await GetLatestSymbolsResponseAsync(httpClient, cancellationToken);
             if (response is null)
                 return;
@@ -419,16 +418,13 @@ namespace Bource.Services.Crawlers.Tsetmc
                 //if (statuses.ContainsKey(isnCode) && statuses[isnCode] != "مجاز")
                 //    continue;
 
-                var symbolData = new SymbolData(dataLine, lastModified);
+                var symbolData = new SymbolData(dataLine, DateTime.Now);
                 symbolData.FillTransactions(transactionsDataDictionary[symbolData.InsCode]);
                 data.Add(symbolData);
             }
 
             await GetLatestClientSymbolDataAsync(data, httpClient, cancellationToken);
 
-            logger.LogInformation($"Get Datas From Tse:{(DateTime.Now - startTime).TotalSeconds}");
-
-            startTime = DateTime.Now;
             // افزودن به لیست دیتاهای امروز و صف برای ذخیره سازی
 
             List<SymbolData> symbolsToSave = new();
@@ -452,7 +448,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             var todaySymbolData = (await distributedCache.GetValueAsync<List<SymbolData>>("SymbolData")) ?? new();
 
             todaySymbolData.AddRange(symbolsToSave);
-            logger.LogInformation($"Save To List:{(DateTime.Now - startTime).TotalSeconds}");
 
             //TseSymbolDataProvider.AddSymbolDataToQueue(symbolsToSave);
             await AddSymbolDataToDataBase(symbolsToSave);
