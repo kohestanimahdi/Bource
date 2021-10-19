@@ -57,9 +57,11 @@ namespace Bource.Services.Crawlers.AsanBource
                 FileExtensions.DeleteFileIfExists($"Contents/SymbolLogos/{symbol.Code12}.png");
                 await File.WriteAllBytesAsync(FileExtensions.GetDirectory($"Contents/SymbolLogos/{symbol.Code12}.png"), fileBytes, cancellationToken);
 
-                symbol.Logo = $"Contents/SymbolLogos/{symbol.Code12}.png";
-                await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
-
+                if (string.IsNullOrWhiteSpace(symbol.Logo))
+                {
+                    symbol.Logo = $"Contents/SymbolLogos/{symbol.Code12}.png";
+                    await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
+                }
                 await Task.Delay(delayBetweenRequests, cancellationToken);
             }
             catch (Exception ex)
