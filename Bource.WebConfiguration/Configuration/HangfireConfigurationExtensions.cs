@@ -154,6 +154,10 @@ namespace Bource.WebConfiguration.Configuration
             // پر کردن اطلاعات ناقص از بخشی که یکبار پر میشود
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.CompleteSymbolData), app =>
             app.CompleteSymbolData(CancellationToken.None), "0 5 * * 0,1,2,3,6", TimeZoneInfo.Local);
+
+            // حذف آن هایی که بیشتر از 2 ماه از آن ها گذشته است
+            RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.RemoveOldSymbolDataAsync), app =>
+            app.RemoveOldSymbolDataAsync(CancellationToken.None), "0 7 * * *", TimeZoneInfo.Local);
         }
 
         private static void AddMarketTimeTasks()
@@ -163,6 +167,9 @@ namespace Bource.WebConfiguration.Configuration
                 app => app.SetMarketStatus(null, CancellationToken.None), "*/4 9-15 * * 0,1,2,3,6", TimeZoneInfo.Local);
 
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.SetMarketStatus) + "9",
+                app => app.SetMarketStatus(true, CancellationToken.None), "0 9 * * 0,1,2,3,6", TimeZoneInfo.Local);
+
+            RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.SetMarketStatus) + "8",
                 app => app.SetMarketStatus(null, CancellationToken.None), "59 8 * * 0,1,2,3,6", TimeZoneInfo.Local);
 
             // دریافت اطلاعات پیغام‌های ناظر بازار- در ساعت بازار - هر به یک دقیقه

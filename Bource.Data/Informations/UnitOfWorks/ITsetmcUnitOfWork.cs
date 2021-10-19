@@ -58,5 +58,6 @@ namespace Bource.Data.Informations.UnitOfWorks
         Task AddIfNotExistsSymbolPriorityAsync(List<SymbolPriority> items, CancellationToken cancellationToken = default);
         Task<List<SymbolData>> GetSymbolDataOfSymbolAsync(long insCode, DateTime date, CancellationToken cancellationToken = default);
         Task UpdateSymbolDataRangeAsync(List<SymbolData> symbolDatas, CancellationToken cancellationToken = default);
+        Task RemoveOldSymbolDataAsync(DateTime olderThan, CancellationToken cancellationToken = default);
     }
 }

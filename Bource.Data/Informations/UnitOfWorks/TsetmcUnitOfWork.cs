@@ -216,5 +216,8 @@ namespace Bource.Data.Informations.UnitOfWorks
 
         public Task AddIfNotExistsSymbolPriorityAsync(List<SymbolPriority> items, CancellationToken cancellationToken = default(CancellationToken))
         => symbolPriorityRepository.AddIfNotExistsAsync(items, cancellationToken);
+
+        public Task RemoveOldSymbolDataAsync(DateTime olderThan, CancellationToken cancellationToken = default)
+            => symbolDataRepository.RemoveOldSymbolDataAsync(olderThan, cancellationToken);
     }
 }

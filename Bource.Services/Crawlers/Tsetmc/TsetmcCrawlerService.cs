@@ -60,6 +60,10 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         #endregion Constructors
 
+        public Task RemoveOldSymbolDataAsync(CancellationToken cancellationToken = default)
+        => tsetmcUnitOfWork.RemoveOldSymbolDataAsync(DateTime.Today.AddMonths(-2), cancellationToken);
+
+
         private Task DoFunctionsOFListWithMultiTask<T>(List<T> symbols, Func<T, HttpClient, CancellationToken, int, Task> func, CancellationToken cancellationToken, int numberOfThreads = 5, int? timeout = null)
             => ApplicationHelpers.DoFunctionsOFListWithMultiTask(symbols, httpClientFactory, className, func, cancellationToken, numberOfThreads, timeout);
 
@@ -70,7 +74,11 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             var marketStatus = false;
             if (status.HasValue)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5));
+
                 marketStatus = status.Value;
+            }
             else
             {
                 var httpClient = httpClientFactory.CreateClient(className);
@@ -358,8 +366,8 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         #region در یک نگاه نماد
 
-        public async Task ScheduleLatestSymbolDataEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
-        => await DoFuncEverySecond(ScheduleLatestSymbolData, cancellationToken);
+        public Task ScheduleLatestSymbolDataEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
+        => DoFuncEverySecond(ScheduleLatestSymbolData, cancellationToken);
 
 
         public async Task ScheduleLatestSymbolData(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
@@ -367,9 +375,6 @@ namespace Bource.Services.Crawlers.Tsetmc
             var marketStatus = await distributedCache.GetValueAsync<bool>("MarketStatus");
             if (!marketStatus)
                 return;
-
-            if (DateTime.Now.Hour < 9)
-                throw new ServerException("قبل از ساعت 9 قادر به اجرای این عملیات نیستید");
 
             var oneTimeSymbolData = (await distributedCache.GetValueAsync<Dictionary<long, FillSymbolData>>("OneTimeSymbolData")) ?? new();
 
@@ -390,6 +395,8 @@ namespace Bource.Services.Crawlers.Tsetmc
         /// <returns></returns>
         private async Task GetLatestSymbolDataAsync(HttpClient httpClient, Dictionary<long, FillSymbolData> oneTimeSymbolData, CancellationToken cancellationToken = default(CancellationToken))
         {
+            var startTime = DateTime.Now;
+
             var response = await GetLatestSymbolsResponseAsync(httpClient, cancellationToken);
             if (response is null)
                 return;
@@ -425,6 +432,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
             await GetLatestClientSymbolDataAsync(data, httpClient, cancellationToken);
 
+            logger.LogInformation($"GetData:{(DateTime.Now - startTime).TotalSeconds}");
             // افزودن به لیست دیتاهای امروز و صف برای ذخیره سازی
 
             List<SymbolData> symbolsToSave = new();
@@ -448,6 +456,8 @@ namespace Bource.Services.Crawlers.Tsetmc
             var todaySymbolData = (await distributedCache.GetValueAsync<List<SymbolData>>("SymbolData")) ?? new();
 
             todaySymbolData.AddRange(symbolsToSave);
+
+            logger.LogInformation($"Save to ram:{(DateTime.Now - startTime).TotalSeconds}");
 
             //TseSymbolDataProvider.AddSymbolDataToQueue(symbolsToSave);
             await AddSymbolDataToDataBase(symbolsToSave);

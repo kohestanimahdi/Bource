@@ -232,6 +232,9 @@ namespace Bource.Console
                         case 25:
                             shakhesbanCrawlerService.GetSymbolPrioritiesAsync().GetAwaiter().GetResult();
                             break;
+                        case 26:
+                            tse.RemoveOldSymbolDataAsync().GetAwaiter().GetResult();
+                            break;
 
                         default:
                             break;
@@ -274,7 +277,8 @@ namespace Bource.Console
                 "22", "Symbols of Indicators", "لیست نمادهای شاخص ها ",
                 "23", "Get papers", "باز کردن مرورگر ودریافت نوع اوراق ",
                 "24", "Get papers and save to server", "باز کردن مرورگر ودریافت نوع اوراق Server",
-                "25", "Get priorities", "دریافت حق تقدم ها"
+                "25", "Get priorities", "دریافت حق تقدم ها",
+                "26", "remove old symbol datas", "حذف اطلاعات بیشتر از 2 ماه"
                 );
         }
     }

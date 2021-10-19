@@ -81,7 +81,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             while (n < symbols.Count)
             {
                 var subSymbols = symbols.Skip(n).Take(count).ToList();
-                tasks.Add(Task.Run(() => GetInsturmentsClosingPricesAsync(subSymbols, shareInfos, cancellationToken)));
+                tasks.Add(Task.Run(() => GetInsturmentsClosingPricesAsync(subSymbols.ToList(), shareInfos, cancellationToken)));
                 n += count;
             }
 
@@ -92,7 +92,7 @@ namespace Bource.Services.Crawlers.Tsetmc
         {
             try
             {
-                var requestText = string.Join(';', symbols.Select(i => $"{i.InsCode},0,0"));
+                var requestText = string.Join(';', symbols.Select(i => $"{i.InsCode},0,{((!(i.YMarNSC == "NO")) ? 1 : 0)}"));
 
                 string inscodeCompress = Common.Utilities.ApplicationHelpers.TseClientCompress(requestText);
 
@@ -110,9 +110,11 @@ namespace Bource.Services.Crawlers.Tsetmc
                 if (insturmentClosingPrice.Equals("*"))
                     return;
 
-                await SaveClosingPriceInfo(symbols, shareInfos, insturmentClosingPrice, ClosingPriceTypes.NoPriceAdjustment, cancellationToken);
-                await SaveClosingPriceInfo(symbols, shareInfos, insturmentClosingPrice, ClosingPriceTypes.CapitalIncreaseAndProfit, cancellationToken);
-                await SaveClosingPriceInfo(symbols, shareInfos, insturmentClosingPrice, ClosingPriceTypes.CapitalIncrease, cancellationToken);
+                var insCodes = symbols.Select(i => i.InsCode).ToList();
+
+                await SaveClosingPriceInfo(insCodes, shareInfos, insturmentClosingPrice, ClosingPriceTypes.NoPriceAdjustment, cancellationToken);
+                await SaveClosingPriceInfo(insCodes, shareInfos, insturmentClosingPrice, ClosingPriceTypes.CapitalIncreaseAndProfit, cancellationToken);
+                await SaveClosingPriceInfo(insCodes, shareInfos, insturmentClosingPrice, ClosingPriceTypes.CapitalIncrease, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -128,7 +130,7 @@ namespace Bource.Services.Crawlers.Tsetmc
             }
         }
 
-        private async Task SaveClosingPriceInfo(List<Symbol> symbols, List<TseShareInfo> shareInfos, string insturmentClosingPrice, ClosingPriceTypes types, CancellationToken cancellationToken)
+        private async Task SaveClosingPriceInfo(List<long> insCodes, List<TseShareInfo> shareInfos, string insturmentClosingPrice, ClosingPriceTypes types, CancellationToken cancellationToken)
         {
             foreach (string text in insturmentClosingPrice.Split('@'))
             {
@@ -155,18 +157,18 @@ namespace Bource.Services.Crawlers.Tsetmc
 
                 if (cpList.Any())
                 {
-                    var symbol = symbols.FirstOrDefault(i => i.InsCode == cpList.First().InsCode);
+                    var insCode = insCodes.FirstOrDefault(i => i == cpList.First().InsCode);
 
-                    if (symbol is not null)
+                    if (insCode != 0)
                     {
-                        var closingPricesInfos = ConvertToClosingPriceType(symbol, cpList.ToList(), shareInfos, types);
+                        var closingPricesInfos = ConvertToClosingPriceType(insCode, cpList.ToList(), shareInfos, types);
                         await tsetmcUnitOfWork.AppendClosingPriceInfoAsync(closingPricesInfos.Where(i => i.ZTotTran != 0).ToList(), cancellationToken);
                     }
                 }
             }
         }
 
-        private List<ClosingPriceInfo> ConvertToClosingPriceType(Symbol symbol, List<ClosingPriceInfo> cpList, List<TseShareInfo> tseShares, ClosingPriceTypes types)
+        private List<ClosingPriceInfo> ConvertToClosingPriceType(long insCode, List<ClosingPriceInfo> cpList, List<TseShareInfo> tseShares, ClosingPriceTypes types)
         {
             List<ClosingPriceInfo> list = new List<ClosingPriceInfo>();
             var cp = cpList.ToList();
@@ -196,9 +198,9 @@ namespace Bource.Services.Crawlers.Tsetmc
                     {
                         num2 = num2 * cp[i + 1].PriceYesterday / cp[i].PClosing;
                     }
-                    else if (types == ClosingPriceTypes.CapitalIncrease && cp[i].PClosing != cp[i + 1].PriceYesterday && tseShares.Exists((TseShareInfo p) => p.InsCode == symbol.InsCode && p.DEven == cp[i + 1].DEven))
+                    else if (types == ClosingPriceTypes.CapitalIncrease && cp[i].PClosing != cp[i + 1].PriceYesterday && tseShares.Exists((TseShareInfo p) => p.InsCode == insCode && p.DEven == cp[i + 1].DEven))
                     {
-                        num2 *= tseShares.Find((TseShareInfo p) => p.InsCode == symbol.InsCode && p.DEven == cp[i + 1].DEven).NumberOfShareOld / tseShares.Find((TseShareInfo p) => p.InsCode == symbol.InsCode && p.DEven == cp[i + 1].DEven).NumberOfShareNew;
+                        num2 *= tseShares.Find((TseShareInfo p) => p.InsCode == insCode && p.DEven == cp[i + 1].DEven).NumberOfShareOld / tseShares.Find((TseShareInfo p) => p.InsCode == insCode && p.DEven == cp[i + 1].DEven).NumberOfShareNew;
                     }
                     ClosingPriceInfo closingPriceInfo = new ClosingPriceInfo();
                     closingPriceInfo.InsCode = cp[i].InsCode;

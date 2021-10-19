@@ -5,6 +5,7 @@ using Bource.Models.Data.Common;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,18 +32,17 @@ namespace Bource.Services.Crawlers.AsanBource
             FileExtensions.CreateIfNotExists("Contents/SymbolLogos");
 
             var symbols = await tsetmcUnitOfWork.GetSymbolsAsync(cancellationToken);
+            var httpClient = httpClientFactory.CreateClient(className);
             foreach (var symbol in symbols)
-                await DownloadSymbolImageAsync(symbol, cancellationToken);
+                await DownloadSymbolImageAsync(httpClient, symbol, cancellationToken);
         }
 
-        private async Task DownloadSymbolImageAsync(Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
+        private async Task DownloadSymbolImageAsync(HttpClient httpClient, Symbol symbol, CancellationToken cancellationToken = default(CancellationToken))
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(symbol.Code12))
                     return;
-
-                using var httpClient = httpClientFactory.CreateClient(className);
 
                 var response = await httpClient.GetAsync($"content/SymbolsLogo/{symbol.Code12}.png", cancellationToken);
                 if (!response.IsSuccessStatusCode)
@@ -55,12 +55,12 @@ namespace Bource.Services.Crawlers.AsanBource
                 var fileBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
 
                 FileExtensions.DeleteFileIfExists($"Contents/SymbolLogos/{symbol.Code12}.png");
-                await File.WriteAllBytesAsync(FileExtensions.GetDirectory($"Contents/SymbolLogos/{symbol.Code12}.png"), fileBytes);
+                await File.WriteAllBytesAsync(FileExtensions.GetDirectory($"Contents/SymbolLogos/{symbol.Code12}.png"), fileBytes, cancellationToken);
 
                 symbol.Logo = $"Contents/SymbolLogos/{symbol.Code12}.png";
-                await tsetmcUnitOfWork.UpdateSymbolAsync(symbol);
+                await tsetmcUnitOfWork.UpdateSymbolAsync(symbol, cancellationToken);
 
-                await Task.Delay(delayBetweenRequests);
+                await Task.Delay(delayBetweenRequests, cancellationToken);
             }
             catch (Exception ex)
             {
