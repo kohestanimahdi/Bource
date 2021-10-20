@@ -2,6 +2,7 @@
 using Bource.Models.Data.Tsetmc;
 using MongoDB.Driver;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,7 +22,17 @@ namespace Bource.Data.Informations.Repositories
         public async Task RemoveOldSymbolDataAsync(DateTime olderThan, CancellationToken cancellationToken = default)
         {
             var items = await Table.Find(i => i.CreateDate < olderThan).ToListAsync(cancellationToken);
-            await base.DeleteRangeAsync(items, cancellationToken);
+            var result = items.GroupBy(i => i.InsCode);
+            foreach (var item in result)
+            {
+                var removedItem = item.OrderByDescending(i => i.LastUpdate).ToList();
+                if (removedItem.Count > 1)
+                {
+                    removedItem = removedItem.Skip(1).ToList();
+                    await base.DeleteRangeAsync(removedItem, cancellationToken);
+                }
+            }
+
         }
     }
 }
