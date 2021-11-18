@@ -240,6 +240,10 @@ namespace Bource.Models.Data.Tsetmc
 
         public void FillTransactions(IEnumerable<string> transactions)
         {
+            if (InsCode == 35366681030756042)
+            {
+
+            }
             BuyTransactions = new List<SymbolTransaction>();
             SellTransactions = new List<SymbolTransaction>();
 

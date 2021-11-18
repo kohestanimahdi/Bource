@@ -86,7 +86,17 @@ namespace Bource.Services.Crawlers.Tsetmc
                 marketStatus = stockCashMarketAtGlance.IsOpen && OTCCashMarketAtGlance.IsOpen;
             }
 
-            await distributedCache.SetValueAsync("MarketStatus", marketStatus, 5);
+
+            int cacheTime = (int)(DateTime.Today.AddHours(12) - DateTime.Now).TotalMinutes;
+            if (cacheTime < 5)
+                cacheTime = 5;
+            // set market status for access during today
+            if (marketStatus)
+            {
+                await distributedCache.SetValueAsync("IsTodayOpen", true, DateTime.Today.AddDays(1).Subtract(DateTime.Now).TotalMinutes);
+            }
+
+            await distributedCache.SetValueAsync("MarketStatus", marketStatus, cacheTime);
         }
 
         #region نمادها
@@ -369,6 +379,49 @@ namespace Bource.Services.Crawlers.Tsetmc
         public Task ScheduleLatestSymbolDataEverySecondAsync(CancellationToken cancellationToken = default(CancellationToken))
         => DoFuncEverySecond(ScheduleLatestSymbolData, cancellationToken);
 
+        public async Task ScheduleLatestSymbolDataEverySecond(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var startTime = DateTime.Now;
+            var httpClient = httpClientFactory.CreateClient(className);
+
+            var marketStatus = await distributedCache.GetValueAsync<bool>("MarketStatus");
+            if (!marketStatus)
+                return;
+
+            var oneTimeSymbolData = (await distributedCache.GetValueAsync<Dictionary<long, FillSymbolData>>("OneTimeSymbolData")) ?? new();
+
+            while (startTime.AddMinutes(1) > DateTime.Now)
+            {
+                try
+                {
+                    GetLatestSymbolDataAsync(httpClient, oneTimeSymbolData, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "");
+                }
+                await Task.Delay(TimeSpan.FromSeconds(1));
+            }
+        }
+
+        public async Task GetLastSymbolData(CancellationToken cancellationToken = default)
+        {
+            var isOpen = await distributedCache.GetValueAsync<bool?>("IsTodayOpen");
+            if (isOpen is not null && isOpen.Value)
+            {
+                var oneTimeSymbolData = (await distributedCache.GetValueAsync<Dictionary<long, FillSymbolData>>("OneTimeSymbolData")) ?? new();
+
+                try
+                {
+                    await GetLatestSymbolDataAsync(httpClientFactory.CreateClient(className), oneTimeSymbolData, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "");
+                }
+            }
+        }
+
 
         public async Task ScheduleLatestSymbolData(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -425,7 +478,7 @@ namespace Bource.Services.Crawlers.Tsetmc
                 //if (statuses.ContainsKey(isnCode) && statuses[isnCode] != "مجاز")
                 //    continue;
 
-                var symbolData = new SymbolData(dataLine, DateTime.Now);
+                var symbolData = new SymbolData(dataLine, lastModified);
                 symbolData.FillTransactions(transactionsDataDictionary[symbolData.InsCode]);
                 data.Add(symbolData);
             }

@@ -235,7 +235,12 @@ namespace Bource.Console
                         case 26:
                             tse.RemoveOldSymbolDataAsync().GetAwaiter().GetResult();
                             break;
-
+                        case 27:
+                            tse.GetLastSymbolData().GetAwaiter().GetResult();
+                            break;
+                        case 28:
+                            tse.ScheduleLatestSymbolDataEverySecond();
+                            break;
                         default:
                             break;
                     }
