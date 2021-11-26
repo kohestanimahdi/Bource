@@ -676,6 +676,13 @@ namespace Bource.Services.Crawlers.Tsetmc
                 await DoFuncEverySecond(GetMarketAtGlanceAsync, cancellationToken);
         }
 
+        public async Task GetMarketAtGlanceAfterMarketCloseAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var isOpen = await distributedCache.GetValueAsync<bool?>("IsTodayOpen");
+            if (isOpen is not null && isOpen.Value)
+                await GetMarketAtGlanceAsync(httpClientFactory.CreateClient(className), cancellationToken);
+        }
+
         private async Task GetMarketAtGlanceAsync(HttpClient httpClient, CancellationToken cancellationToken = default(CancellationToken))
         {
             var (stockCashMarketAtGlance, OTCCashMarketAtGlance) = await GetMarketAtGlanceObjextsAsync(httpClient, cancellationToken);

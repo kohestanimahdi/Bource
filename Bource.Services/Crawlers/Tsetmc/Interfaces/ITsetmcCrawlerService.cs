@@ -16,6 +16,7 @@ namespace Bource.Services.Crawlers.Tsetmc
 
         Task GetChangeOfSharesOfActiveShareHoldersAsync(CancellationToken cancellationToken = default);
         Task GetLastSymbolData(CancellationToken cancellationToken = default);
+        Task GetMarketAtGlanceAfterMarketCloseAsync(CancellationToken cancellationToken = default);
 
         //Task GetIndicators(CancellationToken cancellationToken = default);
         Task GetMarketAtGlanceScheduleEverySecondAsync(CancellationToken cancellationToken = default);

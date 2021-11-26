@@ -196,6 +196,10 @@ namespace Bource.WebConfiguration.Configuration
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetLastSymbolData),
                 app => app.GetLastSymbolData(CancellationToken.None), "15 17 * * 0,1,2,3,6", TimeZoneInfo.Local);
 
+            // دریافت اخرین اطلاعات بازار در یک نگاه - ساعت 5
+            RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetMarketAtGlanceAfterMarketCloseAsync),
+                app => app.GetMarketAtGlanceAfterMarketCloseAsync(CancellationToken.None), "30 17 * * 0,1,2,3,6", TimeZoneInfo.Local);
+
             // دریافت اطلاعات بازار نقدی در یک نگاه - ثانیه ای یک بار
             RecurringJob.AddOrUpdate<TsetmcCrawlerService>(nameof(TsetmcCrawlerService.GetMarketAtGlanceScheduleEverySecondAsync),
                 app => app.GetMarketAtGlanceScheduleEverySecondAsync(CancellationToken.None), "* 9-14 * * 0,1,2,3,6", TimeZoneInfo.Local);
