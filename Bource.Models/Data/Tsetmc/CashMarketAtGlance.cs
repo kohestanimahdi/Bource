@@ -25,6 +25,9 @@ namespace Bource.Models.Data.Tsetmc
         [Display(Name = "ارزش بازار اول و دوم")]
         public decimal ValueOfFirstAndSecondMarket { get; set; }
 
+        [Display(Name = "ارزش بازار پایه")]
+        public decimal? ValueOfBaseMarket { get; set; }
+
         [Display(Name = "ارزش بازار")]
         public decimal ValueOfMarket { get; set; }
 

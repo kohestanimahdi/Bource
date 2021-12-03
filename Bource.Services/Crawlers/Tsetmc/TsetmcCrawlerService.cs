@@ -770,11 +770,11 @@ namespace Bource.Services.Crawlers.Tsetmc
                         OverallIndex = trs[3].FirstChild.ConvertToDecimal(),
                         OverallIndexChange = trs[3].SelectSingleNode("div").ConvertToNegativePositiveDecimal(),
                         ValueOfFirstAndSecondMarket = trs[5].GetAttributeValueAsDecimal(),
-
-                        Time = trs[7].GetAsDateTime("14"),
-                        NumberOfTransaction = trs[9].ConvertToDecimal(),
-                        ValueOfTransaction = trs[11].GetAttributeValueAsDecimal(),
-                        Turnover = trs[13].GetAttributeValueAsDecimal(),
+                        ValueOfBaseMarket = trs[7].GetAttributeValueAsDecimal(),
+                        Time = trs[9].GetAsDateTime("14"),
+                        NumberOfTransaction = trs[11].ConvertToDecimal(),
+                        ValueOfTransaction = trs[13].GetAttributeValueAsDecimal(),
+                        Turnover = trs[15].GetAttributeValueAsDecimal(),
                         Market = MarketType.OTC
                     };
                 }
